@@ -13,6 +13,11 @@ Reads every file git tracks or would add (`git ls-files --cached --others
   * spatial-scale-spectrum anywhere but placeholders.json and index.json: it is
     listed as Coming soon, and has no code, README or artwork.
 
+A JSON file is also read with its escapes decoded (an escaped "@" is still an
+email address), as build_index.py reads it: tools are merged without review, and
+an author could otherwise spell in index.json what this check refuses on disk.
+build_index.py and publish.py call findings_in() on what they are about to publish.
+
 Prints one line per finding, as a GitHub annotation, and exits 1 if there is
 any. This file holds the patterns, so it is the one file not checked; it keeps
 the dataset names rot13-encoded, so that it does not spell them either.
@@ -24,6 +29,7 @@ own python3.
 from __future__ import annotations
 
 import codecs
+import json
 import os
 import re
 import subprocess
@@ -75,6 +81,15 @@ def main() -> int:
     return 0
 
 
+def findings_in(text: str, path: str):
+    """(line, what, match) for each rule that `text`, the contents of `path`, breaks."""
+    for what, pattern, allowed in RULES:
+        if path in allowed:
+            continue
+        for match in pattern.finditer(text):
+            yield text.count("\n", 0, match.start()) + 1, what, match.group(0)
+
+
 def _findings(path: str):
     """(line, what, match) for each rule a path or its contents break; line 0 is the path."""
     full = os.path.join(ROOT, path)
@@ -86,13 +101,20 @@ def _findings(path: str):
     else:
         return                               # deleted, not yet committed
     for what, pattern, allowed in RULES:
-        if path in allowed:
-            continue
-        hit = pattern.search(path)
+        hit = None if path in allowed else pattern.search(path)
         if hit:
             yield 0, what, hit.group(0)
-        for match in pattern.finditer(text):
-            yield text.count("\n", 0, match.start()) + 1, what, match.group(0)
+    raw = list(findings_in(text, path))
+    yield from raw
+    if path.endswith(".json"):
+        try:
+            decoded = json.dumps(json.loads(text), ensure_ascii=False)
+        except ValueError:
+            return
+        seen = {match for _, _, match in raw}
+        for _line, what, match in findings_in(decoded, path):
+            if match not in seen:
+                yield 0, f"{what}, written with JSON escapes", match
 
 
 if __name__ == "__main__":

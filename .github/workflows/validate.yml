@@ -5,7 +5,9 @@
 #
 # Least privilege: the token can only read, and fork pull requests run with a
 # read-only token and no secrets (`pull_request`, never `pull_request_target`),
-# so running a stranger's tool cannot write to the registry.
+# so running a stranger's tool cannot write to the registry. A tool's jobs keep
+# no cache, which another job could restore. When this passes on a pull request,
+# automerge.yml decides whether to merge it.
 #
 # pixi is pinned to the version PointillViz is built and tested with, so a
 # pixi release cannot change what the gates accept; raise it on purpose,
@@ -14,6 +16,8 @@ name: validate
 
 on:
   pull_request:
+    # ready_for_review: a draft is not merged, so its checks run again when it is ready.
+    types: [opened, synchronize, reopened, ready_for_review]
   push:
     branches: [main]
 
@@ -36,6 +40,8 @@ jobs:
           cache-write: ${{ github.event_name == 'push' }}
       # Includes the R bridge tests: r-base and r-jsonlite are in the SDK's environment.
       - run: pixi run --locked --manifest-path sdk/pixi.toml pytest sdk/tests
+      # The automation's own scripts.
+      - run: pixi run --locked --manifest-path sdk/pixi.toml pytest scripts/tests
 
   hygiene:
     name: Public-repository hygiene
@@ -113,7 +119,7 @@ jobs:
           manifest-path: tools/${{ matrix.tool }}/pixi.toml
           locked: true
           environments: default
-          cache-write: ${{ github.event_name == 'push' }}
+          cache: false
       # --env app: this job already runs inside the tool's environment.
       - name: Run the gates
         run: |
@@ -163,6 +169,6 @@ jobs:
           manifest-path: examples/${{ matrix.example }}/pixi.toml
           locked: true
           environments: default
-          cache-write: ${{ github.event_name == 'push' }}
+          cache: false
       - name: Run the gates
         run: pixi run --locked --manifest-path "examples/$EXAMPLE/pixi.toml" python -m pointillviz_tool validate "examples/$EXAMPLE" --env app

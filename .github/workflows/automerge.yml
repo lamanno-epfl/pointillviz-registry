@@ -1,0 +1,50 @@
+# Merges a pull request that publishes or changes one tool once `validate`
+# passes on it, then starts the release. scripts/automerge.py holds the rules:
+# one tool folder and nothing else, the tool new or the author's own, and the
+# id not reserved. Anything else waits for a maintainer.
+#
+# Least privilege: this workflow can write, so it runs no code from any pull
+# request. It checks out only scripts/ from main, reads pull requests through
+# the API, and never downloads their artifacts or restores a cache.
+name: automerge
+
+on:
+  workflow_run:
+    workflows: [validate]
+    types: [completed]
+  # Also every hour, for a run GitHub dropped from the queue below.
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One pass at a time, so that two passes never give one new tool two owners. A
+# pass handles every open pull request, so a queued run that GitHub drops for a
+# newer one loses nothing.
+concurrency:
+  group: automerge
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    name: Merge
+    if: >-
+      github.event_name != 'workflow_run' ||
+      (github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write         # merge, and record a new tool's owner in owners.json
+      pull-requests: write    # merge, and say why a pull request was left alone
+      actions: write          # start release.yml
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          persist-credentials: false
+          sparse-checkout: scripts
+      - env:
+          GH_TOKEN: ${{ github.token }}
+          TRIGGER_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: python3 -I scripts/automerge.py

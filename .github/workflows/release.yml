@@ -1,16 +1,18 @@
 # Releases every tool version that is new, and keeps index.json in step.
 #
-# On each push to main, every tool whose tag <id>-v<version> does not exist yet
-# is packed, gated as a bundle in its own environment, and released with that
-# bundle as the asset. Then index.json is rebuilt, and committed when it
-# changed. A released bundle never changes: a version is packed and hashed once,
-# and the index carries it over from then on. A tool that fails is not released
-# and does not hold up the others.
+# On each push to main, and when automerge.yml has merged a tool, every tool
+# whose tag <id>-v<version> does not exist yet is packed, gated as a bundle in
+# its own environment, and released. Then index.json is rebuilt, and committed
+# when it changed. A released bundle never changes: a version is packed and
+# hashed once, and the index carries it over from then on. A tool that fails is
+# not released and does not hold up the others.
 #
-# Least privilege: tools run only in the `gates` jobs, whose token can only
-# read. `publish` holds the one write permission and runs no tool code: from
-# the bundles and reports of the tools that passed, it creates the releases and
-# commits the index.
+# Tools are merged without review, so the code the gates run is a stranger's.
+# It runs only in the `gates` jobs, whose token can only read, with no cache
+# that another job reads, and all such a job hands on is its own report.
+# `publish` holds the one write permission and runs no tool code: it releases a
+# tool only when GitHub says that tool's gates job succeeded, and it packs every
+# bundle it releases itself, from the clean checkout (scripts/publish.py).
 #
 # pixi is pinned to the version PointillViz is built and tested with, as in
 # validate.yml.
@@ -19,6 +21,8 @@ name: release
 on:
   push:
     branches: [main]
+  # automerge.yml starts it: a merge made with a workflow's token starts no workflow.
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -77,17 +81,16 @@ jobs:
               exit 1
             fi
           done
+      # No cache: a cache this job wrote could be restored by another tool's job.
       - uses: prefix-dev/setup-pixi@v0.11.2
         with:
           pixi-version: v0.83.0
           manifest-path: tools/${{ matrix.tool }}/pixi.toml
           locked: true
           environments: default
-      # Packed from the clean checkout before any tool code runs, so nothing a
-      # run writes into the tool's folder can end up in the bundle. The gates
-      # then run the tool as this job's user, beside the packed file: only
-      # reviewed, merged code runs here, and that is the defence against a tool
-      # that would rewrite its own bundle.
+          cache: false
+      # The bundle the gates check. It is not the one released: the tool runs
+      # beside it and could rewrite it, so publish packs its own.
       - name: Pack the bundle
         if: ${{ !matrix.released }}
         run: |
@@ -101,7 +104,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           GH_REPO: ${{ github.repository }}
         run: gh release download "$TAG" --pattern "$TOOL-$VERSION.pvtool" --dir "out/bundles/$TAG"
-      # The gates check the bundle itself, the very bytes that are released.
       - name: Run the gates
         run: |
           pixi run --locked --manifest-path "tools/$TOOL/pixi.toml" python -m pointillviz_tool validate "out/bundles/$TAG/$TOOL-$VERSION.pvtool" --env app --json > report.json || true
@@ -118,12 +120,10 @@ jobs:
               sys.exit(1)
           sys.exit(0 if report["ok"] else 1)
           EOF
-          mkdir -p out/reports
-          mv report.json "out/reports/$TOOL.json"
       - uses: actions/upload-artifact@v7
         with:
-          name: release-${{ matrix.tool }}
-          path: out/
+          name: report-${{ matrix.tool }}
+          path: report.json
           if-no-files-found: error
 
   publish:
@@ -133,68 +133,38 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      actions: read           # which gates jobs succeeded
     env:
       GH_TOKEN: ${{ github.token }}
       GH_REPO: ${{ github.repository }}
       SHA: ${{ needs.plan.outputs.sha }}
+      PLAN: ${{ needs.plan.outputs.tools }}
     steps:
       - uses: actions/checkout@v7
         with:
           ref: ${{ needs.plan.outputs.sha }}
           persist-credentials: false
-      # Only the tools that passed uploaded a bundle and a report.
+      # Each report in its own folder, report-<id>/: one job's artifact cannot
+      # stand in for another's.
       - uses: actions/download-artifact@v8
         with:
-          pattern: release-*
-          path: ${{ runner.temp }}/passed
-          merge-multiple: true
+          pattern: report-*
+          path: ${{ runner.temp }}/reports
+      # No cache: this job can write, so it builds its environment from the lock.
       - uses: prefix-dev/setup-pixi@v0.11.2
         with:
           pixi-version: v0.83.0
           manifest-path: sdk/pixi.toml
           locked: true
-      - name: Create the releases
+          cache: false
+      - name: Release the tools that passed
         run: |
-          failed=0
-          for report in "$RUNNER_TEMP"/passed/reports/*.json; do
-            [ -e "$report" ] || continue
-            tool=$(basename "$report" .json)
-            version=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["version"])' "$report")
-            tag="$tool-v$version"
-            if gh release view "$tag" > /dev/null 2>&1; then
-              continue    # released by an earlier run; it only needs indexing
-            fi
-            title=$(python3 - "$tool" "$report" "$RUNNER_TEMP/notes.md" <<'EOF'
-          import json, sys
-          tool, path, notes = sys.argv[1:]
-          with open(path, encoding="utf-8") as fh:
-              report = json.load(fh)
-          with open(f"tools/{tool}/plugin.json", encoding="utf-8") as fh:
-              description = json.load(fh)["description"]
-          kind = "An R tool" if report["language"] == "r" else "A Python tool"
-          gpu = f', with "gpu": "{report["gpu"]}"' if report["gpu"] else ""
-          passed = [g["id"] for g in report["gates"] if g["required"] and g["status"] == "pass"]
-          bundle = f'{report["plugin_id"]}-{report["version"]}.pvtool'
-          with open(notes, "w", encoding="utf-8") as fh:
-              fh.write(f"{description}\n\n{kind} for PointillViz{gpu}. It passed every "
-                       f"required gate: {', '.join(passed)}.\n\nInstall it in PointillViz: "
-                       f"Tools → Store → Install. Or download {bundle} below and use "
-                       "Install from file.\n")
-          print(f'{report["name"]} {report["version"]}')
-          EOF
-            )
-            if ! gh release create "$tag" "$RUNNER_TEMP/passed/bundles/$tag/$tool-$version.pvtool" \
-                --target "$SHA" --title "$title" --notes-file "$RUNNER_TEMP/notes.md"; then
-              echo "::error::$tool $version could not be released, so it is not indexed."
-              rm "$report"
-              failed=1
-            fi
-          done
-          echo "RELEASE_FAILED=$failed" >> "$GITHUB_ENV"
+          pixi run --locked --manifest-path sdk/pixi.toml python scripts/publish.py \
+            "$RUNNER_TEMP/reports" "$RUNNER_TEMP/out" || echo "RELEASE_FAILED=1" >> "$GITHUB_ENV"
       - name: Rebuild index.json
         run: |
           pixi run --locked --manifest-path sdk/pixi.toml python scripts/build_index.py \
-            --bundles "$RUNNER_TEMP/passed/bundles" --reports "$RUNNER_TEMP/passed/reports" \
+            --bundles "$RUNNER_TEMP/out/bundles" --reports "$RUNNER_TEMP/out/reports" \
             --base-url "https://github.com/$GH_REPO/releases/download" \
             --raw-base "https://raw.githubusercontent.com/$GH_REPO/main"
           python3 scripts/check_hygiene.py

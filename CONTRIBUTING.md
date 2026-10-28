@@ -441,7 +441,7 @@ Each command exits with 0 when it did what was asked, 1 when it did not, and 2 f
 
 ## 10. Publishing
 
-The registry takes tools by pull request.
+The registry takes tools by pull request, and merges them automatically when their checks pass. Nobody reviews a tool before it is published: the gates make sure it works, not that it is safe.
 
 1. Fork [lamanno-epfl/pointillviz-registry](https://github.com/lamanno-epfl/pointillviz-registry) and create a branch.
 2. Put the tool in `tools/<id>/`, with its `pixi.toml` and `pixi.lock`.
@@ -450,17 +450,27 @@ The registry takes tools by pull request.
    python -m pointillviz_tool validate tools/<id>
    python3 scripts/check_hygiene.py
    ```
-4. Open the pull request. CI runs:
+4. Open the pull request into `main`. CI runs:
    - the SDK's tests;
    - the hygiene check: the repository is public, so no email addresses (an `author` is a name) and no paths from your own computer;
    - the version check: a tool that is already released needs a higher version, one that no release has used (see [Versions](#11-versions));
    - the gates of your tool, in its `default` environment exactly as `pixi.lock` pins it, on the CPU. The report is printed in the job's log and attached to the run as `report-<id>`.
-5. Once the pull request is reviewed and merged, the release workflow packs the tool, runs the gates on the bundle, releases it as `<id>-v<version>` with `<id>-<version>.pvtool` attached, and adds it to `index.json`. It then appears in PointillViz's store and on store.pointillviz.com.
+5. When every check passes, the pull request is merged automatically if:
+   - it adds, changes or removes files in `tools/<id>/` and nowhere else: one tool per pull request;
+   - `plugin.json` there gives the id `<id>`;
+   - `<id>` is not reserved for a tool listed as Coming soon;
+   - the tool is new, or you own it. Whoever first publishes a tool owns it, and only its owners can change or remove it; `owners.json` lists them by GitHub account. The registry's own tools are changed by its maintainers;
+   - it is not a draft.
+
+   A pull request that changes anything else waits for a maintainer, and a comment on it says why.
+6. After the merge, the release workflow packs the tool, runs the gates on the bundle, releases it as `<id>-v<version>` with `<id>-<version>.pvtool` attached, and adds it to `index.json`. PointillViz's store lists it a few minutes later, and store.pointillviz.com within the hour.
+
+To take a tool out of the store, its owner opens a pull request that deletes its folder. Its releases stay on GitHub, and its id stays its owner's.
 
 A change to `sdk/`, `scripts/` or the workflows runs the gates of every tool again, and of the unlisted examples in `examples/`.
 
 ## 11. Versions
 
-`version` is `MAJOR.MINOR.PATCH`. A released bundle never changes, so any change to a released tool's folder (its code, manifest, README, preview or environment) needs a higher version, or the version check fails. Raise PATCH for a fix, MINOR for an addition such as a new parameter or output, and MAJOR for a change that breaks what people relied on, such as a removed parameter or a different statistic.
+`version` is `MAJOR.MINOR.PATCH`. Only a tool's owners can publish a new version of it. A released bundle never changes, so any change to a released tool's folder (its code, manifest, README, preview or environment) needs a higher version, or the version check fails. Raise PATCH for a fix, MINOR for an addition such as a new parameter or output, and MAJOR for a change that breaks what people relied on, such as a removed parameter or a different statistic.
 
 The index lists each tool's latest version, and earlier versions stay available as GitHub releases. A new version that fails the gates is not released, and the store keeps offering the version before it. The index describes a released version as it was released: a change to its folder without a new version is not published.

@@ -51,6 +51,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "sdk"))
 
 from pointillviz_tool import bundle, manifest  # noqa: E402  (the SDK of this checkout)
+import check_hygiene  # noqa: E402  (beside this file)
 
 REPOSITORY = "https://github.com/lamanno-epfl/pointillviz-registry"
 BASE_URL = REPOSITORY + "/releases/download"
@@ -120,7 +121,7 @@ def _entry(tool_dir, tool, prev, args, base_url, raw_base, today):
 
     try:
         m = manifest.load(tool_dir)
-    except manifest.ManifestError as exc:
+    except Exception as exc:            # any malformed plugin.json: the other tools go on
         return keep(f"plugin.json cannot be read ({exc})")
     if m["id"] != tool:
         return keep(f"plugin.json gives the id {m['id']!r}; a tool lives in tools/<its id>/")
@@ -156,8 +157,7 @@ def _entry(tool_dir, tool, prev, args, base_url, raw_base, today):
     except (bundle.BundleError, manifest.ManifestError, ValueError, KeyError) as exc:
         return keep(f"the bundle of {m['version']} is unusable ({exc})")
     sha256, size, published = hashlib.sha256(data).hexdigest(), len(data), today
-    print(f"{tool} {m['version']}: new, {size:,} bytes", file=sys.stderr)
-    return {
+    entry = {
         "id": m["id"],
         "name": m["name"],
         "version": m["version"],
@@ -178,6 +178,13 @@ def _entry(tool_dir, tool, prev, args, base_url, raw_base, today):
         "report": report,
         "published": published,
     }
+    # Its text is its author's, merged without review: what the hygiene check
+    # refuses would stop index.json from being committed for every tool.
+    for _line, what, match in check_hygiene.findings_in(json.dumps(entry, ensure_ascii=False),
+                                                         "index.json"):
+        return keep(f"its entry would put {what} in the public index ({match[:40]})")
+    print(f"{tool} {m['version']}: new, {size:,} bytes", file=sys.stderr)
+    return entry
 
 
 def _report(path: str, m: dict):
