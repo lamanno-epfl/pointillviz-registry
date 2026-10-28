@@ -1,0 +1,2636 @@
+{
+  "schema": 1,
+  "registry": "https://github.com/lamanno-epfl/pointillviz-registry",
+  "tools": [
+    {
+      "id": "banksy-niches",
+      "name": "BANKSY niches",
+      "version": "1.0.0",
+      "description": "Tissue niches from each cell's expression and its neighbourhood's, by the BANKSY method.",
+      "author": "PointillViz reference tools",
+      "icon": "hub",
+      "tags": [
+        "spatial",
+        "niches",
+        "domains",
+        "clustering",
+        "genes"
+      ],
+      "license": "MIT",
+      "citation": "Singhal V, Chou N, Lee J, et al. BANKSY unifies cell typing and tissue domain segmentation for scalable spatial omics data analysis. Nat Genet 56, 431-441 (2024).",
+      "language": "python",
+      "gpu": null,
+      "outputs": [
+        "summary",
+        "labels",
+        "matrix",
+        "table"
+      ],
+      "optional_outputs": [
+        "files"
+      ],
+      "requires": {
+        "genes": true,
+        "cell_types": false,
+        "categoricals": false,
+        "spatial": "any",
+        "min_cells": 200
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "banksy-niches",
+        "name": "BANKSY niches",
+        "version": "1.0.0",
+        "author": "PointillViz reference tools",
+        "description": "Tissue niches from each cell's expression and its neighbourhood's, by the BANKSY method.",
+        "long_description": "Joins every cell's expression to that of its spatial neighbours, as BANKSY does, and clusters the result into niches with the authors' Leiden recipe or with k-means. The niches are painted on the map, with their cell types, marker genes and a downloadable list of every cell's niche.",
+        "icon": "hub",
+        "tags": [
+          "spatial",
+          "niches",
+          "domains",
+          "clustering",
+          "genes"
+        ],
+        "entry": "tool.py",
+        "homepage": "",
+        "license": "MIT",
+        "citation": "Singhal V, Chou N, Lee J, et al. BANKSY unifies cell typing and tissue domain segmentation for scalable spatial omics data analysis. Nat Genet 56, 431-441 (2024).",
+        "gpu": null,
+        "outputs": [
+          "summary",
+          "labels",
+          "matrix",
+          "table"
+        ],
+        "optional_outputs": [
+          "files"
+        ],
+        "params": [
+          {
+            "name": "clustering",
+            "type": "select",
+            "label": "Clustering",
+            "help": "Leiden finds as many niches as the resolution calls for, on a graph of cells that share neighbours.\nk-means divides the cells into exactly the number of niches you ask for.",
+            "default": "leiden",
+            "optional": false,
+            "options": [
+              {
+                "value": "leiden",
+                "label": "Leiden (the authors' default)"
+              },
+              {
+                "value": "kmeans",
+                "label": "k-means"
+              }
+            ]
+          },
+          {
+            "name": "resolution",
+            "type": "float",
+            "label": "Resolution (Leiden)",
+            "help": "Leiden only. Higher values give more, smaller niches; lower values give fewer, larger ones.",
+            "default": 0.3,
+            "optional": false,
+            "min": 0.05,
+            "max": 2.0,
+            "step": 0.05
+          },
+          {
+            "name": "n_niches",
+            "type": "int",
+            "label": "Niches (k-means)",
+            "help": "k-means only: how many niches to divide the tissue into.\nIf two niches share their marker genes and cell types, try fewer.",
+            "default": 8,
+            "optional": false,
+            "min": 2.0,
+            "max": 30.0,
+            "step": 1.0
+          },
+          {
+            "name": "lambda",
+            "type": "float",
+            "label": "Neighbourhood weight (λ)",
+            "help": "How much a cell's neighbourhood counts against its own expression.\n0.8 finds tissue domains; 0.2 finds spatially informed cell types; 0 ignores space.",
+            "default": 0.8,
+            "optional": false,
+            "min": 0.0,
+            "max": 1.0,
+            "step": 0.05
+          },
+          {
+            "name": "k_geom",
+            "type": "int",
+            "label": "Spatial neighbours (k)",
+            "help": "How many nearest cells make a neighbourhood. The gradient features use twice as many.",
+            "default": 15,
+            "optional": false,
+            "min": 5.0,
+            "max": 30.0,
+            "step": 1.0
+          },
+          {
+            "name": "agf",
+            "type": "bool",
+            "label": "Include gradients (AGF)",
+            "help": "Adds BANKSY's azimuthal Gabor filter, which responds where expression changes across a neighbourhood, as at a border.",
+            "default": true,
+            "optional": false
+          },
+          {
+            "name": "n_genes",
+            "type": "int",
+            "label": "Variable genes",
+            "help": "How many of the most variable genes to use. More genes take longer.",
+            "default": 2000,
+            "optional": false,
+            "min": 50.0,
+            "max": 5000.0,
+            "step": 50.0
+          },
+          {
+            "name": "n_pcs",
+            "type": "int",
+            "label": "Principal components",
+            "help": "How many principal components of the joint matrix the clustering sees.",
+            "default": 20,
+            "optional": false,
+            "min": 5.0,
+            "max": 50.0,
+            "step": 1.0
+          },
+          {
+            "name": "smooth",
+            "type": "bool",
+            "label": "Smooth labels",
+            "help": "Gives a cell the niche held by more than half of itself and its 15 nearest cells, repeated until nothing changes (BANKSY's smoothLabels).",
+            "default": false,
+            "optional": false
+          }
+        ],
+        "requires": {
+          "genes": true,
+          "cell_types": false,
+          "categoricals": false,
+          "spatial": "any",
+          "min_cells": 200
+        },
+        "sweep": null
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/banksy-niches-v1.0.0/banksy-niches-1.0.0.pvtool",
+        "sha256": "58ec74514ad19c7f75d2d4e168ff2fed336e95f3473344591a7df3463fb11550",
+        "size": 41293
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/banksy-niches/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/banksy-niches/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/banksy-niches",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "6 files, 40.3 kB packed and 178.3 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "banksy-niches 1.0.0 by PointillViz reference tools; Python entry tool.py, outputs summary, labels, matrix, table."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.py imported in 0.47 s and defines run(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "pass",
+            "message": "1 source file, using collections, concurrent, gzip, igraph, leidenalg, numpy, os, pointillviz_tool, scipy; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 0.31 s, returning summary, table, matrix, files, labels and 2 log lines."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, table, matrix, files, labels."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "ran at the minimum corner (agf=False, k_geom=5, lambda=0.0, n_genes=50, n_niches=2, n_pcs=5, resolution=0.05) in 0.28 s; ran at the maximum corner (clustering='kmeans', k_geom=30, lambda=1.0, n_genes=5000, n_niches=30, n_pcs=50, resolution=2.0, smooth=True) in 0.29 s."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": []
+      },
+      "published": "2026-10-28"
+    },
+    {
+      "id": "categorical-chords",
+      "name": "Categorical Chords",
+      "version": "2.0.0",
+      "description": "Explore spatial contacts or shared membership between categorical annotations with count-weighted ribbons and enrichment colors.",
+      "author": "PointillViz reference tools",
+      "icon": "donut_large",
+      "tags": [
+        "spatial",
+        "cell types",
+        "categorical",
+        "chord"
+      ],
+      "license": "MIT",
+      "citation": "",
+      "language": "python",
+      "gpu": null,
+      "outputs": [
+        "chord",
+        "matrix",
+        "table",
+        "summary"
+      ],
+      "optional_outputs": [],
+      "requires": {
+        "genes": false,
+        "cell_types": false,
+        "categoricals": true,
+        "spatial": "any",
+        "min_cells": 2
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "categorical-chords",
+        "name": "Categorical Chords",
+        "version": "2.0.0",
+        "author": "PointillViz reference tools",
+        "description": "Explore spatial contacts or shared membership between categorical annotations with count-weighted ribbons and enrichment colors.",
+        "long_description": "",
+        "icon": "donut_large",
+        "tags": [
+          "spatial",
+          "cell types",
+          "categorical",
+          "chord"
+        ],
+        "entry": "tool.py",
+        "homepage": "",
+        "license": "MIT",
+        "citation": "",
+        "gpu": null,
+        "outputs": [
+          "chord",
+          "matrix",
+          "table",
+          "summary"
+        ],
+        "optional_outputs": [],
+        "params": [
+          {
+            "name": "mode",
+            "type": "select",
+            "label": "Relationship",
+            "help": "Selects whether to analyze spatial contacts between different cells or relationships between two annotations on the same cells.",
+            "default": "contacts",
+            "optional": false,
+            "options": [
+              {
+                "value": "contacts",
+                "label": "Spatial contacts"
+              },
+              {
+                "value": "annotations",
+                "label": "Annotation relationships"
+              }
+            ]
+          },
+          {
+            "name": "field",
+            "type": "categorical_field",
+            "label": "Grouping annotation",
+            "help": "Selects the categorical annotation used for the groups.\nIn annotation mode, this is the first of the two annotations.",
+            "default": null,
+            "optional": false
+          },
+          {
+            "name": "other_field",
+            "type": "categorical_field",
+            "label": "Second annotation",
+            "help": "Selects the second annotation compared on the same cells.\nUsed only for Annotation relationships.",
+            "default": null,
+            "optional": true
+          },
+          {
+            "name": "radius",
+            "type": "float",
+            "label": "Contact radius",
+            "help": "Sets the maximum distance between two cells for them to count as a spatial contact, in dataset coordinate units.\nUsed only for Spatial contacts.",
+            "default": 60,
+            "optional": false,
+            "min": 1.0,
+            "max": 1000.0,
+            "step": 1.0
+          },
+          {
+            "name": "min_count",
+            "type": "int",
+            "label": "Minimum ribbon support",
+            "help": "Shows a ribbon only when the relationship contains at least this many observed cells or spatial pairs.",
+            "default": 1,
+            "optional": false,
+            "min": 1.0,
+            "max": 1000.0,
+            "step": 1.0
+          },
+          {
+            "name": "max_nodes",
+            "type": "int",
+            "label": "Maximum sectors",
+            "help": "Limits how many groups appear around the chord diagram to the most abundant ones.",
+            "default": 20,
+            "optional": false,
+            "min": 4.0,
+            "max": 60.0,
+            "step": 2.0
+          },
+          {
+            "name": "max_links",
+            "type": "int",
+            "label": "Maximum ribbons",
+            "help": "Sets the maximum number of relationships shown, keeping those with the highest observed counts.",
+            "default": 80,
+            "optional": false,
+            "min": 1.0,
+            "max": 500.0,
+            "step": 1.0
+          },
+          {
+            "name": "self_links",
+            "type": "bool",
+            "label": "Include within-group contacts",
+            "help": "Includes spatial contacts between cells belonging to the same group.\nUsed only for Spatial contacts.",
+            "default": false,
+            "optional": false
+          }
+        ],
+        "requires": {
+          "genes": false,
+          "cell_types": false,
+          "categoricals": true,
+          "spatial": "any",
+          "min_cells": 2
+        },
+        "sweep": null
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/categorical-chords-v2.0.0/categorical-chords-2.0.0.pvtool",
+        "sha256": "0317641b3056b7aa1bb9af71ded23fb7f4f1e1c915cd2bb06a8eec82a1ad38b7",
+        "size": 18853
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/categorical-chords/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/categorical-chords/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/categorical-chords",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "6 files, 18.4 kB packed and 72.8 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "categorical-chords 2.0.0 by PointillViz reference tools; Python entry tool.py, outputs chord, matrix, table, summary."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.py imported in 0.00 s and defines run(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "pass",
+            "message": "1 source file, using numpy, pointillviz_tool, scipy; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 0.24 s, returning summary, table, matrix, chord."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, table, matrix, chord."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "at the minimum corner (max_links=1, max_nodes=4, radius=1.0) it refused in words rather than crashing: No relationships pass these controls. Reduce minimum support, increase radius for contacts, or include self-links. (code: no_links); at the maximum corner (max_links=500, max_nodes=60, min_count=1000, mode='annotations', radius=1000.0, self_links=True) it refused in words rather than crashing: No relationships pass these controls. Reduce minimum support, increase radius for contacts, or include self-links. (code: no_links)."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": []
+      },
+      "published": "2026-10-28"
+    },
+    {
+      "id": "celltype-cooccurrence",
+      "name": "Cell-Type Co-occurrence",
+      "version": "2.0.0",
+      "description": "Which cell types are found near each other more often than expected by chance.",
+      "author": "PointillViz reference tools",
+      "icon": "grid_view",
+      "tags": [
+        "spatial",
+        "cell types",
+        "enrichment"
+      ],
+      "license": "MIT",
+      "citation": "",
+      "language": "python",
+      "gpu": null,
+      "outputs": [
+        "matrix",
+        "table",
+        "summary"
+      ],
+      "optional_outputs": [],
+      "requires": {
+        "genes": false,
+        "cell_types": false,
+        "categoricals": true,
+        "spatial": "any",
+        "min_cells": 50
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "celltype-cooccurrence",
+        "name": "Cell-Type Co-occurrence",
+        "version": "2.0.0",
+        "author": "PointillViz reference tools",
+        "description": "Which cell types are found near each other more often than expected by chance.",
+        "long_description": "",
+        "icon": "grid_view",
+        "tags": [
+          "spatial",
+          "cell types",
+          "enrichment"
+        ],
+        "entry": "tool.py",
+        "homepage": "",
+        "license": "MIT",
+        "citation": "",
+        "gpu": null,
+        "outputs": [
+          "matrix",
+          "table",
+          "summary"
+        ],
+        "optional_outputs": [],
+        "params": [
+          {
+            "name": "radius",
+            "type": "float",
+            "label": "Radius",
+            "help": "Sets the maximum distance at which two cells count as neighbours, using the dataset's own coordinate units. Check the scale bar and start with about two or three cell diameters.",
+            "default": 60.0,
+            "optional": false,
+            "min": 5.0,
+            "max": 1000.0,
+            "step": 5.0,
+            "sweep": true,
+            "sweep_steps": 8
+          },
+          {
+            "name": "field",
+            "type": "categorical_field",
+            "label": "Grouping column",
+            "help": "Selects the annotation used to define the groups being compared. Defaults to the cell-type column.",
+            "default": null,
+            "optional": true
+          }
+        ],
+        "requires": {
+          "genes": false,
+          "cell_types": false,
+          "categoricals": true,
+          "spatial": "any",
+          "min_cells": 50
+        },
+        "sweep": "radius"
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/celltype-cooccurrence-v2.0.0/celltype-cooccurrence-2.0.0.pvtool",
+        "sha256": "fab1ae687df44bcc677fcecd102c4254609a5ae9136f31faa39749b6ea1bf269",
+        "size": 19858
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/celltype-cooccurrence/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/celltype-cooccurrence/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/celltype-cooccurrence",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "6 files, 19.4 kB packed and 79.3 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "celltype-cooccurrence 2.0.0 by PointillViz reference tools; Python entry tool.py, outputs matrix, table, summary."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.py imported in 0.00 s and defines run(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "pass",
+            "message": "1 source file, using numpy, pointillviz_tool; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 0.23 s, returning summary, table, matrix. A 3-step sweep over radius (5.0 to 1000.0) returned every step in 0.17 s."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, table, matrix."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "ran at the minimum corner (radius=5.0) in 0.18 s; ran at the maximum corner (radius=1000.0) in 0.16 s."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": []
+      },
+      "published": "2026-10-28"
+    },
+    {
+      "id": "celltype-percolation",
+      "name": "Cell-Type Percolation",
+      "version": "2.0.0",
+      "description": "Whether a cell type is one connected mass or many islands.",
+      "author": "PointillViz reference tools",
+      "icon": "hub",
+      "tags": [
+        "spatial",
+        "cell types",
+        "connectivity",
+        "topology"
+      ],
+      "license": "MIT",
+      "citation": "Stauffer, D. & Aharony, A. (1994). Introduction to Percolation Theory, 2nd ed. Taylor & Francis. Gower, J. C. & Ross, G. J. S. (1969). Minimum spanning trees and single linkage cluster analysis. Applied Statistics 18(1), 54-64.",
+      "language": "python",
+      "gpu": null,
+      "outputs": [
+        "summary",
+        "cells",
+        "series",
+        "table"
+      ],
+      "optional_outputs": [],
+      "requires": {
+        "genes": false,
+        "cell_types": false,
+        "categoricals": true,
+        "spatial": "any",
+        "min_cells": 200
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "celltype-percolation",
+        "name": "Cell-Type Percolation",
+        "version": "2.0.0",
+        "author": "PointillViz reference tools",
+        "description": "Whether a cell type is one connected mass or many islands.",
+        "long_description": "",
+        "icon": "hub",
+        "tags": [
+          "spatial",
+          "cell types",
+          "connectivity",
+          "topology"
+        ],
+        "entry": "tool.py",
+        "homepage": "",
+        "license": "MIT",
+        "citation": "Stauffer, D. & Aharony, A. (1994). Introduction to Percolation Theory, 2nd ed. Taylor & Francis. Gower, J. C. & Ross, G. J. S. (1969). Minimum spanning trees and single linkage cluster analysis. Applied Statistics 18(1), 54-64.",
+        "gpu": null,
+        "outputs": [
+          "summary",
+          "cells",
+          "series",
+          "table"
+        ],
+        "optional_outputs": [],
+        "params": [
+          {
+            "name": "field",
+            "type": "categorical_field",
+            "label": "Grouping column",
+            "help": "Selects the annotation used to define the groups.",
+            "default": null,
+            "optional": true
+          },
+          {
+            "name": "min_cells",
+            "type": "int",
+            "label": "Minimum cells per category",
+            "help": "Categories with fewer placed cells than this are not scored and appear unpainted (grey) on the map.",
+            "default": 50,
+            "optional": false,
+            "min": 10.0,
+            "max": 5000.0,
+            "step": 5.0
+          },
+          {
+            "name": "giant_frac",
+            "type": "float",
+            "label": "Giant-component fraction",
+            "help": "Sets the fraction of a group that must belong to its largest connected patch to define the percolation threshold r*.",
+            "default": 0.5,
+            "optional": false,
+            "min": 0.1,
+            "max": 0.9,
+            "step": 0.05
+          },
+          {
+            "name": "n_sims",
+            "type": "int",
+            "label": "Null draws",
+            "help": "Sets the number of random groups used for comparison. More draws provide a more precise comparison but increase runtime; 0 disables the null results and grey band.",
+            "default": 19,
+            "optional": false,
+            "min": 0.0,
+            "max": 49.0,
+            "step": 1.0
+          },
+          {
+            "name": "link_scale",
+            "type": "float",
+            "label": "Patch-map link radius",
+            "help": "Sets the distance used to define map patches. Cells are colored by patch size at that distance; the plot and r* are unchanged.",
+            "default": 3.0,
+            "optional": false,
+            "min": 0.5,
+            "max": 20.0,
+            "step": 0.5
+          },
+          {
+            "name": "max_per_type",
+            "type": "int",
+            "label": "Maximum cells per category",
+            "help": "Limits runtime by reproducibly subsampling larger categories. Subsampling may change the map and threshold results.",
+            "default": 40000,
+            "optional": false,
+            "min": 5000.0,
+            "max": 200000.0,
+            "step": 1000.0
+          }
+        ],
+        "requires": {
+          "genes": false,
+          "cell_types": false,
+          "categoricals": true,
+          "spatial": "any",
+          "min_cells": 200
+        },
+        "sweep": null
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/celltype-percolation-v2.0.0/celltype-percolation-2.0.0.pvtool",
+        "sha256": "daaae634c0e0967ce15a2acff0f04e5eb25a6bad2861e2e11a698cbe6636272e",
+        "size": 34827
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/celltype-percolation/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/celltype-percolation/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/celltype-percolation",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "6 files, 34.0 kB packed and 131.6 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "celltype-percolation 2.0.0 by PointillViz reference tools; Python entry tool.py, outputs summary, cells, series, table."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.py imported in 0.00 s and defines run(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "pass",
+            "message": "1 source file, using __future__, hashlib, numpy, pointillviz_tool, scipy; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 0.23 s, returning summary, cells, table, series and 1 log line."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, cells, table, series."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "ran at the minimum corner (giant_frac=0.1, link_scale=0.5, max_per_type=5000, min_cells=10, n_sims=0) in 0.13 s; at the maximum corner (giant_frac=0.9, link_scale=20.0, max_per_type=200000, min_cells=5000, n_sims=49) it refused in words rather than crashing: No category has 5,000 cells with coordinates — the largest has 235. Lower the minimum-cells parameter, or pick a coarser annotation column. (code: no_types)."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": []
+      },
+      "published": "2026-10-28"
+    },
+    {
+      "id": "conditional-contact-odds",
+      "name": "Conditional Contact Odds",
+      "version": "2.0.0",
+      "description": "How much one extra neighbour of type B changes the odds a cell is type A, holding every other type's neighbour count fixed.",
+      "author": "PointillViz reference tools",
+      "icon": "hub",
+      "tags": [
+        "spatial",
+        "cell types"
+      ],
+      "license": "MIT",
+      "citation": "",
+      "language": "python",
+      "gpu": null,
+      "outputs": [
+        "summary",
+        "cells",
+        "matrix",
+        "table"
+      ],
+      "optional_outputs": [],
+      "requires": {
+        "genes": false,
+        "cell_types": false,
+        "categoricals": true,
+        "spatial": "any",
+        "min_cells": 500
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "conditional-contact-odds",
+        "name": "Conditional Contact Odds",
+        "version": "2.0.0",
+        "author": "PointillViz reference tools",
+        "description": "How much one extra neighbour of type B changes the odds a cell is type A, holding every other type's neighbour count fixed.",
+        "long_description": "",
+        "icon": "hub",
+        "tags": [
+          "spatial",
+          "cell types"
+        ],
+        "entry": "tool.py",
+        "homepage": "",
+        "license": "MIT",
+        "citation": "",
+        "gpu": null,
+        "outputs": [
+          "summary",
+          "cells",
+          "matrix",
+          "table"
+        ],
+        "optional_outputs": [],
+        "params": [
+          {
+            "name": "field",
+            "type": "categorical_field",
+            "label": "Grouping column",
+            "help": "Selects the annotation used to define the groups.",
+            "default": null,
+            "optional": true
+          },
+          {
+            "name": "k",
+            "type": "int",
+            "label": "Neighbours (k)",
+            "help": "Sets the number of nearest neighbours considered for each cell. Larger values include a broader neighbourhood but increase runtime.",
+            "default": 15,
+            "optional": false,
+            "min": 4.0,
+            "max": 30.0,
+            "step": 1.0
+          },
+          {
+            "name": "lam",
+            "type": "float",
+            "label": "Ridge",
+            "help": "Controls how strongly coefficients are pulled toward zero. Higher values give more stable but more strongly smoothed estimates.",
+            "default": 1.0,
+            "optional": false,
+            "min": 0.01,
+            "max": 100.0,
+            "step": 0.01
+          },
+          {
+            "name": "min_cells",
+            "type": "int",
+            "label": "Minimum cells per level",
+            "help": "Groups with fewer cells are not shown but remain included in the model.",
+            "default": 100,
+            "optional": false,
+            "min": 10.0,
+            "max": 5000.0,
+            "step": 10.0
+          },
+          {
+            "name": "max_levels",
+            "type": "int",
+            "label": "Level ceiling",
+            "help": "Stops the analysis if the selected annotation contains more groups than this, limiting runtime and matrix size.",
+            "default": 80,
+            "optional": false,
+            "min": 4.0,
+            "max": 100.0,
+            "step": 1.0
+          },
+          {
+            "name": "gtol",
+            "type": "float",
+            "label": "Convergence",
+            "help": "Sets when the model stops fitting. Smaller values require closer convergence but may take longer.",
+            "default": 0.0001,
+            "optional": false,
+            "min": 1e-06,
+            "max": 0.01,
+            "step": 1e-06
+          }
+        ],
+        "requires": {
+          "genes": false,
+          "cell_types": false,
+          "categoricals": true,
+          "spatial": "any",
+          "min_cells": 500
+        },
+        "sweep": null
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/conditional-contact-odds-v2.0.0/conditional-contact-odds-2.0.0.pvtool",
+        "sha256": "44fc99254d508d0063231a302bad452a4b4136688a6c255f12736f8ebd94f3a3",
+        "size": 34812
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/conditional-contact-odds/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/conditional-contact-odds/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/conditional-contact-odds",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "7 files, 34.0 kB packed and 130.6 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "conditional-contact-odds 2.0.0 by PointillViz reference tools; Python entry tool.py, outputs summary, cells, matrix, table."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.py imported in 0.00 s and defines run(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "pass",
+            "message": "2 source files, using numpy, pointillviz_tool, potts_core, scipy, time; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 0.27 s, returning summary, cells, table, matrix and 3 log lines."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, cells, table, matrix."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "at the minimum corner (gtol=1e-06, k=4, lam=0.01, max_levels=4, min_cells=10) it refused in words rather than crashing: This annotation has 6 levels and the level ceiling is set to 4. Pick a coarser grouping. (Cost climbs steeply with the level count as well: on a 135k-cell section 73 levels took 26 s at k=15 and 146 levels took 108 s at k=30.) (code: too_many_levels); at the maximum corner (gtol=0.01, k=30, lam=100.0, max_levels=100, min_cells=5000) it refused in words rather than crashing: No pair of levels clears the display gate: 5,000 cells in each level and 100 observed contacts between them. The largest level here has 238 cells and the busiest pair has 2,598 contacts. Lower the minimum, or group the annotation more coarsely. (code: nothing_reportable)."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": []
+      },
+      "published": "2026-10-28"
+    },
+    {
+      "id": "expression-hotspots",
+      "name": "Expression Hotspots (Getis-Ord Gi*)",
+      "version": "2.0.0",
+      "description": "Where one gene forms clusters of high or low expression.",
+      "author": "PointillViz reference tools",
+      "icon": "local_fire_department",
+      "tags": [
+        "spatial",
+        "expression",
+        "hotspots",
+        "statistics"
+      ],
+      "license": "MIT",
+      "citation": "Getis & Ord (1992) Geographical Analysis 24(3):189-206; Ord & Getis (1995) Geographical Analysis 27(4):286-306.",
+      "language": "python",
+      "gpu": null,
+      "outputs": [
+        "summary",
+        "cells"
+      ],
+      "optional_outputs": [
+        "table"
+      ],
+      "requires": {
+        "genes": true,
+        "cell_types": false,
+        "categoricals": false,
+        "spatial": "any",
+        "min_cells": 100
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "expression-hotspots",
+        "name": "Expression Hotspots (Getis-Ord Gi*)",
+        "version": "2.0.0",
+        "author": "PointillViz reference tools",
+        "description": "Where one gene forms clusters of high or low expression.",
+        "long_description": "",
+        "icon": "local_fire_department",
+        "tags": [
+          "spatial",
+          "expression",
+          "hotspots",
+          "statistics"
+        ],
+        "entry": "tool.py",
+        "homepage": "",
+        "license": "MIT",
+        "citation": "Getis & Ord (1992) Geographical Analysis 24(3):189-206; Ord & Getis (1995) Geographical Analysis 27(4):286-306.",
+        "gpu": null,
+        "outputs": [
+          "summary",
+          "cells"
+        ],
+        "optional_outputs": [
+          "table"
+        ],
+        "params": [
+          {
+            "name": "gene",
+            "type": "gene",
+            "label": "Gene",
+            "help": "Selects the gene analyzed for expression hotspots and coldspots.",
+            "default": null,
+            "optional": false
+          },
+          {
+            "name": "k",
+            "type": "int",
+            "label": "Neighbours (k)",
+            "help": "Sets how many nearest neighbours are examined around each cell.\nSmaller values detect finer patterns; larger values detect broader patterns.",
+            "default": 15,
+            "optional": false,
+            "min": 3.0,
+            "max": 100.0,
+            "step": 1.0
+          },
+          {
+            "name": "normalize",
+            "type": "select",
+            "label": "Expression values",
+            "help": "Sets the expression scale used in the calculation.\nlog1p(CP10K) is recommended for most datasets; choose raw counts only when the original counts are required.",
+            "default": "log1p",
+            "optional": false,
+            "options": [
+              {
+                "value": "log1p",
+                "label": "log1p(CP10K)"
+              },
+              {
+                "value": "cp10k",
+                "label": "CP10K"
+              },
+              {
+                "value": "raw",
+                "label": "Raw counts"
+              }
+            ]
+          },
+          {
+            "name": "alpha",
+            "type": "float",
+            "label": "Significance threshold",
+            "help": "Sets the largest p-value, or q-value when FDR correction is enabled, at which a cell is classified as a significant hotspot or coldspot.",
+            "default": 0.05,
+            "optional": false,
+            "min": 0.001,
+            "max": 0.25,
+            "step": 0.001
+          },
+          {
+            "name": "fdr",
+            "type": "bool",
+            "label": "Benjamini-Hochberg FDR",
+            "help": "Corrects for testing many cells at once.\nWhen disabled, significance is based on uncorrected p-values and may include more false-positive hotspots or coldspots.",
+            "default": true,
+            "optional": false
+          }
+        ],
+        "requires": {
+          "genes": true,
+          "cell_types": false,
+          "categoricals": false,
+          "spatial": "any",
+          "min_cells": 100
+        },
+        "sweep": null
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/expression-hotspots-v2.0.0/expression-hotspots-2.0.0.pvtool",
+        "sha256": "7487825040843412f78d27bff65752073eb1d0ce8757c56cfe53c4b6279adbaa",
+        "size": 33396
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/expression-hotspots/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/expression-hotspots/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/expression-hotspots",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "6 files, 32.6 kB packed and 131.7 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "expression-hotspots 2.0.0 by PointillViz reference tools; Python entry tool.py, outputs summary, cells."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.py imported in 0.00 s and defines run(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "pass",
+            "message": "1 source file, using __future__, numpy, pointillviz_tool, scipy; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 1.13 s, returning summary, cells, table and 2 log lines."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, cells, table."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "ran at the minimum corner (alpha=0.001, fdr=False, k=3) in 0.38 s; ran at the maximum corner (alpha=0.25, k=100, normalize='raw') in 0.38 s."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": []
+      },
+      "published": "2026-10-28"
+    },
+    {
+      "id": "interface-coherence",
+      "name": "Interface Coherence",
+      "version": "2.0.0",
+      "description": "Whether two cell types meet along one front or in specks.",
+      "author": "PointillViz reference tools",
+      "icon": "linear_scale",
+      "tags": [
+        "spatial",
+        "cell types",
+        "geometry",
+        "boundaries"
+      ],
+      "license": "MIT",
+      "citation": "",
+      "language": "python",
+      "gpu": null,
+      "outputs": [
+        "summary",
+        "cells",
+        "matrix",
+        "series",
+        "table"
+      ],
+      "optional_outputs": [],
+      "requires": {
+        "genes": false,
+        "cell_types": false,
+        "categoricals": true,
+        "spatial": "2d",
+        "min_cells": 200
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "interface-coherence",
+        "name": "Interface Coherence",
+        "version": "2.0.0",
+        "author": "PointillViz reference tools",
+        "description": "Whether two cell types meet along one front or in specks.",
+        "long_description": "",
+        "icon": "linear_scale",
+        "tags": [
+          "spatial",
+          "cell types",
+          "geometry",
+          "boundaries"
+        ],
+        "entry": "tool.py",
+        "homepage": "",
+        "license": "MIT",
+        "citation": "",
+        "gpu": null,
+        "outputs": [
+          "summary",
+          "cells",
+          "matrix",
+          "series",
+          "table"
+        ],
+        "optional_outputs": [],
+        "params": [
+          {
+            "name": "field",
+            "type": "categorical_field",
+            "label": "Grouping column",
+            "help": "Which annotation the boundaries are drawn between.\nDefaults to the cell-type column.",
+            "default": null,
+            "optional": true
+          },
+          {
+            "name": "min_interface",
+            "type": "float",
+            "label": "Minimum reportable interface",
+            "help": "Sets the minimum shared boundary required for a group pair to appear in the matrix and table, measured in cell diameters.\nIt does not change the map or the calculated boundaries.",
+            "default": 50.0,
+            "optional": false,
+            "min": 0.0,
+            "max": 1000.0,
+            "step": 5.0
+          },
+          {
+            "name": "edge_prune",
+            "type": "float",
+            "label": "Edge pruning distance",
+            "help": "Drop Delaunay edges longer than this many median cell spacings, so no boundary is created across a lumen or tissue gap.\n(The empty-circle criterion used to construct Delaunay triangles does not impose a maximum edge length and could otherwise connect cells across such gaps.)",
+            "default": 3.0,
+            "optional": false,
+            "min": 1.0,
+            "max": 20.0,
+            "step": 0.5
+          },
+          {
+            "name": "n_shuffles",
+            "type": "int",
+            "label": "Label shuffles",
+            "help": "Sets how many times the group labels are randomly shuffled to create the reference used to score each pair.\nMore shuffles give a more stable comparison but increase runtime.",
+            "default": 19,
+            "optional": false,
+            "min": 5.0,
+            "max": 99.0,
+            "step": 1.0
+          },
+          {
+            "name": "type_a",
+            "type": "category_value",
+            "label": "Pair member A",
+            "help": "First member of the pair drawn in the segment-length curve. It is used only to select the pair shown against the dashed white shuffled-label curve.\nDefaults to the longest reportable interface.",
+            "default": null,
+            "optional": true,
+            "field_param": "field"
+          },
+          {
+            "name": "type_b",
+            "type": "category_value",
+            "label": "Pair member B",
+            "help": "Second member of that pair.",
+            "default": null,
+            "optional": true,
+            "field_param": "field"
+          }
+        ],
+        "requires": {
+          "genes": false,
+          "cell_types": false,
+          "categoricals": true,
+          "spatial": "2d",
+          "min_cells": 200
+        },
+        "sweep": null
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/interface-coherence-v2.0.0/interface-coherence-2.0.0.pvtool",
+        "sha256": "f1e71b01a46eb8d191fdc5a39a95121f99f1f7fdab2bbd81e5a4f4ab7774124d",
+        "size": 30492
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/interface-coherence/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/interface-coherence/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/interface-coherence",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "6 files, 29.8 kB packed and 105.2 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "interface-coherence 2.0.0 by PointillViz reference tools; Python entry tool.py, outputs summary, cells, matrix, series, table."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.py imported in 0.01 s and defines run(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "pass",
+            "message": "1 source file, using __future__, numpy, pointillviz_tool, scipy; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 0.29 s, returning summary, cells, table, series, matrix and 1 log line."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, cells, table, series, matrix."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "ran at the minimum corner (edge_prune=1.0, min_interface=0.0, n_shuffles=5) in 0.21 s; at the maximum corner (edge_prune=20.0, min_interface=1000.0, n_shuffles=99) it refused in words rather than crashing: No pair of groups shares at least 1000 cell diameters of boundary. Lower the minimum reportable interface. (code: no_interface)."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": []
+      },
+      "published": "2026-10-28"
+    },
+    {
+      "id": "local-density",
+      "name": "Local Cell Density",
+      "version": "2.0.0",
+      "description": "How crowded the tissue is around every cell.",
+      "author": "PointillViz reference tools",
+      "icon": "scatter_plot",
+      "tags": [
+        "spatial",
+        "qc",
+        "density"
+      ],
+      "license": "MIT",
+      "citation": "",
+      "language": "python",
+      "gpu": null,
+      "outputs": [
+        "cells",
+        "series",
+        "summary"
+      ],
+      "optional_outputs": [],
+      "requires": {
+        "genes": false,
+        "cell_types": false,
+        "categoricals": false,
+        "spatial": "any",
+        "min_cells": 50
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "local-density",
+        "name": "Local Cell Density",
+        "version": "2.0.0",
+        "author": "PointillViz reference tools",
+        "description": "How crowded the tissue is around every cell.",
+        "long_description": "",
+        "icon": "scatter_plot",
+        "tags": [
+          "spatial",
+          "qc",
+          "density"
+        ],
+        "entry": "tool.py",
+        "homepage": "",
+        "license": "MIT",
+        "citation": "",
+        "gpu": null,
+        "outputs": [
+          "cells",
+          "series",
+          "summary"
+        ],
+        "optional_outputs": [],
+        "params": [
+          {
+            "name": "k",
+            "type": "int",
+            "label": "Neighbours (k)",
+            "help": "Sets how many nearest neighbours are used to estimate local density. Larger values measure density over a broader area and produce a smoother result.",
+            "default": 10,
+            "optional": false,
+            "min": 3.0,
+            "max": 50.0,
+            "step": 1.0
+          },
+          {
+            "name": "scale",
+            "type": "select",
+            "label": "Scale",
+            "help": "Sets whether density is shown directly or on a log10 scale.",
+            "default": "log10",
+            "optional": false,
+            "options": [
+              {
+                "value": "log10",
+                "label": "log10 density"
+              },
+              {
+                "value": "linear",
+                "label": "Density"
+              }
+            ]
+          }
+        ],
+        "requires": {
+          "genes": false,
+          "cell_types": false,
+          "categoricals": false,
+          "spatial": "any",
+          "min_cells": 50
+        },
+        "sweep": null
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/local-density-v2.0.0/local-density-2.0.0.pvtool",
+        "sha256": "21c3a4b637ef928e834c59f7c5882dcd0a9cd59db824ed617d533abbbc64db27",
+        "size": 21910
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/local-density/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/local-density/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/local-density",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "6 files, 21.4 kB packed and 95.6 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "local-density 2.0.0 by PointillViz reference tools; Python entry tool.py, outputs cells, series, summary."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.py imported in 0.00 s and defines run(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "pass",
+            "message": "1 source file, using numpy; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 0.26 s, returning summary, cells, series."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, cells, series."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "ran at the minimum corner (k=3) in 0.19 s; ran at the maximum corner (k=50, scale='linear') in 0.19 s."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": []
+      },
+      "published": "2026-10-28"
+    },
+    {
+      "id": "mclust-niches",
+      "name": "Mclust niches",
+      "version": "1.0.0",
+      "description": "Niches from the mix of cell types around each cell, fitted by a Gaussian mixture with mclust in R.",
+      "author": "PointillViz reference tools",
+      "icon": "bubble_chart",
+      "tags": [
+        "spatial",
+        "niches",
+        "cell types",
+        "neighbourhood",
+        "clustering",
+        "R"
+      ],
+      "license": "MIT",
+      "citation": "Scrucca L, Fop M, Murphy TB, Raftery AE. mclust 5: clustering, classification and density estimation using Gaussian finite mixture models. The R Journal 8(1), 289-317 (2016).",
+      "language": "r",
+      "gpu": null,
+      "outputs": [
+        "summary",
+        "labels",
+        "table"
+      ],
+      "optional_outputs": [],
+      "requires": {
+        "genes": false,
+        "cell_types": true,
+        "categoricals": false,
+        "spatial": "any",
+        "min_cells": 200
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "mclust-niches",
+        "name": "Mclust niches",
+        "version": "1.0.0",
+        "author": "PointillViz reference tools",
+        "description": "Niches from the mix of cell types around each cell, fitted by a Gaussian mixture with mclust in R.",
+        "long_description": "Describes every cell by the cell types of its nearest cells, and groups cells with similar surroundings into niches with a Gaussian mixture model (mclust). The niches are painted on the map, with a table of their sizes and main cell types. A native R tool.",
+        "icon": "bubble_chart",
+        "tags": [
+          "spatial",
+          "niches",
+          "cell types",
+          "neighbourhood",
+          "clustering",
+          "R"
+        ],
+        "entry": "tool.R",
+        "homepage": "",
+        "license": "MIT",
+        "citation": "Scrucca L, Fop M, Murphy TB, Raftery AE. mclust 5: clustering, classification and density estimation using Gaussian finite mixture models. The R Journal 8(1), 289-317 (2016).",
+        "gpu": null,
+        "outputs": [
+          "summary",
+          "labels",
+          "table"
+        ],
+        "optional_outputs": [],
+        "params": [
+          {
+            "name": "k",
+            "type": "int",
+            "label": "Neighbours (k)",
+            "help": "How many nearest cells make up the mix of cell types around each cell.\nLarger values describe broader surroundings.",
+            "default": 20,
+            "optional": false,
+            "min": 5.0,
+            "max": 100.0,
+            "step": 1.0
+          },
+          {
+            "name": "n_niches",
+            "type": "int",
+            "label": "Niches",
+            "help": "How many niches the mixture model divides the cells into.\nIf two niches hold the same cell types, try fewer.",
+            "default": 8,
+            "optional": false,
+            "min": 2.0,
+            "max": 30.0,
+            "step": 1.0
+          },
+          {
+            "name": "seed",
+            "type": "int",
+            "label": "Random seed",
+            "help": "Chooses the 2,000 cells the mixture is fitted to. Change it to see how stable the niches are.",
+            "default": 1,
+            "optional": false,
+            "min": 0.0,
+            "max": 1000000.0,
+            "step": 1.0
+          }
+        ],
+        "requires": {
+          "genes": false,
+          "cell_types": true,
+          "categoricals": false,
+          "spatial": "any",
+          "min_cells": 200
+        },
+        "sweep": null
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/mclust-niches-v1.0.0/mclust-niches-1.0.0.pvtool",
+        "sha256": "38d2e0ae0f49737aee19f02b2ee12a3a78bf6d028dca67e276e55a6f985ca1d1",
+        "size": 59360
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/mclust-niches/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/mclust-niches/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/mclust-niches",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "6 files, 58.0 kB packed and 260.4 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "mclust-niches 1.0.0 by PointillViz reference tools; R entry tool.R, outputs summary, labels, table."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy, r-base, r-jsonlite for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.R sourced in 0.01 s and defines run <- function(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "pass",
+            "message": "1 source file, using mclust, stats; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 0.81 s, returning summary, table, labels and 1 log line."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, table, labels."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "ran at the minimum corner (k=5, n_niches=2, seed=0) in 0.67 s; ran at the maximum corner (k=100, n_niches=30, seed=1000000) in 1.53 s."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": []
+      },
+      "published": "2026-10-28"
+    },
+    {
+      "id": "neighborhood-composition",
+      "name": "Neighborhood Composition & Mixing",
+      "version": "2.0.0",
+      "description": "How mixed each cell's neighbourhood is, and who sits next to whom.",
+      "author": "PointillViz reference tools",
+      "icon": "blur_on",
+      "tags": [
+        "spatial",
+        "cell types",
+        "neighbourhood",
+        "entropy",
+        "enrichment"
+      ],
+      "license": "MIT",
+      "citation": "Shannon (1948) Bell Syst. Tech. J. 27:379-423; Pielou (1966) J. Theor. Biol. 13:131-144.",
+      "language": "python",
+      "gpu": null,
+      "outputs": [
+        "summary",
+        "cells",
+        "matrix",
+        "table"
+      ],
+      "optional_outputs": [],
+      "requires": {
+        "genes": false,
+        "cell_types": false,
+        "categoricals": true,
+        "spatial": "any",
+        "min_cells": 200
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "neighborhood-composition",
+        "name": "Neighborhood Composition & Mixing",
+        "version": "2.0.0",
+        "author": "PointillViz reference tools",
+        "description": "How mixed each cell's neighbourhood is, and who sits next to whom.",
+        "long_description": "",
+        "icon": "blur_on",
+        "tags": [
+          "spatial",
+          "cell types",
+          "neighbourhood",
+          "entropy",
+          "enrichment"
+        ],
+        "entry": "tool.py",
+        "homepage": "",
+        "license": "MIT",
+        "citation": "Shannon (1948) Bell Syst. Tech. J. 27:379-423; Pielou (1966) J. Theor. Biol. 13:131-144.",
+        "gpu": null,
+        "outputs": [
+          "summary",
+          "cells",
+          "matrix",
+          "table"
+        ],
+        "optional_outputs": [],
+        "params": [
+          {
+            "name": "k",
+            "type": "int",
+            "label": "Neighbours (k)",
+            "help": "Sets how many nearest cells define each neighbourhood.\nLarger values measure mixing over a broader area and produce a smoother result.",
+            "default": 15,
+            "optional": false,
+            "min": 3.0,
+            "max": 100.0,
+            "step": 1.0
+          },
+          {
+            "name": "field",
+            "type": "categorical_field",
+            "label": "Grouping column",
+            "help": "Selects the annotation used to define the groups.\nDefaults to the dataset’s cell-type column.",
+            "default": null,
+            "optional": true
+          },
+          {
+            "name": "min_type_cells",
+            "type": "int",
+            "label": "Minimum cells per category",
+            "help": "Categories with fewer cells are not shown in the matrix or table, but are still included in each cell’s mixing score.",
+            "default": 25,
+            "optional": false,
+            "min": 0.0,
+            "max": 5000.0,
+            "step": 1.0
+          }
+        ],
+        "requires": {
+          "genes": false,
+          "cell_types": false,
+          "categoricals": true,
+          "spatial": "any",
+          "min_cells": 200
+        },
+        "sweep": null
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/neighborhood-composition-v2.0.0/neighborhood-composition-2.0.0.pvtool",
+        "sha256": "6b4678b54541fc56aed1b728e250bf9b93d0b7a86c9562c3a5676f3b4ede3fdb",
+        "size": 29484
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/neighborhood-composition/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/neighborhood-composition/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/neighborhood-composition",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "6 files, 28.8 kB packed and 117.6 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "neighborhood-composition 2.0.0 by PointillViz reference tools; Python entry tool.py, outputs summary, cells, matrix, table."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.py imported in 0.00 s and defines run(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "pass",
+            "message": "1 source file, using __future__, math, numpy, pointillviz_tool; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 0.26 s, returning summary, cells, table, matrix and 1 log line."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, cells, table, matrix."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "ran at the minimum corner (k=3, min_type_cells=0) in 0.18 s; at the maximum corner (k=100, min_type_cells=5000) it refused in words rather than crashing: No two categories have at least 5000 cells with coordinates, so there is no composition matrix to build. Lower 'Minimum cells per category'. (code: no_types_pass_floor)."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": []
+      },
+      "published": "2026-10-28"
+    },
+    {
+      "id": "ripley-cross-l",
+      "name": "Ripley's Cross-L Function",
+      "version": "2.0.0",
+      "description": "At what distance cell type B accumulates around cell type A.",
+      "author": "PointillViz reference tools",
+      "icon": "radar",
+      "tags": [
+        "spatial",
+        "cell types",
+        "point process",
+        "colocalization",
+        "scale"
+      ],
+      "license": "MIT",
+      "citation": "Ripley, B. D. (1977). Modelling spatial patterns. Journal of the Royal Statistical Society, Series B, 39(2), 172-212.",
+      "language": "python",
+      "gpu": null,
+      "outputs": [
+        "summary",
+        "series",
+        "table"
+      ],
+      "optional_outputs": [],
+      "requires": {
+        "genes": false,
+        "cell_types": true,
+        "categoricals": true,
+        "spatial": "2d",
+        "min_cells": 100
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "ripley-cross-l",
+        "name": "Ripley's Cross-L Function",
+        "version": "2.0.0",
+        "author": "PointillViz reference tools",
+        "description": "At what distance cell type B accumulates around cell type A.",
+        "long_description": "",
+        "icon": "radar",
+        "tags": [
+          "spatial",
+          "cell types",
+          "point process",
+          "colocalization",
+          "scale"
+        ],
+        "entry": "tool.py",
+        "homepage": "",
+        "license": "MIT",
+        "citation": "Ripley, B. D. (1977). Modelling spatial patterns. Journal of the Royal Statistical Society, Series B, 39(2), 172-212.",
+        "gpu": null,
+        "outputs": [
+          "summary",
+          "series",
+          "table"
+        ],
+        "optional_outputs": [],
+        "params": [
+          {
+            "name": "field",
+            "type": "categorical_field",
+            "label": "Grouping column",
+            "help": "Selects the annotation used to define the groups.\nDefaults to the dataset’s cell-type column.",
+            "default": null,
+            "optional": true
+          },
+          {
+            "name": "type_a",
+            "type": "category_value",
+            "label": "Group A (reference)",
+            "help": "Selects the reference group from which distances are measured.\nDefaults to the most abundant group.",
+            "default": null,
+            "optional": true,
+            "field_param": "field"
+          },
+          {
+            "name": "type_b",
+            "type": "category_value",
+            "label": "Group B (neighbour)",
+            "help": "Selects the group counted around group A.\nDefaults to the next most abundant group; A and B must differ.",
+            "default": null,
+            "optional": true,
+            "field_param": "field"
+          },
+          {
+            "name": "max_radius",
+            "type": "float",
+            "label": "Maximum radius",
+            "help": "Sets the largest distance tested, in the dataset’s coordinate units.\nKeep it below about one quarter of the section’s shorter side to limit edge effects.",
+            "default": 150.0,
+            "optional": false,
+            "min": 1.0,
+            "max": 5000.0,
+            "step": 5.0
+          },
+          {
+            "name": "n_steps",
+            "type": "int",
+            "label": "Radius steps",
+            "help": "Sets how many radii are tested between the smallest radius and the maximum radius.\nMore steps produce a more detailed curve.",
+            "default": 30,
+            "optional": false,
+            "min": 4.0,
+            "max": 200.0,
+            "step": 1.0
+          },
+          {
+            "name": "n_sims",
+            "type": "int",
+            "label": "Simulations",
+            "help": "Sets how many random redistributions of the B labels are used to create the grey envelope.\nMore simulations give a more stable envelope but increase runtime.",
+            "default": 39,
+            "optional": false,
+            "min": 5.0,
+            "max": 999.0,
+            "step": 1.0
+          },
+          {
+            "name": "window",
+            "type": "select",
+            "label": "Observation window",
+            "help": "Defines the tissue area used to calculate density and correct for edges.\nThe convex hull suits irregular tissue, while the bounding box suits a rectangular imaging field.",
+            "default": "hull",
+            "optional": false,
+            "options": [
+              {
+                "value": "hull",
+                "label": "Convex hull of the cells"
+              },
+              {
+                "value": "bbox",
+                "label": "Bounding box of the cells"
+              }
+            ]
+          }
+        ],
+        "requires": {
+          "genes": false,
+          "cell_types": true,
+          "categoricals": true,
+          "spatial": "2d",
+          "min_cells": 100
+        },
+        "sweep": null
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/ripley-cross-l-v2.0.0/ripley-cross-l-2.0.0.pvtool",
+        "sha256": "330dc17455cd015ee84ff0358c07ef2d53f8b5fbb1ea068805ad27e7435abfed",
+        "size": 28612
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/ripley-cross-l/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/ripley-cross-l/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/ripley-cross-l",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "6 files, 27.9 kB packed and 98.1 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "ripley-cross-l 2.0.0 by PointillViz reference tools; Python entry tool.py, outputs summary, series, table."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.py imported in 0.00 s and defines run(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "pass",
+            "message": "1 source file, using __future__, hashlib, math, numpy, pointillviz_tool, scipy; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 0.26 s, returning summary, table, series and 2 log lines."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, table, series."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "ran at the minimum corner (max_radius=1.0, n_sims=5, n_steps=4) in 0.18 s; ran at the maximum corner (max_radius=5000.0, n_sims=999, n_steps=200, window='bbox') in 0.87 s."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": []
+      },
+      "published": "2026-10-28"
+    },
+    {
+      "id": "tissue-permeability",
+      "name": "Tissue Permeability",
+      "version": "2.0.0",
+      "description": "Which cells one cell type seals off from the rest of the tissue.",
+      "author": "PointillViz reference tools",
+      "icon": "route",
+      "tags": [
+        "spatial",
+        "cell types",
+        "geometry",
+        "barrier",
+        "connectivity"
+      ],
+      "license": "MIT",
+      "citation": "",
+      "language": "python",
+      "gpu": null,
+      "outputs": [
+        "summary",
+        "cells",
+        "series",
+        "table"
+      ],
+      "optional_outputs": [],
+      "requires": {
+        "genes": false,
+        "cell_types": false,
+        "categoricals": true,
+        "spatial": "any",
+        "min_cells": 200
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "tissue-permeability",
+        "name": "Tissue Permeability",
+        "version": "2.0.0",
+        "author": "PointillViz reference tools",
+        "description": "Which cells one cell type seals off from the rest of the tissue.",
+        "long_description": "",
+        "icon": "route",
+        "tags": [
+          "spatial",
+          "cell types",
+          "geometry",
+          "barrier",
+          "connectivity"
+        ],
+        "entry": "tool.py",
+        "homepage": "",
+        "license": "MIT",
+        "citation": "",
+        "gpu": null,
+        "outputs": [
+          "summary",
+          "cells",
+          "series",
+          "table"
+        ],
+        "optional_outputs": [],
+        "params": [
+          {
+            "name": "field",
+            "type": "categorical_field",
+            "label": "Grouping column",
+            "help": "Selects the annotation used to define the barrier and source populations.\nDefaults to the dataset’s cell-type column.",
+            "default": null,
+            "optional": true
+          },
+          {
+            "name": "barrier",
+            "type": "category_value",
+            "label": "Barrier cell type",
+            "help": "Selects the population treated as an impassable barrier.",
+            "default": null,
+            "optional": false,
+            "field_param": "field"
+          },
+          {
+            "name": "source",
+            "type": "select",
+            "label": "Route towards",
+            "help": "Selects the routing destination: the exposed tissue surface or another cell population.\nSurface cells are identified along the section boundary and beside sufficiently large gaps.",
+            "default": "surface",
+            "optional": false,
+            "options": [
+              {
+                "value": "surface",
+                "label": "The tissue's exposed surface"
+              },
+              {
+                "value": "type",
+                "label": "A second cell type"
+              }
+            ]
+          },
+          {
+            "name": "source_type",
+            "type": "category_value",
+            "label": "Source cell type",
+            "help": "Selects the destination population when routing towards another cell type.\nIt must differ from the barrier population.",
+            "default": null,
+            "optional": true,
+            "field_param": "field"
+          },
+          {
+            "name": "barrier_width",
+            "type": "float",
+            "label": "Barrier half-width",
+            "help": "Sets how closely a path may approach a barrier-cell centre, measured in median cell spacings.\nLarger values treat the barrier as thicker.",
+            "default": 0.75,
+            "optional": false,
+            "min": 0.0,
+            "max": 3.0,
+            "step": 0.05
+          },
+          {
+            "name": "max_gap",
+            "type": "float",
+            "label": "Largest gap a path may cross",
+            "help": "Drop Delaunay edges longer than this many median cell spacings, so no route crosses a lumen or tissue gap.",
+            "default": 5.0,
+            "optional": false,
+            "min": 1.5,
+            "max": 20.0,
+            "step": 0.5
+          },
+          {
+            "name": "paint",
+            "type": "select",
+            "label": "Map shows",
+            "help": "Selects whether the map displays sealed-compartment size, additional path length or detour factor.\nThis does not change the calculation.",
+            "default": "compartment",
+            "optional": false,
+            "options": [
+              {
+                "value": "compartment",
+                "label": "Sealed compartments (size in cells)"
+              },
+              {
+                "value": "detour",
+                "label": "Extra path forced by the barrier"
+              },
+              {
+                "value": "tau",
+                "label": "Detour factor (geodesic / straight line)"
+              }
+            ]
+          },
+          {
+            "name": "n_null",
+            "type": "int",
+            "label": "Random barriers",
+            "help": "Sets how many equally large random barriers are used for the grey plot band and the random-barrier comparison.",
+            "default": 5,
+            "optional": false,
+            "min": 2.0,
+            "max": 20.0,
+            "step": 1.0
+          }
+        ],
+        "requires": {
+          "genes": false,
+          "cell_types": false,
+          "categoricals": true,
+          "spatial": "any",
+          "min_cells": 200
+        },
+        "sweep": null
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/tissue-permeability-v2.0.0/tissue-permeability-2.0.0.pvtool",
+        "sha256": "2efff72d0a6c8506accc421786a15346dce7e8f6f9b6692b1ee54ff8f89f4462",
+        "size": 51142
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/tissue-permeability/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/tissue-permeability/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/tissue-permeability",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "6 files, 49.9 kB packed and 272.3 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "tissue-permeability 2.0.0 by PointillViz reference tools; Python entry tool.py, outputs summary, cells, series, table."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.py imported in 0.01 s and defines run(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "pass",
+            "message": "1 source file, using __future__, numpy, pointillviz_tool, scipy; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 0.30 s, returning summary, cells, table, series."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, cells, table, series."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "at the minimum corner (barrier_width=0.0, max_gap=1.5, n_null=2) it refused in words rather than crashing: Nothing here is more than one cell spacing from a source, so there is no route to measure and nothing is enclosed. At a gap of 1.5 spacings almost every cell counts as exposed surface — raise it, or route towards a cell type instead of the surface. (code: no_interior); ran at the maximum corner (barrier_width=3.0, max_gap=20.0, n_null=20, paint='tau', source='type') in 0.25 s."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": []
+      },
+      "published": "2026-10-28"
+    },
+    {
+      "id": "vector-field",
+      "name": "Vector Field",
+      "version": "2.0.0",
+      "description": "Which way a quantity increases across the tissue, as arrows over the section. Gene, cell type or any annotation column — with every arrow that could be noise removed.",
+      "author": "PointillViz reference tools",
+      "icon": "near_me",
+      "tags": [
+        "spatial",
+        "gradient",
+        "expression"
+      ],
+      "license": "MIT",
+      "citation": "",
+      "language": "python",
+      "gpu": null,
+      "outputs": [
+        "summary",
+        "cells",
+        "vectors",
+        "series"
+      ],
+      "optional_outputs": [],
+      "requires": {
+        "genes": false,
+        "cell_types": false,
+        "categoricals": false,
+        "spatial": "2d",
+        "min_cells": 200
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "vector-field",
+        "name": "Vector Field",
+        "version": "2.0.0",
+        "author": "PointillViz reference tools",
+        "description": "Which way a quantity increases across the tissue, as arrows over the section. Gene, cell type or any annotation column — with every arrow that could be noise removed.",
+        "long_description": "",
+        "icon": "near_me",
+        "tags": [
+          "spatial",
+          "gradient",
+          "expression"
+        ],
+        "entry": "tool.py",
+        "homepage": "",
+        "license": "MIT",
+        "citation": "",
+        "gpu": null,
+        "outputs": [
+          "summary",
+          "cells",
+          "vectors",
+          "series"
+        ],
+        "optional_outputs": [],
+        "params": [
+          {
+            "name": "source",
+            "type": "select",
+            "label": "Differentiate",
+            "help": "Selects whether the field represents the local proportion of a population, a continuous measurement, or gene expression.",
+            "default": "category",
+            "optional": false,
+            "options": [
+              {
+                "value": "category",
+                "label": "One level of a categorical column"
+              },
+              {
+                "value": "gene",
+                "label": "A gene"
+              },
+              {
+                "value": "continuous",
+                "label": "A continuous column"
+              }
+            ]
+          },
+          {
+            "name": "field",
+            "type": "categorical_field",
+            "label": "Categorical column",
+            "help": "Selects the categorical annotation used to define the populations.\nUsed only when Differentiate is set to category.\nDefaults to the dataset’s cell-type column.",
+            "default": null,
+            "optional": true
+          },
+          {
+            "name": "level",
+            "type": "category_value",
+            "label": "Level",
+            "help": "Selects the population from the chosen categorical column whose local proportion is analyzed.",
+            "default": null,
+            "optional": true,
+            "field_param": "field"
+          },
+          {
+            "name": "column",
+            "type": "continuous_field",
+            "label": "Continuous column",
+            "help": "Selects the continuous measurement to analyze.\nUsed only when Differentiate is set to continuous.",
+            "default": null,
+            "optional": true
+          },
+          {
+            "name": "gene",
+            "type": "gene",
+            "label": "Gene",
+            "help": "Selects the gene whose normalized expression is analyzed.\nUsed only when Differentiate is set to gene.\nValues are normalized to a total of 10,000 counts per cell.",
+            "default": null,
+            "optional": true
+          },
+          {
+            "name": "sigma",
+            "type": "float",
+            "label": "Smoothing (σ, grid cells)",
+            "help": "Sets the width of the Gaussian smoothing in grid cells.\nLarger values produce smoother fields with broader, weaker gradients.",
+            "default": 1.2,
+            "optional": false,
+            "min": 0.6,
+            "max": 3.0,
+            "step": 0.1
+          },
+          {
+            "name": "detail",
+            "type": "float",
+            "label": "Grid detail",
+            "help": "Sets the spatial resolution of the calculation.\nHigher values capture finer but noisier spatial changes.",
+            "default": 1.0,
+            "optional": false,
+            "min": 0.5,
+            "max": 2.5,
+            "step": 0.1
+          },
+          {
+            "name": "arrows",
+            "type": "int",
+            "label": "Arrows",
+            "help": "Sets the approximate number of arrows displayed.\nThis changes the display density, not the calculated field.",
+            "default": 2000,
+            "optional": false,
+            "min": 200.0,
+            "max": 20000.0,
+            "step": 100.0
+          },
+          {
+            "name": "gate",
+            "type": "bool",
+            "label": "Hide arrows that are not significant",
+            "help": "Shows only positions with z ≥ 3 and at least 30 effective cells.\nTurning it off also displays gradients that may reflect noise.",
+            "default": true,
+            "optional": false
+          }
+        ],
+        "requires": {
+          "genes": false,
+          "cell_types": false,
+          "categoricals": false,
+          "spatial": "2d",
+          "min_cells": 200
+        },
+        "sweep": null
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/vector-field-v2.0.0/vector-field-2.0.0.pvtool",
+        "sha256": "8f620b459f90bcb95ff6e52b8c526772e9d1a69249360be6e39d7b8a4e34b92e",
+        "size": 53664
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/vector-field/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/vector-field/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/vector-field",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "7 files, 52.4 kB packed and 235.8 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "vector-field 2.0.0 by PointillViz reference tools; Python entry tool.py, outputs summary, cells, vectors, series."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.py imported in 0.00 s and defines run(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "pass",
+            "message": "2 source files, using __future__, numpy, pointillviz_tool, vfield_core; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 0.01 s, returning summary, cells, vectors, series and 1 log line."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, cells, vectors, series."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "ran at the minimum corner (arrows=200, detail=0.5, gate=False, sigma=0.6) in 0.01 s; at the maximum corner (arrows=20000, detail=2.5, sigma=3.0, source='continuous') it refused in words rather than crashing: Nothing could be measured. Of 122 grid sites inside the tissue, none were far enough from a tissue edge for the smoothing window to sit entirely on real data, so no gradient at all was computed for cont_cell_area. The grid is too coarse, or σ too large, for a region this size: lower the smoothing, raise the grid detail, or widen the selection. (code: no_measurable_sites)."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": []
+      },
+      "published": "2026-10-28"
+    }
+  ],
+  "placeholders": [
+    {
+      "id": "spatial-scale-spectrum",
+      "name": "Spatial Scale Spectrum",
+      "description": "How clustered each cell type is, at every length scale."
+    }
+  ]
+}
