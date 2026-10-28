@@ -77,14 +77,21 @@ warning: The feature tool-x is not used in any environment, so the added depende
 
 Added conda-forge (https://conda.anaconda.org/conda-forge/)
  WARN a warning of another kind
+Updated environment default
+✔ Added tqdm *
+⚠️ The feature tool-y is not used in any environment, so the added dependencies were not resolved or pinned
+  Add it to an environment with `pixi workspace environment add <environment> --feature tool-y`
+  Then run `pixi upgrade --feature tool-y tqdm` to resolve and pin the dependencies
 Updated environment default"""
     lines = []
     emit = envs._without_notices(lines.append)
     for line in stderr.split("\n"):
         emit(line)
+    # The last block is the same note as pixi words it under a UTF-8 locale.
     assert lines == ["The default environment has been installed.", "Added six *",
                      "Added conda-forge (https://conda.anaconda.org/conda-forge/)",
-                     " WARN a warning of another kind", "Updated environment default"]
+                     " WARN a warning of another kind", "Updated environment default",
+                     "✔ Added tqdm *", "Updated environment default"]
 
 
 def _executable(path):

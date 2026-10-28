@@ -52,9 +52,10 @@ _MAX_MESSAGE = 8000
 #: about the manifest it parses (the `[system-requirements]` deprecation that a
 #: GPU tool's pixi.toml triggers, with a local path), and the note that a
 #: feature serves no environment yet, which a shared install's own steps
-#: provoke because `_wire` adds the requirements before the environment.
+#: provoke because `_wire` adds the requirements before the environment. pixi
+#: starts that note with "⚠️" under a UTF-8 locale and with "warning:" otherwise.
 _NOTICE = re.compile(r"\s*WARN Encountered \d+ warnings? while parsing the manifest"
-                     r"|warning: The feature \S+ is not used in any environment")
+                     r"|(?:warning:|⚠️?)\s*The feature \S+ is not used in any environment")
 #: A line that starts a new record of pixi's log; a notice runs until one.
 _RECORD = re.compile(r"\s*(TRACE|DEBUG|INFO|WARN|ERROR)\s")
 
