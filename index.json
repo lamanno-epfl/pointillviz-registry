@@ -248,6 +248,213 @@
       "published": "2026-10-28"
     },
     {
+      "id": "beeswarm-plot",
+      "name": "Beeswarm Plot",
+      "version": "1.0.0",
+      "description": "How marker genes are expressed across cell types or niches, one swarm of cells per group.",
+      "author": "PointillViz reference tools",
+      "icon": "bubble_chart",
+      "tags": [
+        "expression",
+        "markers",
+        "groups",
+        "plot"
+      ],
+      "license": "MIT",
+      "citation": "",
+      "language": "python",
+      "gpu": null,
+      "outputs": [
+        "images",
+        "table",
+        "summary",
+        "files"
+      ],
+      "optional_outputs": [],
+      "requires": {
+        "genes": true,
+        "cell_types": false,
+        "categoricals": true,
+        "spatial": "any",
+        "min_cells": 20
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "beeswarm-plot",
+        "name": "Beeswarm Plot",
+        "version": "1.0.0",
+        "author": "PointillViz reference tools",
+        "description": "How marker genes are expressed across cell types or niches, one swarm of cells per group.",
+        "long_description": "",
+        "icon": "bubble_chart",
+        "tags": [
+          "expression",
+          "markers",
+          "groups",
+          "plot"
+        ],
+        "entry": "tool.py",
+        "homepage": "",
+        "license": "MIT",
+        "citation": "",
+        "gpu": null,
+        "outputs": [
+          "images",
+          "table",
+          "summary",
+          "files"
+        ],
+        "optional_outputs": [],
+        "params": [
+          {
+            "name": "field",
+            "type": "categorical_field",
+            "label": "Groups",
+            "help": "Selects the annotation whose groups form the rows: cell types, niches or any other categorical column.\nDefaults to the dataset’s cell-type column.",
+            "default": null,
+            "optional": true
+          },
+          {
+            "name": "genes",
+            "type": "genes",
+            "label": "Genes",
+            "help": "Selects the genes that form the columns.\nOpens on the 20 genes detected in the most cells, the Marker Dot Plot’s Top markers. Search to add genes, or remove them; left empty, the plot uses those 20.",
+            "default": null,
+            "optional": true,
+            "max_items": 40,
+            "preset": "top_markers",
+            "preset_n": 20
+          },
+          {
+            "name": "coarse",
+            "type": "categorical_field",
+            "label": "Coarse groups",
+            "help": "Adds a second, broader annotation as an outer colour strip and orders the rows by it; each group takes the coarse group most of its cells belong to.\nThe same column as Groups draws no outer strip.",
+            "default": null,
+            "optional": true
+          },
+          {
+            "name": "threshold",
+            "type": "float",
+            "label": "Expression threshold",
+            "help": "Leaves cells at or below this log1p(CP10K) out of the swarms; 0 keeps every cell that detects the gene.\nThe colours always count every cell of a group.",
+            "default": 0,
+            "optional": false,
+            "min": 0.0,
+            "max": 5.0,
+            "step": 0.05
+          },
+          {
+            "name": "cmap",
+            "type": "select",
+            "label": "Colormap",
+            "help": "Colours the mean expression z-score with the colormaps the viewer offers for gene expression.",
+            "default": "magma",
+            "optional": false,
+            "options": [
+              {
+                "value": "viridis",
+                "label": "Viridis"
+              },
+              {
+                "value": "plasma",
+                "label": "Plasma"
+              },
+              {
+                "value": "inferno",
+                "label": "Inferno"
+              },
+              {
+                "value": "magma",
+                "label": "Magma"
+              },
+              {
+                "value": "cividis",
+                "label": "Cividis"
+              }
+            ]
+          }
+        ],
+        "requires": {
+          "genes": true,
+          "cell_types": false,
+          "categoricals": true,
+          "spatial": "any",
+          "min_cells": 20
+        },
+        "sweep": null
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/beeswarm-plot-v1.0.0/beeswarm-plot-1.0.0.pvtool",
+        "sha256": "5f05dcff07b3215405df0ffe32641d4bd82872412cc39233f58093cfb1cde7d1",
+        "size": 29840
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/beeswarm-plot/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/beeswarm-plot/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/beeswarm-plot",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "6 files, 29.1 kB packed and 103.4 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "beeswarm-plot 1.0.0 by PointillViz reference tools; Python entry tool.py, outputs images, table, summary, files."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.py imported in 0.02 s and defines run(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "pass",
+            "message": "1 source file, using html, numpy, pointillviz_tool; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 0.02 s, returning summary, table, files, images."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, table, files, images."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "ran at the minimum corner (cmap='viridis') in 0.02 s; ran at the maximum corner (cmap='cividis', threshold=5.0) in 0.02 s."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": []
+      },
+      "published": "2026-10-28"
+    },
+    {
       "id": "categorical-chords",
       "name": "Categorical Chords",
       "version": "2.0.0",
