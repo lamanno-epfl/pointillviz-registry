@@ -54,6 +54,11 @@ PARAM_TYPES = (
     "continuous_field",              # the name of a continuous column
     "json",                          # structured tool-specific settings
 )
+#: What a `genes` parameter's `preset` may name. "top_markers": the form opens
+#: with the `preset_n` genes detected in the most cells, the Marker Dot Plot's
+#: "Top markers" ranking (`Dataset.top_detected_genes`), and the gates run on
+#: the same list. The user edits the list from there.
+GENE_PRESETS = ("top_markers",)
 # Used with fullmatch: `$` also matches before a trailing newline, and an id or
 # a version ends up in directory names, release tags and URLs.
 _ID_RE = re.compile(r"[a-z][a-z0-9-]{1,48}[a-z0-9]")
@@ -290,6 +295,15 @@ def _validate_param(p: dict, i: int) -> dict:
         out["field_param"] = p.get("field_param")
     if ptype == "genes":
         out["max_items"] = int(_number(p.get("max_items") or 20, f"{where} max_items"))
+        if p.get("preset") is not None:
+            if p["preset"] not in GENE_PRESETS:
+                raise ManifestError(f"{where}: preset must be one of "
+                                    + ", ".join(GENE_PRESETS) + ".")
+            n = int(_number(p.get("preset_n") or out["max_items"], f"{where} preset_n"))
+            if not 1 <= n <= out["max_items"]:
+                raise ManifestError(f"{where}: preset_n must be from 1 to max_items "
+                                    f"({out['max_items']}).")
+            out["preset"], out["preset_n"] = p["preset"], n
     return out
 
 

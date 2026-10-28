@@ -82,6 +82,18 @@ def test_a_non_numeric_number_is_a_manifest_error(param, requires):
     refused(raw, "must be a")
 
 
+def test_a_genes_preset_is_kept_and_checked():
+    gs = {"name": "gs", "type": "genes", "max_items": 30, "optional": True}
+    got = validate({**V3, "params": [dict(gs, preset="top_markers", preset_n=20)]})["params"][0]
+    assert (got["preset"], got["preset_n"], got["max_items"]) == ("top_markers", 20, 30)
+    got = validate({**V3, "params": [dict(gs, preset="top_markers")]})["params"][0]
+    assert got["preset_n"] == 30                         # no preset_n: as many as max_items
+    assert "preset" not in validate({**V3, "params": [gs]})["params"][0]
+    refused({**V3, "params": [dict(gs, preset="variable")]}, "preset must be one of top_markers")
+    refused({**V3, "params": [dict(gs, preset="top_markers", preset_n=31)]}, "preset_n must be from 1")
+    refused({**V3, "params": [dict(gs, preset="top_markers", preset_n=-1)]}, "preset_n must be from 1")
+
+
 def test_param_names_and_types_are_closed():
     refused({**BASE, "params": [{"name": "2k", "type": "int"}]})
     refused({**BASE, "params": [{"name": "k-1", "type": "int", "min": 0, "max": 1}]})

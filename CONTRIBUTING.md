@@ -152,7 +152,7 @@ PointillViz draws one control per parameter, and checks and converts each value 
 | `text` | text box | a string | |
 | `select` | menu | one of the option values | `options`: `[{"value": ..., "label": ...}]` |
 | `gene` | gene search | a gene name | |
-| `genes` | gene picker | a list of gene names | `max_items` (default 20) |
+| `genes` | gene picker | a list of gene names | `max_items` (default 20); `preset` |
 | `categorical_field` | the dataset's categorical columns | a column name | |
 | `category_value` | the levels of a column | a level | `field_param`: the `categorical_field` parameter it follows |
 | `continuous_field` | the dataset's continuous columns | a column name | |
@@ -162,6 +162,7 @@ Each parameter has a `name` (letters, digits and `_`, not starting with a digit,
 
 - **Defaults.** `int`, `float`, `bool`, `text`, `select` and `json` parameters need a `default`, or `"optional": true`. The form opens on the defaults, and the gates run the tool on them. A `select` default must be one of its options, and a numeric default must lie in its own range.
 - **Dataset parameters** (`gene`, `genes`, `categorical_field`, `category_value`, `continuous_field`) take no default: PointillViz fills them from the open dataset, and the gates from theirs. With `"optional": true`, `run()` gets `None` (`NULL` in R) when nothing is chosen.
+- **Gene presets.** A `genes` parameter with `"preset": "top_markers"` opens on the `preset_n` genes (default `max_items`) detected in the most cells: the Marker Dot Plot's "Top markers" ranking, which `ds.top_detected_genes(n)` returns. The gates run on the same list, and the user edits it from there.
 - **Sweeps.** One `int` or `float` parameter may set `"sweep": true`, with `sweep_steps` from 2 to 12 (default 8). PointillViz can then run the tool over a range of that parameter at once, and the user moves between the steps. A tool that returns per-cell outputs (`cells`, `vectors`, `labels`) cannot declare a sweep.
 
 ## 4. Python tools

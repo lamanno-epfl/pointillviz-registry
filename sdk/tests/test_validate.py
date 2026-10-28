@@ -407,6 +407,21 @@ def test_parameters_with_no_default_are_filled_from_the_fixture(tmp_path):
     assert params["a"] != params["b"]
 
 
+def test_a_genes_preset_runs_the_gates_on_the_top_detected_genes(tmp_path):
+    from pointillviz_tool import Dataset
+    from pointillviz_tool.fixture import write_fixture
+    code = ("def run(ds, params):\n"
+            "    ds.genes(params['gs'])\n"
+            "    return {'summary': ' '.join(params['gs']), 'cells': {'values': [1.0] * ds.n_cells}}\n")
+    tool = _tool(tmp_path, code=code, manifest={"params": [
+        {"name": "gs", "type": "genes", "max_items": 12, "preset": "top_markers", "preset_n": 6}]})
+    r = validate(str(tool))
+    assert r["ok"], format_report(r)
+    params = gate(r, "fixture")["detail"]["params"]
+    fixture = write_fixture(str(tmp_path / "same-fixture"))["path"]      # the gates' own, seeded
+    assert params["gs"] == Dataset(fixture).top_detected_genes(6)
+
+
 def test_a_rejected_return_value_is_the_result_gates_failure(tmp_path):
     r = validate(str(_tool(tmp_path, code="def run(ds, params):\n"
                                           "    return {'summary': 's', 'cells': {'values': [1.0]}}\n")))

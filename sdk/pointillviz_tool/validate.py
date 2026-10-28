@@ -1234,6 +1234,8 @@ def _default_params(manifest: dict, dataset_dir: str) -> dict:
         ptype, name = p["type"], p["name"]
         if ptype == "gene":
             supplied[name] = take("gene", genes)
+        elif ptype == "genes" and p.get("preset") == "top_markers":
+            supplied[name] = ds.top_detected_genes(p["preset_n"])   # what the form opens on
         elif ptype == "genes":
             picked = [take("gene", genes) for _ in range(min(3, p.get("max_items") or 3))]
             supplied[name] = [g for g in picked if g]

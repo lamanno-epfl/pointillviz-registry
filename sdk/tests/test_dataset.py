@@ -92,6 +92,18 @@ def test_normalisation_modes_differ_correctly(fixture_dir):
     assert refusal(lambda: ds.gene("Ubiquitous", "zscore")).code == "bad_normalize"
 
 
+def test_top_detected_genes_is_the_viewers_ranking(fixture_dir):
+    ds = Dataset(fixture_dir)
+    with open(os.path.join(fixture_dir, "gene_index.json"), encoding="utf-8") as fh:
+        gi = json.load(fh)
+    # geneSearchSequence: every gene by its non-zero count, most first, ties in panel order
+    want = [g for _, _, g in sorted((-n, i, g) for i, (g, n) in enumerate(zip(gi["genes"], gi["nnz"])))]
+    assert ds.top_detected_genes(5) == want[:5]
+    assert ds.top_detected_genes(len(want) + 10) == want
+    assert ds.top_detected_genes(0) == []
+    assert "Silent" not in ds.top_detected_genes(len(want) - 1)   # detected in no cell: last
+
+
 def test_unknown_names_are_sentences(fixture_dir):
     ds = Dataset(fixture_dir)
     exc = refusal(lambda: ds.gene("NotAGene"))

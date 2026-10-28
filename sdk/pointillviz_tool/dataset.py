@@ -238,6 +238,19 @@ class Dataset:
     def has_gene(self, name: str) -> bool:
         return name in self._gene_positions()
 
+    def top_detected_genes(self, n: int) -> list:
+        """The `n` genes detected in the most cells, most first, ties in panel order.
+
+        The viewer's own ranking: its gene search boxes list genes in this order
+        with nothing typed, and the Marker Dot Plot's "Top markers" takes its
+        head. Counted over the whole dataset (the gene index's non-zero counts,
+        so it reads no expression), not over a selection.
+        """
+        gi = self._gene_index()[0]
+        nnz = np.asarray(gi["nnz"], dtype=np.int64)
+        order = np.argsort(-nnz, kind="stable")
+        return [gi["genes"][i] for i in order[:max(0, int(n))]]
+
     def gene(self, name: str, normalize: str = "cp10k") -> np.ndarray:
         """(n_cells,) float32 expression of one gene, densified.
 
