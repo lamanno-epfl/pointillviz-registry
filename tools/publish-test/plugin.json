@@ -1,0 +1,35 @@
+{
+  "schema": 3,
+  "id": "publish-test",
+  "name": "Publish test",
+  "version": "0.1.0",
+  "author": "PointillViz maintainers",
+  "description": "A temporary tool that checks automatic publishing. It will be removed.",
+  "long_description": "Paints each cell by its total transcript count. It exists only to test that a pull request is checked, merged and released without a manual step, and is removed afterwards.",
+  "icon": "functions",
+  "tags": [
+    "test"
+  ],
+  "entry": "tool.py",
+  "outputs": [
+    "summary",
+    "cells"
+  ],
+  "requires": {
+    "genes": true,
+    "spatial": "any",
+    "min_cells": 1
+  },
+  "params": [
+    {
+      "name": "min_counts",
+      "type": "int",
+      "label": "Minimum counts",
+      "default": 0,
+      "min": 0,
+      "max": 5000,
+      "step": 1,
+      "help": "Cells with fewer transcripts than this are left unpainted."
+    }
+  ]
+}
