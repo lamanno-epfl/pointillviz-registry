@@ -1,0 +1,40 @@
+{
+  "schema": 3,
+  "id": "interface-coherence",
+  "name": "Interface Coherence",
+  "version": "2.0.0",
+  "author": "PointillViz reference tools",
+  "description": "Whether two cell types meet along one front or in specks.",
+  "icon": "linear_scale",
+  "tags": ["spatial", "cell types", "geometry", "boundaries"],
+  "entry": "tool.py",
+  "license": "MIT",
+  "outputs": ["summary", "cells", "matrix", "series", "table"],
+  "requires": {
+    "cell_types": false,
+    "categoricals": true,
+    "genes": false,
+    "spatial": "2d",
+    "min_cells": 200
+  },
+  "params": [
+    { "name": "field", "type": "categorical_field", "label": "Grouping column",
+      "optional": true,
+      "help": "Which annotation the boundaries are drawn between.\nDefaults to the cell-type column." },
+    { "name": "min_interface", "type": "float", "label": "Minimum reportable interface",
+      "default": 50.0, "min": 0.0, "max": 1000.0, "step": 5.0,
+      "help": "Sets the minimum shared boundary required for a group pair to appear in the matrix and table, measured in cell diameters.\nIt does not change the map or the calculated boundaries." },
+    { "name": "edge_prune", "type": "float", "label": "Edge pruning distance",
+      "default": 3.0, "min": 1.0, "max": 20.0, "step": 0.5,
+      "help": "Drop Delaunay edges longer than this many median cell spacings, so no boundary is created across a lumen or tissue gap.\n(The empty-circle criterion used to construct Delaunay triangles does not impose a maximum edge length and could otherwise connect cells across such gaps.)" },
+    { "name": "n_shuffles", "type": "int", "label": "Label shuffles",
+      "default": 19, "min": 5, "max": 99, "step": 1,
+      "help": "Sets how many times the group labels are randomly shuffled to create the reference used to score each pair.\nMore shuffles give a more stable comparison but increase runtime." },
+    { "name": "type_a", "type": "category_value", "field_param": "field",
+      "label": "Pair member A", "optional": true,
+      "help": "First member of the pair drawn in the segment-length curve. It is used only to select the pair shown against the dashed white shuffled-label curve.\nDefaults to the longest reportable interface." },
+    { "name": "type_b", "type": "category_value", "field_param": "field",
+      "label": "Pair member B", "optional": true,
+      "help": "Second member of that pair." }
+  ]
+}

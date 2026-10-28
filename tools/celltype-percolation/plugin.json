@@ -1,0 +1,41 @@
+{
+  "schema": 3,
+  "id": "celltype-percolation",
+  "name": "Cell-Type Percolation",
+  "version": "2.0.0",
+  "author": "PointillViz reference tools",
+  "description": "Whether a cell type is one connected mass or many islands.",
+  "icon": "hub",
+  "tags": ["spatial", "cell types", "connectivity", "topology"],
+  "entry": "tool.py",
+  "license": "MIT",
+  "citation": "Stauffer, D. & Aharony, A. (1994). Introduction to Percolation Theory, 2nd ed. Taylor & Francis. Gower, J. C. & Ross, G. J. S. (1969). Minimum spanning trees and single linkage cluster analysis. Applied Statistics 18(1), 54-64.",
+  "outputs": ["summary", "cells", "series", "table"],
+  "requires": {
+    "cell_types": false,
+    "categoricals": true,
+    "genes": false,
+    "spatial": "any",
+    "min_cells": 200
+  },
+  "params": [
+    { "name": "field", "type": "categorical_field", "label": "Grouping column",
+      "optional": true,
+      "help": "Selects the annotation used to define the groups." },
+    { "name": "min_cells", "type": "int", "label": "Minimum cells per category",
+      "default": 50, "min": 10, "max": 5000, "step": 5,
+      "help": "Categories with fewer placed cells than this are not scored and appear unpainted (grey) on the map." },
+    { "name": "giant_frac", "type": "float", "label": "Giant-component fraction",
+      "default": 0.5, "min": 0.1, "max": 0.9, "step": 0.05,
+      "help": "Sets the fraction of a group that must belong to its largest connected patch to define the percolation threshold r*." },
+    { "name": "n_sims", "type": "int", "label": "Null draws",
+      "default": 19, "min": 0, "max": 49, "step": 1,
+      "help": "Sets the number of random groups used for comparison. More draws provide a more precise comparison but increase runtime; 0 disables the null results and grey band." },
+    { "name": "link_scale", "type": "float", "label": "Patch-map link radius",
+      "default": 3.0, "min": 0.5, "max": 20.0, "step": 0.5,
+      "help": "Sets the distance used to define map patches. Cells are colored by patch size at that distance; the plot and r* are unchanged." },
+    { "name": "max_per_type", "type": "int", "label": "Maximum cells per category",
+      "default": 40000, "min": 5000, "max": 200000, "step": 1000,
+      "help": "Limits runtime by reproducibly subsampling larger categories. Subsampling may change the map and threshold results." }
+  ]
+}

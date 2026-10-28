@@ -1,0 +1,26 @@
+{
+  "schema": 3,
+  "id": "{{ID}}",
+  "name": "{{NAME}}",
+  "version": "0.1.0",
+  "author": "Your Name",
+  "description": "Labels each cell with the most common cell type among its nearest neighbours: the starting point for a native R tool.",
+  "long_description": "Finds each cell's nearest neighbours in its own section and paints the cell by the cell type most of them have. Replace the body of run() with the analysis you want; the manifest around it is already correct.",
+  "icon": "hub",
+  "tags": ["starter"],
+  "entry": "tool.R",
+  "outputs": ["summary", "labels"],
+  "requires": {"cell_types": true, "spatial": "any", "min_cells": 1},
+  "params": [
+    {
+      "name": "k",
+      "type": "int",
+      "label": "Neighbours",
+      "default": 10,
+      "min": 2,
+      "max": 50,
+      "step": 1,
+      "help": "How many nearest cells make up each cell's neighbourhood."
+    }
+  ]
+}

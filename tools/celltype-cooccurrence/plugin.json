@@ -1,0 +1,22 @@
+{
+  "schema": 3,
+  "id": "celltype-cooccurrence",
+  "name": "Cell-Type Co-occurrence",
+  "version": "2.0.0",
+  "author": "PointillViz reference tools",
+  "description": "Which cell types are found near each other more often than expected by chance.",
+  "icon": "grid_view",
+  "tags": ["spatial", "cell types", "enrichment"],
+  "entry": "tool.py",
+  "license": "MIT",
+  "outputs": ["matrix", "table", "summary"],
+  "requires": { "categoricals": true, "spatial": "any", "min_cells": 50 },
+  "params": [
+    { "name": "radius", "type": "float", "label": "Radius", "default": 60.0,
+      "min": 5.0, "max": 1000.0, "step": 5.0, "sweep": true, "sweep_steps": 8,
+      "help": "Sets the maximum distance at which two cells count as neighbours, using the dataset's own coordinate units. Check the scale bar and start with about two or three cell diameters." },
+    { "name": "field", "type": "categorical_field", "label": "Grouping column",
+      "optional": true,
+      "help": "Selects the annotation used to define the groups being compared. Defaults to the cell-type column." }
+  ]
+}

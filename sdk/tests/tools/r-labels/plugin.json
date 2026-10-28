@@ -1,0 +1,14 @@
+{
+  "schema": 3,
+  "id": "r-labels",
+  "name": "R test tool",
+  "version": "1.0.0",
+  "author": "SDK test suite",
+  "description": "Labels each cell by its cell type, from R; exists to be run and validated.",
+  "entry": "tool.R",
+  "outputs": ["summary", "labels", "table"],
+  "requires": {"cell_types": true, "spatial": "any"},
+  "params": [
+    {"name": "k", "type": "int", "label": "Neighbours", "default": 5, "min": 2, "max": 40}
+  ]
+}

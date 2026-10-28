@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pointillviz-tool"
+version = "1.0.0"
+description = "Write, check and run PointillViz community tools: the dataset handle, the result contract and the gates."
+requires-python = ">=3.10"
+dependencies = ["numpy", "scipy"]
+
+[tool.setuptools.packages.find]
+include = ["pointillviz_tool*"]
+
+# The R runner and the `new` templates are read from the installed package.
+[tool.setuptools.package-data]
+pointillviz_tool = ["r/*.R", "templates/**/*"]
+
+# `pythonpath` puts this folder on sys.path, so the tests import the package
+# from the checkout whether pytest is started here or from the repo root.
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]

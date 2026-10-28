@@ -1,0 +1,168 @@
+# Checks every pull request and every push to main: the SDK's own tests, the
+# public-repository hygiene, version bumps, and the gates of every tool and
+# example the change touches (all of them when sdk/, scripts/ or the workflows
+# change).
+#
+# Least privilege: the token can only read, and fork pull requests run with a
+# read-only token and no secrets (`pull_request`, never `pull_request_target`),
+# so running a stranger's tool cannot write to the registry.
+#
+# pixi is pinned to the version PointillViz is built and tested with, so a
+# pixi release cannot change what the gates accept; raise it on purpose,
+# together with the app.
+name: validate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  sdk:
+    name: SDK tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: prefix-dev/setup-pixi@v0.11.2
+        with:
+          pixi-version: v0.83.0
+          manifest-path: sdk/pixi.toml
+          locked: true
+          cache-write: ${{ github.event_name == 'push' }}
+      # Includes the R bridge tests: r-base and r-jsonlite are in the SDK's environment.
+      - run: pixi run --locked --manifest-path sdk/pixi.toml pytest sdk/tests
+
+  hygiene:
+    name: Public-repository hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - run: python3 scripts/check_hygiene.py
+
+  versions:
+    name: Version bumps
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      # A released bundle never changes, so a tool whose files change needs a
+      # version above the one index.json lists, and one no release has used.
+      - env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: python3 scripts/changed_tools.py "$BASE" HEAD --check-versions
+
+  changes:
+    name: Changed tools
+    runs-on: ubuntu-latest
+    outputs:
+      tools: ${{ steps.diff.outputs.tools }}
+      examples: ${{ steps.diff.outputs.examples }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - id: diff
+        env:
+          BASE: ${{ github.event.pull_request.base.sha || github.event.before }}
+        run: |
+          tools=$(python3 scripts/changed_tools.py "$BASE" HEAD)
+          echo "tools=$tools" >> "$GITHUB_OUTPUT"
+          examples=$(python3 scripts/changed_tools.py "$BASE" HEAD --examples)
+          echo "examples=$examples" >> "$GITHUB_OUTPUT"
+
+  tools:
+    name: Gates (${{ matrix.tool }})
+    needs: changes
+    if: needs.changes.outputs.tools != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        tool: ${{ fromJSON(needs.changes.outputs.tools) }}
+    env:
+      TOOL: ${{ matrix.tool }}
+      # The SDK of this checkout; a tool does not depend on it.
+      PYTHONPATH: ${{ github.workspace }}/sdk
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Check that the tool brings its environment
+        run: |
+          for file in pixi.toml pixi.lock; do
+            if [ ! -f "tools/$TOOL/$file" ]; then
+              echo "::error file=tools/$TOOL/plugin.json::tools/$TOOL has no $file. The registry builds each tool's environment from its pixi.toml and pixi.lock: declare python, numpy and scipy in pixi.toml (and r-base and r-jsonlite for an R tool), run 'pixi lock' in the tool's folder, and commit both files."
+              exit 1
+            fi
+          done
+      # Only the default environment: the gates run every tool on the CPU, a
+      # GPU tool included, and that is how CI tests its CPU fallback.
+      - uses: prefix-dev/setup-pixi@v0.11.2
+        with:
+          pixi-version: v0.83.0
+          manifest-path: tools/${{ matrix.tool }}/pixi.toml
+          locked: true
+          environments: default
+          cache-write: ${{ github.event_name == 'push' }}
+      # --env app: this job already runs inside the tool's environment.
+      - name: Run the gates
+        run: |
+          pixi run --locked --manifest-path "tools/$TOOL/pixi.toml" python -m pointillviz_tool validate "tools/$TOOL" --env app --json > report.json || true
+          pixi run --locked --manifest-path "tools/$TOOL/pixi.toml" python - "$TOOL" report.json <<'EOF'
+          import json, sys
+          from pointillviz_tool.validate import format_report
+          tool, path = sys.argv[1:]
+          with open(path, encoding="utf-8") as fh:
+              report = json.load(fh)
+          print(format_report(report))
+          if report["plugin_id"] not in (None, tool):
+              print(f"::error file=tools/{tool}/plugin.json::plugin.json gives the id "
+                    f"{report['plugin_id']}, but a tool lives in tools/<its id>/.")
+              sys.exit(1)
+          sys.exit(0 if report["ok"] else 1)
+          EOF
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: report-${{ matrix.tool }}
+          path: report.json
+          if-no-files-found: ignore
+
+  # The unlisted examples (examples/gpu-probe tests GPU selection in the app):
+  # gated like a tool, on the CPU and its default environment, so a GPU
+  # example's CPU fallback is what CI checks. They are never released.
+  examples:
+    name: Gates (examples/${{ matrix.example }})
+    needs: changes
+    if: needs.changes.outputs.examples != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        example: ${{ fromJSON(needs.changes.outputs.examples) }}
+    env:
+      EXAMPLE: ${{ matrix.example }}
+      PYTHONPATH: ${{ github.workspace }}/sdk
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - uses: prefix-dev/setup-pixi@v0.11.2
+        with:
+          pixi-version: v0.83.0
+          manifest-path: examples/${{ matrix.example }}/pixi.toml
+          locked: true
+          environments: default
+          cache-write: ${{ github.event_name == 'push' }}
+      - name: Run the gates
+        run: pixi run --locked --manifest-path "examples/$EXAMPLE/pixi.toml" python -m pointillviz_tool validate "examples/$EXAMPLE" --env app

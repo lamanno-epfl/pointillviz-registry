@@ -1,0 +1,55 @@
+{
+  "schema": 3,
+  "id": "tissue-permeability",
+  "name": "Tissue Permeability",
+  "version": "2.0.0",
+  "author": "PointillViz reference tools",
+  "description": "Which cells one cell type seals off from the rest of the tissue.",
+  "icon": "route",
+  "tags": ["spatial", "cell types", "geometry", "barrier", "connectivity"],
+  "entry": "tool.py",
+  "license": "MIT",
+  "outputs": ["summary", "cells", "series", "table"],
+  "requires": {
+    "cell_types": false,
+    "categoricals": true,
+    "genes": false,
+    "spatial": "any",
+    "min_cells": 200
+  },
+  "params": [
+    { "name": "field", "type": "categorical_field", "label": "Grouping column",
+      "optional": true,
+      "help": "Selects the annotation used to define the barrier and source populations.\nDefaults to the dataset’s cell-type column." },
+    { "name": "barrier", "type": "category_value", "field_param": "field",
+      "label": "Barrier cell type",
+      "help": "Selects the population treated as an impassable barrier." },
+    { "name": "source", "type": "select", "label": "Route towards",
+      "default": "surface",
+      "options": [
+        { "value": "surface", "label": "The tissue's exposed surface" },
+        { "value": "type", "label": "A second cell type" }
+      ],
+      "help": "Selects the routing destination: the exposed tissue surface or another cell population.\nSurface cells are identified along the section boundary and beside sufficiently large gaps." },
+    { "name": "source_type", "type": "category_value", "field_param": "field",
+      "label": "Source cell type", "optional": true,
+      "help": "Selects the destination population when routing towards another cell type.\nIt must differ from the barrier population." },
+    { "name": "barrier_width", "type": "float", "label": "Barrier half-width",
+      "default": 0.75, "min": 0.0, "max": 3.0, "step": 0.05,
+      "help": "Sets how closely a path may approach a barrier-cell centre, measured in median cell spacings.\nLarger values treat the barrier as thicker." },
+    { "name": "max_gap", "type": "float", "label": "Largest gap a path may cross",
+      "default": 5.0, "min": 1.5, "max": 20.0, "step": 0.5,
+      "help": "Drop Delaunay edges longer than this many median cell spacings, so no route crosses a lumen or tissue gap." },
+    { "name": "paint", "type": "select", "label": "Map shows",
+      "default": "compartment",
+      "options": [
+        { "value": "compartment", "label": "Sealed compartments (size in cells)" },
+        { "value": "detour", "label": "Extra path forced by the barrier" },
+        { "value": "tau", "label": "Detour factor (geodesic / straight line)" }
+      ],
+      "help": "Selects whether the map displays sealed-compartment size, additional path length or detour factor.\nThis does not change the calculation." },
+    { "name": "n_null", "type": "int", "label": "Random barriers",
+      "default": 5, "min": 2, "max": 20, "step": 1,
+      "help": "Sets how many equally large random barriers are used for the grey plot band and the random-barrier comparison." }
+  ]
+}

@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 140" width="240" height="140" role="img" aria-label="Cross-L curve rising to a peak and leaving a null envelope">
+  <!-- Drawn from a real run of this tool: 400 A cells, 1,600 B cells scattered
+       in a disc of radius 60 about them, 3,000 background cells, 39
+       relabellings. The marked peak sits on r = 60, which is the point of the
+       tool. Colours are chosen to read on a light or a dark card. -->
+  <polygon points="10.0,68.4 15.7,65.2 21.4,64.6 27.1,64.2 32.8,65.0 38.5,61.3 44.2,60.1 49.8,56.1 55.5,54.7 61.2,53.0 66.9,50.8 72.6,49.1 78.3,48.8 84.0,50.4 89.7,52.8 95.4,53.0 101.1,54.5 106.8,54.7 112.5,54.3 118.2,51.8 123.8,51.8 129.5,51.1 135.2,52.4 140.9,53.4 146.6,52.9 152.3,53.4 158.0,50.2 163.7,50.6 169.4,52.1 175.1,50.6 180.8,47.4 186.5,48.1 192.2,47.6 197.8,47.8 203.5,46.9 209.2,45.2 214.9,44.2 220.6,42.9 226.3,39.8 232.0,40.3 232.0,117.6 226.3,114.2 220.6,113.2 214.9,111.3 209.2,108.7 203.5,107.0 197.8,107.6 192.2,104.8 186.5,103.2 180.8,100.4 175.1,98.6 169.4,96.7 163.7,93.9 158.0,89.8 152.3,89.7 146.6,87.3 140.9,87.1 135.2,84.8 129.5,82.3 123.8,80.6 118.2,79.6 112.5,79.6 106.8,79.0 101.1,75.6 95.4,73.4 89.7,71.6 84.0,67.9 78.3,65.3 72.6,63.9 66.9,66.1 61.2,66.3 55.5,66.1 49.8,68.2 44.2,69.3 38.5,72.8 32.8,73.2 27.1,72.6 21.4,76.5 15.7,76.4 10.0,75.8" fill="#94a3b8" fill-opacity="0.28"/>
+  <line x1="10.0" y1="72.0" x2="232.0" y2="72.0" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3"/>
+  <polyline points="10.0,68.4 15.7,65.5 21.4,65.5 27.1,59.0 32.8,54.3 38.5,47.5 44.2,40.6 49.8,36.0 55.5,32.9 61.2,29.0 66.9,24.9 72.6,20.4 78.3,22.3 84.0,27.1 89.7,30.3 95.4,32.4 101.1,34.3 106.8,37.9 112.5,37.5 118.2,36.8 123.8,38.5 129.5,41.5 135.2,43.4 140.9,46.2 146.6,47.6 152.3,50.3 158.0,50.4 163.7,53.3 169.4,58.1 175.1,56.4 180.8,54.4 186.5,57.6 192.2,56.5 197.8,59.0 203.5,58.8 209.2,57.1 214.9,57.1 220.6,55.4 226.3,50.2 232.0,51.6" fill="none" stroke="#5b8def" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="72.6" y1="20.4" x2="72.6" y2="122.0" stroke="#5b8def" stroke-width="0.9" stroke-dasharray="2 3" opacity="0.75"/>
+  <circle cx="72.6" cy="20.4" r="3.2" fill="#5b8def"/>
+  <line x1="10.0" y1="122.0" x2="232.0" y2="122.0" stroke="#94a3b8" stroke-width="1"/>
+  <text x="10.0" y="12" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10" fill="#94a3b8">L(r) &#8722; r</text>
+  <text x="72.6" y="134" text-anchor="middle" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10" fill="#5b8def">peak</text>
+  <text x="232.0" y="134" text-anchor="end" font-family="ui-sans-serif, system-ui, sans-serif" font-size="10" fill="#94a3b8">radius</text>
+</svg>

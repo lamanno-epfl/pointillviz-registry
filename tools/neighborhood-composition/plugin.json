@@ -1,0 +1,50 @@
+{
+  "schema": 3,
+  "id": "neighborhood-composition",
+  "name": "Neighborhood Composition & Mixing",
+  "version": "2.0.0",
+  "author": "PointillViz reference tools",
+  "description": "How mixed each cell's neighbourhood is, and who sits next to whom.",
+  "icon": "blur_on",
+  "tags": ["spatial", "cell types", "neighbourhood", "entropy", "enrichment"],
+  "entry": "tool.py",
+  "license": "MIT",
+  "citation": "Shannon (1948) Bell Syst. Tech. J. 27:379-423; Pielou (1966) J. Theor. Biol. 13:131-144.",
+  "outputs": ["summary", "cells", "matrix", "table"],
+  "requires": {
+    "categoricals": true,
+    "cell_types": false,
+    "genes": false,
+    "spatial": "any",
+    "min_cells": 200
+  },
+  "params": [
+    {
+      "name": "k",
+      "type": "int",
+      "label": "Neighbours (k)",
+      "default": 15,
+      "min": 3,
+      "max": 100,
+      "step": 1,
+      "help": "Sets how many nearest cells define each neighbourhood.\nLarger values measure mixing over a broader area and produce a smoother result."
+    },
+    {
+      "name": "field",
+      "type": "categorical_field",
+      "label": "Grouping column",
+      "optional": true,
+      "help": "Selects the annotation used to define the groups.\nDefaults to the dataset’s cell-type column."
+    },
+    {
+      "name": "min_type_cells",
+      "type": "int",
+      "label": "Minimum cells per category",
+      "default": 25,
+      "min": 0,
+      "max": 5000,
+      "step": 1,
+      "help": "Categories with fewer cells are not shown in the matrix or table, but are still included in each cell’s mixing score."
+    }
+  ]
+}

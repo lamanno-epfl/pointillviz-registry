@@ -1,0 +1,7 @@
+[
+  {
+    "id": "spatial-scale-spectrum",
+    "name": "Spatial Scale Spectrum",
+    "description": "How clustered each cell type is, at every length scale."
+  }
+]

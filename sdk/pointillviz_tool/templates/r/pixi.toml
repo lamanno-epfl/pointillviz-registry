@@ -1,0 +1,15 @@
+# The tool's environment. pixi builds it exactly as pixi.lock pins it; run
+# `pixi lock` after every change to this file, and ship both files.
+# PointillViz's tool SDK runs in this environment beside R, which is why
+# python, numpy and scipy are here; the SDK itself is provided by PointillViz.
+[workspace]
+name = "{{ID}}"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
+
+[dependencies]
+python = ">=3.10"
+numpy = "*"
+scipy = "*"
+r-base = "*"
+r-jsonlite = "*"

@@ -1,0 +1,12 @@
+[workspace]
+name = "banksy-niches"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
+
+[dependencies]
+python = ">=3.10"
+numpy = "*"
+scipy = "*"
+# Leiden clustering, as the BANKSY authors run it.
+python-igraph = "*"
+leidenalg = "*"

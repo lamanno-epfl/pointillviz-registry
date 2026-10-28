@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 140" width="240" height="140" role="img" aria-label="Cell-type co-occurrence matrix: a hot self-association diagonal, warm lymphoid and myeloid blocks, and blue avoidance between immune cells and stroma">
+<g fill="#ffe63c"><rect x="14.0" y="8.0" width="10.7" height="10.7"/></g>
+<g fill="#f37438"><rect x="14.0" y="19.2" width="10.7" height="10.7"/><rect x="25.2" y="8.0" width="10.7" height="10.7"/></g>
+<g fill="#c54035"><rect x="14.0" y="30.4" width="10.7" height="10.7"/><rect x="36.4" y="8.0" width="10.7" height="10.7"/><rect x="58.8" y="97.6" width="10.7" height="10.7"/><rect x="70.0" y="75.2" width="10.7" height="10.7"/><rect x="81.2" y="64.0" width="10.7" height="10.7"/><rect x="103.6" y="52.8" width="10.7" height="10.7"/></g>
+<g fill="#222232"><rect x="14.0" y="41.6" width="10.7" height="10.7"/><rect x="47.6" y="8.0" width="10.7" height="10.7"/></g>
+<g fill="#2f469a"><rect x="14.0" y="52.8" width="10.7" height="10.7"/><rect x="58.8" y="8.0" width="10.7" height="10.7"/></g>
+<g fill="#3971dc"><rect x="14.0" y="64.0" width="10.7" height="10.7"/><rect x="70.0" y="8.0" width="10.7" height="10.7"/></g>
+<g fill="#b83633"><rect x="14.0" y="75.2" width="10.7" height="10.7"/><rect x="36.4" y="75.2" width="10.7" height="10.7"/><rect x="81.2" y="8.0" width="10.7" height="10.7"/><rect x="81.2" y="30.4" width="10.7" height="10.7"/></g>
+<g fill="#0dc3fc"><rect x="14.0" y="86.4" width="10.7" height="10.7"/><rect x="92.4" y="8.0" width="10.7" height="10.7"/></g>
+<g fill="#358cf2"><rect x="14.0" y="97.6" width="10.7" height="10.7"/><rect x="103.6" y="8.0" width="10.7" height="10.7"/></g>
+<g fill="#ffba2a"><rect x="25.2" y="19.2" width="10.7" height="10.7"/></g>
+<g fill="#e05739"><rect x="25.2" y="30.4" width="10.7" height="10.7"/><rect x="36.4" y="19.2" width="10.7" height="10.7"/><rect x="81.2" y="75.2" width="10.7" height="10.7"/></g>
+<g fill="#8d2a2a"><rect x="25.2" y="41.6" width="10.7" height="10.7"/><rect x="47.6" y="19.2" width="10.7" height="10.7"/><rect x="70.0" y="86.4" width="10.7" height="10.7"/><rect x="92.4" y="64.0" width="10.7" height="10.7"/></g>
+<g fill="#202027"><rect x="25.2" y="52.8" width="10.7" height="10.7"/><rect x="58.8" y="19.2" width="10.7" height="10.7"/></g>
+<g fill="#272749"><rect x="25.2" y="64.0" width="10.7" height="10.7"/><rect x="70.0" y="19.2" width="10.7" height="10.7"/></g>
+<g fill="#d44c37"><rect x="25.2" y="75.2" width="10.7" height="10.7"/><rect x="58.8" y="75.2" width="10.7" height="10.7"/><rect x="81.2" y="19.2" width="10.7" height="10.7"/><rect x="81.2" y="52.8" width="10.7" height="10.7"/><rect x="92.4" y="97.6" width="10.7" height="10.7"/><rect x="103.6" y="86.4" width="10.7" height="10.7"/></g>
+<g fill="#345ac0"><rect x="25.2" y="86.4" width="10.7" height="10.7"/><rect x="92.4" y="19.2" width="10.7" height="10.7"/></g>
+<g fill="#2d3d85"><rect x="25.2" y="97.6" width="10.7" height="10.7"/><rect x="103.6" y="19.2" width="10.7" height="10.7"/></g>
+<g fill="#fb9e2d"><rect x="36.4" y="30.4" width="10.7" height="10.7"/></g>
+<g fill="#cb4536"><rect x="36.4" y="41.6" width="10.7" height="10.7"/><rect x="47.6" y="30.4" width="10.7" height="10.7"/></g>
+<g fill="#421e1e"><rect x="36.4" y="52.8" width="10.7" height="10.7"/><rect x="58.8" y="30.4" width="10.7" height="10.7"/></g>
+<g fill="#632222"><rect x="36.4" y="64.0" width="10.7" height="10.7"/><rect x="70.0" y="30.4" width="10.7" height="10.7"/></g>
+<g fill="#3250b3"><rect x="36.4" y="86.4" width="10.7" height="10.7"/><rect x="92.4" y="30.4" width="10.7" height="10.7"/></g>
+<g fill="#292b57"><rect x="36.4" y="97.6" width="10.7" height="10.7"/><rect x="47.6" y="86.4" width="10.7" height="10.7"/><rect x="92.4" y="41.6" width="10.7" height="10.7"/><rect x="103.6" y="30.4" width="10.7" height="10.7"/></g>
+<g fill="#ef633c"><rect x="47.6" y="41.6" width="10.7" height="10.7"/><rect x="58.8" y="64.0" width="10.7" height="10.7"/><rect x="70.0" y="52.8" width="10.7" height="10.7"/></g>
+<g fill="#782626"><rect x="47.6" y="52.8" width="10.7" height="10.7"/><rect x="58.8" y="41.6" width="10.7" height="10.7"/><rect x="70.0" y="97.6" width="10.7" height="10.7"/><rect x="103.6" y="64.0" width="10.7" height="10.7"/></g>
+<g fill="#a62f2f"><rect x="47.6" y="64.0" width="10.7" height="10.7"/><rect x="70.0" y="41.6" width="10.7" height="10.7"/></g>
+<g fill="#4d1e1e"><rect x="47.6" y="75.2" width="10.7" height="10.7"/><rect x="58.8" y="86.4" width="10.7" height="10.7"/><rect x="81.2" y="41.6" width="10.7" height="10.7"/><rect x="92.4" y="52.8" width="10.7" height="10.7"/></g>
+<g fill="#211e1e"><rect x="47.6" y="97.6" width="10.7" height="10.7"/><rect x="103.6" y="41.6" width="10.7" height="10.7"/></g>
+<g fill="#f57c36"><rect x="58.8" y="52.8" width="10.7" height="10.7"/></g>
+<g fill="#ffc42f"><rect x="70.0" y="64.0" width="10.7" height="10.7"/></g>
+<g fill="#2c1e1e"><rect x="81.2" y="86.4" width="10.7" height="10.7"/><rect x="92.4" y="75.2" width="10.7" height="10.7"/></g>
+<g fill="#24243d"><rect x="81.2" y="97.6" width="10.7" height="10.7"/><rect x="103.6" y="75.2" width="10.7" height="10.7"/></g>
+<g fill="#ffdb38"><rect x="92.4" y="86.4" width="10.7" height="10.7"/></g>
+<g fill="#ffcf33"><rect x="103.6" y="97.6" width="10.7" height="10.7"/></g>
+<rect x="13.3" y="7.3" width="101.7" height="101.7" fill="none" stroke="#8a8f98" stroke-width="0.6"/>
+<g fill="#8a8f98" font-family="system-ui,sans-serif" font-size="8">
+<text x="119.8" y="15.6">B</text>
+<text x="119.8" y="26.8">CD4 T</text>
+<text x="119.8" y="38.0">CD8 T</text>
+<text x="119.8" y="49.2">NK</text>
+<text x="119.8" y="60.4">Mono</text>
+<text x="119.8" y="71.6">Mac</text>
+<text x="119.8" y="82.8">DC</text>
+<text x="119.8" y="94.0">Fib</text>
+<text x="119.8" y="105.2">Endo</text>
+</g>
+<rect x="14.0" y="120" width="1.7" height="6" fill="#00d5ff"/>
+<rect x="15.7" y="120" width="1.7" height="6" fill="#08c9fd"/>
+<rect x="17.4" y="120" width="1.7" height="6" fill="#13bbfa"/>
+<rect x="19.1" y="120" width="1.7" height="6" fill="#1caff8"/>
+<rect x="20.8" y="120" width="1.7" height="6" fill="#26a0f5"/>
+<rect x="22.5" y="120" width="1.7" height="6" fill="#2f95f3"/>
+<rect x="24.2" y="120" width="1.7" height="6" fill="#3789f1"/>
+<rect x="25.9" y="120" width="1.7" height="6" fill="#3b7dea"/>
+<rect x="27.6" y="120" width="1.7" height="6" fill="#3a76e2"/>
+<rect x="29.3" y="120" width="1.7" height="6" fill="#386dd7"/>
+<rect x="31.0" y="120" width="1.7" height="6" fill="#3666cf"/>
+<rect x="32.7" y="120" width="1.7" height="6" fill="#355fc6"/>
+<rect x="34.4" y="120" width="1.7" height="6" fill="#3356bc"/>
+<rect x="36.1" y="120" width="1.7" height="6" fill="#3250b3"/>
+<rect x="37.8" y="120" width="1.7" height="6" fill="#3048a1"/>
+<rect x="39.5" y="120" width="1.7" height="6" fill="#2f4393"/>
+<rect x="41.2" y="120" width="1.7" height="6" fill="#2d3d85"/>
+<rect x="42.9" y="120" width="1.7" height="6" fill="#2c3673"/>
+<rect x="44.6" y="120" width="1.7" height="6" fill="#2a3065"/>
+<rect x="46.3" y="120" width="1.7" height="6" fill="#282954"/>
+<rect x="48.0" y="120" width="1.7" height="6" fill="#27274b"/>
+<rect x="49.7" y="120" width="1.7" height="6" fill="#262644"/>
+<rect x="51.4" y="120" width="1.7" height="6" fill="#24243b"/>
+<rect x="53.1" y="120" width="1.7" height="6" fill="#222234"/>
+<rect x="54.8" y="120" width="1.7" height="6" fill="#21212b"/>
+<rect x="56.5" y="120" width="1.7" height="6" fill="#1f1f24"/>
+<rect x="58.2" y="120" width="1.7" height="6" fill="#1f1e1e"/>
+<rect x="59.9" y="120" width="1.7" height="6" fill="#281e1e"/>
+<rect x="61.6" y="120" width="1.7" height="6" fill="#2f1e1e"/>
+<rect x="63.3" y="120" width="1.7" height="6" fill="#381e1e"/>
+<rect x="65.0" y="120" width="1.7" height="6" fill="#3f1e1e"/>
+<rect x="66.7" y="120" width="1.7" height="6" fill="#461e1e"/>
+<rect x="68.4" y="120" width="1.7" height="6" fill="#4f1e1e"/>
+<rect x="70.1" y="120" width="1.7" height="6" fill="#5c2020"/>
+<rect x="71.8" y="120" width="1.7" height="6" fill="#6a2323"/>
+<rect x="73.5" y="120" width="1.7" height="6" fill="#7c2727"/>
+<rect x="75.2" y="120" width="1.7" height="6" fill="#8a2a2a"/>
+<rect x="76.9" y="120" width="1.7" height="6" fill="#9b2d2d"/>
+<rect x="78.6" y="120" width="1.7" height="6" fill="#a93030"/>
+<rect x="80.3" y="120" width="1.7" height="6" fill="#b63432"/>
+<rect x="82.0" y="120" width="1.7" height="6" fill="#c13d34"/>
+<rect x="83.7" y="120" width="1.7" height="6" fill="#c94436"/>
+<rect x="85.4" y="120" width="1.7" height="6" fill="#d44c37"/>
+<rect x="87.1" y="120" width="1.7" height="6" fill="#dc5439"/>
+<rect x="88.8" y="120" width="1.7" height="6" fill="#e55b3a"/>
+<rect x="90.5" y="120" width="1.7" height="6" fill="#ef633c"/>
+<rect x="92.2" y="120" width="1.7" height="6" fill="#f26e39"/>
+<rect x="93.9" y="120" width="1.7" height="6" fill="#f57c36"/>
+<rect x="95.6" y="120" width="1.7" height="6" fill="#f78833"/>
+<rect x="97.3" y="120" width="1.7" height="6" fill="#f99330"/>
+<rect x="99.0" y="120" width="1.7" height="6" fill="#fba12d"/>
+<rect x="100.7" y="120" width="1.7" height="6" fill="#feac2a"/>
+<rect x="102.4" y="120" width="1.7" height="6" fill="#ffb82a"/>
+<rect x="104.1" y="120" width="1.7" height="6" fill="#ffbf2c"/>
+<rect x="105.8" y="120" width="1.7" height="6" fill="#ffc62f"/>
+<rect x="107.5" y="120" width="1.7" height="6" fill="#ffcf33"/>
+<rect x="109.2" y="120" width="1.7" height="6" fill="#ffd636"/>
+<rect x="110.9" y="120" width="1.7" height="6" fill="#ffdf39"/>
+<rect x="112.6" y="120" width="1.7" height="6" fill="#ffe63c"/>
+<g fill="#8a8f98" font-family="system-ui,sans-serif" font-size="8"><text x="14" y="116">avoids</text><text x="82" y="116">together</text></g>
+<text x="122" y="126" fill="#8a8f98" font-family="system-ui,sans-serif" font-size="10" font-weight="600">log2 obs/exp</text>
+</svg>

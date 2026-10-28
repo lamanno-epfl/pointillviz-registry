@@ -1,0 +1,26 @@
+# Two environments. `default` is what a CPU run uses: it is solved without a
+# CUDA driver, so conda-forge gives it the CPU build of PyTorch. `gpu` adds a
+# CUDA 12 system requirement and asks for a CUDA build; PointillViz uses it
+# for runs on the GPU.
+[workspace]
+name = "gpu-probe"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
+
+[dependencies]
+python = ">=3.10"
+numpy = "*"
+scipy = "*"
+pytorch = "*"
+
+[feature.gpu]
+platforms = ["linux-64", "win-64"]
+
+[feature.gpu.system-requirements]
+cuda = "12"
+
+[feature.gpu.dependencies]
+pytorch = { version = "*", build = "cuda*" }
+
+[environments]
+gpu = ["gpu"]

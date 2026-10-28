@@ -1,0 +1,108 @@
+{
+  "schema": 3,
+  "id": "banksy-niches",
+  "name": "BANKSY niches",
+  "version": "1.0.0",
+  "author": "PointillViz reference tools",
+  "description": "Tissue niches from each cell's expression and its neighbourhood's, by the BANKSY method.",
+  "long_description": "Joins every cell's expression to that of its spatial neighbours, as BANKSY does, and clusters the result into niches with the authors' Leiden recipe or with k-means. The niches are painted on the map, with their cell types, marker genes and a downloadable list of every cell's niche.",
+  "icon": "hub",
+  "tags": ["spatial", "niches", "domains", "clustering", "genes"],
+  "entry": "tool.py",
+  "license": "MIT",
+  "citation": "Singhal V, Chou N, Lee J, et al. BANKSY unifies cell typing and tissue domain segmentation for scalable spatial omics data analysis. Nat Genet 56, 431-441 (2024).",
+  "outputs": ["summary", "labels", "matrix", "table"],
+  "optional_outputs": ["files"],
+  "requires": {
+    "genes": true,
+    "spatial": "any",
+    "min_cells": 200
+  },
+  "params": [
+    {
+      "name": "clustering",
+      "type": "select",
+      "label": "Clustering",
+      "default": "leiden",
+      "options": [
+        {"value": "leiden", "label": "Leiden (the authors' default)"},
+        {"value": "kmeans", "label": "k-means"}
+      ],
+      "help": "Leiden finds as many niches as the resolution calls for, on a graph of cells that share neighbours.\nk-means divides the cells into exactly the number of niches you ask for."
+    },
+    {
+      "name": "resolution",
+      "type": "float",
+      "label": "Resolution (Leiden)",
+      "default": 0.3,
+      "min": 0.05,
+      "max": 2,
+      "step": 0.05,
+      "help": "Leiden only. Higher values give more, smaller niches; lower values give fewer, larger ones."
+    },
+    {
+      "name": "n_niches",
+      "type": "int",
+      "label": "Niches (k-means)",
+      "default": 8,
+      "min": 2,
+      "max": 30,
+      "step": 1,
+      "help": "k-means only: how many niches to divide the tissue into.\nIf two niches share their marker genes and cell types, try fewer."
+    },
+    {
+      "name": "lambda",
+      "type": "float",
+      "label": "Neighbourhood weight (λ)",
+      "default": 0.8,
+      "min": 0,
+      "max": 1,
+      "step": 0.05,
+      "help": "How much a cell's neighbourhood counts against its own expression.\n0.8 finds tissue domains; 0.2 finds spatially informed cell types; 0 ignores space."
+    },
+    {
+      "name": "k_geom",
+      "type": "int",
+      "label": "Spatial neighbours (k)",
+      "default": 15,
+      "min": 5,
+      "max": 30,
+      "step": 1,
+      "help": "How many nearest cells make a neighbourhood. The gradient features use twice as many."
+    },
+    {
+      "name": "agf",
+      "type": "bool",
+      "label": "Include gradients (AGF)",
+      "default": true,
+      "help": "Adds BANKSY's azimuthal Gabor filter, which responds where expression changes across a neighbourhood, as at a border."
+    },
+    {
+      "name": "n_genes",
+      "type": "int",
+      "label": "Variable genes",
+      "default": 2000,
+      "min": 50,
+      "max": 5000,
+      "step": 50,
+      "help": "How many of the most variable genes to use. More genes take longer."
+    },
+    {
+      "name": "n_pcs",
+      "type": "int",
+      "label": "Principal components",
+      "default": 20,
+      "min": 5,
+      "max": 50,
+      "step": 1,
+      "help": "How many principal components of the joint matrix the clustering sees."
+    },
+    {
+      "name": "smooth",
+      "type": "bool",
+      "label": "Smooth labels",
+      "default": false,
+      "help": "Gives a cell the niche held by more than half of itself and its 15 nearest cells, repeated until nothing changes (BANKSY's smoothLabels)."
+    }
+  ]
+}

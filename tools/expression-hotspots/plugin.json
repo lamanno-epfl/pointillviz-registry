@@ -1,0 +1,68 @@
+{
+  "schema": 3,
+  "id": "expression-hotspots",
+  "name": "Expression Hotspots (Getis-Ord Gi*)",
+  "version": "2.0.0",
+  "author": "PointillViz reference tools",
+  "description": "Where one gene forms clusters of high or low expression.",
+  "icon": "local_fire_department",
+  "tags": ["spatial", "expression", "hotspots", "statistics"],
+  "entry": "tool.py",
+  "license": "MIT",
+  "citation": "Getis & Ord (1992) Geographical Analysis 24(3):189-206; Ord & Getis (1995) Geographical Analysis 27(4):286-306.",
+  "outputs": ["summary", "cells"],
+  "optional_outputs": ["table"],
+  "requires": {
+    "genes": true,
+    "cell_types": false,
+    "spatial": "any",
+    "min_cells": 100
+  },
+  "params": [
+    {
+      "name": "gene",
+      "type": "gene",
+      "label": "Gene",
+      "help": "Selects the gene analyzed for expression hotspots and coldspots."
+    },
+    {
+      "name": "k",
+      "type": "int",
+      "label": "Neighbours (k)",
+      "default": 15,
+      "min": 3,
+      "max": 100,
+      "step": 1,
+      "help": "Sets how many nearest neighbours are examined around each cell.\nSmaller values detect finer patterns; larger values detect broader patterns."
+    },
+    {
+      "name": "normalize",
+      "type": "select",
+      "label": "Expression values",
+      "default": "log1p",
+      "options": [
+        { "value": "log1p", "label": "log1p(CP10K)" },
+        { "value": "cp10k", "label": "CP10K" },
+        { "value": "raw", "label": "Raw counts" }
+      ],
+      "help": "Sets the expression scale used in the calculation.\nlog1p(CP10K) is recommended for most datasets; choose raw counts only when the original counts are required."
+    },
+    {
+      "name": "alpha",
+      "type": "float",
+      "label": "Significance threshold",
+      "default": 0.05,
+      "min": 0.001,
+      "max": 0.25,
+      "step": 0.001,
+      "help": "Sets the largest p-value, or q-value when FDR correction is enabled, at which a cell is classified as a significant hotspot or coldspot."
+    },
+    {
+      "name": "fdr",
+      "type": "bool",
+      "label": "Benjamini-Hochberg FDR",
+      "default": true,
+      "help": "Corrects for testing many cells at once.\nWhen disabled, significance is based on uncorrected p-values and may include more false-positive hotspots or coldspots."
+    }
+  ]
+}

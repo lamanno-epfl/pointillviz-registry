@@ -1,0 +1,26 @@
+{
+  "schema": 3,
+  "id": "{{ID}}",
+  "name": "{{NAME}}",
+  "version": "0.1.0",
+  "author": "Your Name",
+  "description": "Per-cell transcript totals: the starting point for a new tool.",
+  "long_description": "Sums each cell's transcripts and paints them, leaving cells below a threshold unpainted. Replace the body of run() with the analysis you want; the manifest around it is already correct.",
+  "icon": "functions",
+  "tags": ["starter"],
+  "entry": "tool.py",
+  "outputs": ["summary", "cells"],
+  "requires": {"genes": true, "spatial": "any", "min_cells": 1},
+  "params": [
+    {
+      "name": "min_counts",
+      "type": "int",
+      "label": "Minimum counts",
+      "default": 0,
+      "min": 0,
+      "max": 5000,
+      "step": 1,
+      "help": "Cells with fewer transcripts than this are left unpainted."
+    }
+  ]
+}

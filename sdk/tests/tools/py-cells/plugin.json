@@ -1,0 +1,14 @@
+{
+  "schema": 3,
+  "id": "py-cells",
+  "name": "Python test tool",
+  "version": "1.0.0",
+  "author": "SDK test suite",
+  "description": "Paints each cell by its cell-type code; exists to be run and validated.",
+  "entry": "tool.py",
+  "outputs": ["summary", "cells"],
+  "requires": {"cell_types": true, "spatial": "any"},
+  "params": [
+    {"name": "k", "type": "int", "label": "Neighbours", "default": 15, "min": 3, "max": 50}
+  ]
+}

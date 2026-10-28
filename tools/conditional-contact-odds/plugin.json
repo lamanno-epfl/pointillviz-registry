@@ -1,0 +1,40 @@
+{
+  "schema": 3,
+  "id": "conditional-contact-odds",
+  "name": "Conditional Contact Odds",
+  "version": "2.0.0",
+  "author": "PointillViz reference tools",
+  "description": "How much one extra neighbour of type B changes the odds a cell is type A, holding every other type's neighbour count fixed.",
+  "icon": "hub",
+  "tags": ["spatial", "cell types"],
+  "entry": "tool.py",
+  "license": "MIT",
+  "outputs": ["summary", "cells", "matrix", "table"],
+  "requires": {
+    "cell_types": false,
+    "categoricals": true,
+    "genes": false,
+    "spatial": "any",
+    "min_cells": 500
+  },
+  "params": [
+    { "name": "field", "type": "categorical_field", "label": "Grouping column",
+      "optional": true,
+      "help": "Selects the annotation used to define the groups." },
+    { "name": "k", "type": "int", "label": "Neighbours (k)",
+      "default": 15, "min": 4, "max": 30, "step": 1,
+      "help": "Sets the number of nearest neighbours considered for each cell. Larger values include a broader neighbourhood but increase runtime." },
+    { "name": "lam", "type": "float", "label": "Ridge",
+      "default": 1.0, "min": 0.01, "max": 100.0, "step": 0.01,
+      "help": "Controls how strongly coefficients are pulled toward zero. Higher values give more stable but more strongly smoothed estimates." },
+    { "name": "min_cells", "type": "int", "label": "Minimum cells per level",
+      "default": 100, "min": 10, "max": 5000, "step": 10,
+      "help": "Groups with fewer cells are not shown but remain included in the model." },
+    { "name": "max_levels", "type": "int", "label": "Level ceiling",
+      "default": 80, "min": 4, "max": 100, "step": 1,
+      "help": "Stops the analysis if the selected annotation contains more groups than this, limiting runtime and matrix size." },
+    { "name": "gtol", "type": "float", "label": "Convergence",
+      "default": 0.0001, "min": 1e-06, "max": 0.01, "step": 1e-06,
+      "help": "Sets when the model stops fitting. Smaller values require closer convergence but may take longer." }
+  ]
+}

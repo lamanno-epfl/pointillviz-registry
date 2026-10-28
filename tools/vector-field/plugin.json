@@ -1,0 +1,42 @@
+{
+  "schema": 3,
+  "id": "vector-field",
+  "name": "Vector Field",
+  "version": "2.0.0",
+  "author": "PointillViz reference tools",
+  "description": "Which way a quantity increases across the tissue, as arrows over the section. Gene, cell type or any annotation column — with every arrow that could be noise removed.",
+  "icon": "near_me",
+  "tags": ["spatial", "gradient", "expression"],
+  "entry": "tool.py",
+  "license": "MIT",
+  "outputs": ["summary", "cells", "vectors", "series"],
+  "requires": { "spatial": "2d", "min_cells": 200 },
+  "params": [
+    { "name": "source", "type": "select", "label": "Differentiate", "default": "category",
+      "options": [
+        { "value": "category", "label": "One level of a categorical column" },
+        { "value": "gene", "label": "A gene" },
+        { "value": "continuous", "label": "A continuous column" }
+      ],
+      "help": "Selects whether the field represents the local proportion of a population, a continuous measurement, or gene expression." },
+    { "name": "field", "type": "categorical_field", "label": "Categorical column", "optional": true,
+      "help": "Selects the categorical annotation used to define the populations.\nUsed only when Differentiate is set to category.\nDefaults to the dataset’s cell-type column." },
+    { "name": "level", "type": "category_value", "label": "Level", "field_param": "field", "optional": true,
+      "help": "Selects the population from the chosen categorical column whose local proportion is analyzed." },
+    { "name": "column", "type": "continuous_field", "label": "Continuous column", "optional": true,
+      "help": "Selects the continuous measurement to analyze.\nUsed only when Differentiate is set to continuous." },
+    { "name": "gene", "type": "gene", "label": "Gene", "optional": true,
+      "help": "Selects the gene whose normalized expression is analyzed.\nUsed only when Differentiate is set to gene.\nValues are normalized to a total of 10,000 counts per cell." },
+    { "name": "sigma", "type": "float", "label": "Smoothing (σ, grid cells)", "default": 1.2,
+      "min": 0.6, "max": 3.0, "step": 0.1,
+      "help": "Sets the width of the Gaussian smoothing in grid cells.\nLarger values produce smoother fields with broader, weaker gradients." },
+    { "name": "detail", "type": "float", "label": "Grid detail", "default": 1.0,
+      "min": 0.5, "max": 2.5, "step": 0.1,
+      "help": "Sets the spatial resolution of the calculation.\nHigher values capture finer but noisier spatial changes." },
+    { "name": "arrows", "type": "int", "label": "Arrows", "default": 2000,
+      "min": 200, "max": 20000, "step": 100,
+      "help": "Sets the approximate number of arrows displayed.\nThis changes the display density, not the calculated field." },
+    { "name": "gate", "type": "bool", "label": "Hide arrows that are not significant", "default": true,
+      "help": "Shows only positions with z ≥ 3 and at least 30 effective cells.\nTurning it off also displays gradients that may reflect noise." }
+  ]
+}

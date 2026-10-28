@@ -1,0 +1,107 @@
+{
+  "schema": 3,
+  "id": "categorical-chords",
+  "name": "Categorical Chords",
+  "version": "2.0.0",
+  "author": "PointillViz reference tools",
+  "description": "Explore spatial contacts or shared membership between categorical annotations with count-weighted ribbons and enrichment colors.",
+  "icon": "donut_large",
+  "tags": [
+    "spatial",
+    "cell types",
+    "categorical",
+    "chord"
+  ],
+  "entry": "tool.py",
+  "license": "MIT",
+  "outputs": [
+    "chord",
+    "matrix",
+    "table",
+    "summary"
+  ],
+  "requires": {
+    "categoricals": true,
+    "spatial": "any",
+    "min_cells": 2
+  },
+  "params": [
+    {
+      "name": "mode",
+      "type": "select",
+      "label": "Relationship",
+      "default": "contacts",
+      "options": [
+        {
+          "value": "contacts",
+          "label": "Spatial contacts"
+        },
+        {
+          "value": "annotations",
+          "label": "Annotation relationships"
+        }
+      ],
+      "help": "Selects whether to analyze spatial contacts between different cells or relationships between two annotations on the same cells."
+    },
+    {
+      "name": "field",
+      "type": "categorical_field",
+      "label": "Grouping annotation",
+      "help": "Selects the categorical annotation used for the groups.\nIn annotation mode, this is the first of the two annotations."
+    },
+    {
+      "name": "other_field",
+      "type": "categorical_field",
+      "label": "Second annotation",
+      "optional": true,
+      "help": "Selects the second annotation compared on the same cells.\nUsed only for Annotation relationships."
+    },
+    {
+      "name": "radius",
+      "type": "float",
+      "label": "Contact radius",
+      "default": 60,
+      "min": 1,
+      "max": 1000,
+      "step": 1,
+      "help": "Sets the maximum distance between two cells for them to count as a spatial contact, in dataset coordinate units.\nUsed only for Spatial contacts."
+    },
+    {
+      "name": "min_count",
+      "type": "int",
+      "label": "Minimum ribbon support",
+      "default": 1,
+      "min": 1,
+      "max": 1000,
+      "step": 1,
+      "help": "Shows a ribbon only when the relationship contains at least this many observed cells or spatial pairs."
+    },
+    {
+      "name": "max_nodes",
+      "type": "int",
+      "label": "Maximum sectors",
+      "default": 20,
+      "min": 4,
+      "max": 60,
+      "step": 2,
+      "help": "Limits how many groups appear around the chord diagram to the most abundant ones."
+    },
+    {
+      "name": "max_links",
+      "type": "int",
+      "label": "Maximum ribbons",
+      "default": 80,
+      "min": 1,
+      "max": 500,
+      "step": 1,
+      "help": "Sets the maximum number of relationships shown, keeping those with the highest observed counts."
+    },
+    {
+      "name": "self_links",
+      "type": "bool",
+      "label": "Include within-group contacts",
+      "default": false,
+      "help": "Includes spatial contacts between cells belonging to the same group.\nUsed only for Spatial contacts."
+    }
+  ]
+}

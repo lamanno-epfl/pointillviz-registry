@@ -1,0 +1,25 @@
+{
+  "schema": 3,
+  "id": "local-density",
+  "name": "Local Cell Density",
+  "version": "2.0.0",
+  "author": "PointillViz reference tools",
+  "description": "How crowded the tissue is around every cell.",
+  "icon": "scatter_plot",
+  "tags": ["spatial", "qc", "density"],
+  "entry": "tool.py",
+  "license": "MIT",
+  "outputs": ["cells", "series", "summary"],
+  "requires": { "spatial": "any", "min_cells": 50 },
+  "params": [
+    { "name": "k", "type": "int", "label": "Neighbours (k)", "default": 10,
+      "min": 3, "max": 50, "step": 1,
+      "help": "Sets how many nearest neighbours are used to estimate local density. Larger values measure density over a broader area and produce a smoother result." },
+    { "name": "scale", "type": "select", "label": "Scale", "default": "log10",
+      "options": [
+        { "value": "log10", "label": "log10 density" },
+        { "value": "linear", "label": "Density" }
+      ],
+      "help": "Sets whether density is shown directly or on a log10 scale." }
+  ]
+}
