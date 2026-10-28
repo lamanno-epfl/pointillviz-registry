@@ -144,12 +144,16 @@ jobs:
         with:
           ref: ${{ needs.plan.outputs.sha }}
           persist-credentials: false
-      # Each report in its own folder, report-<id>/: one job's artifact cannot
-      # stand in for another's.
-      - uses: actions/download-artifact@v8
-        with:
-          pattern: report-*
-          path: ${{ runner.temp }}/reports
+      # Each report in its own folder, report-<id>/, fetched by its own name: one
+      # job's artifact cannot stand in for another's. (download-artifact with a
+      # pattern unpacks a lone artifact straight into its path, without that
+      # folder, so a run releasing a single tool found no report.) A tool whose
+      # gates job failed has none; publish.py skips it by that job's result.
+      - name: Download the gate reports
+        run: |
+          for tool in $(jq -r '.[].tool | select(test("^[a-z][a-z0-9-]{1,48}[a-z0-9]$"))' <<< "$PLAN"); do
+            gh run download "$GITHUB_RUN_ID" --name "report-$tool" --dir "$RUNNER_TEMP/reports/report-$tool" || true
+          done
       # No cache: this job can write, so it builds its environment from the lock.
       - uses: prefix-dev/setup-pixi@v0.11.2
         with:
