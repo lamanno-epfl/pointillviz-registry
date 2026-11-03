@@ -9,9 +9,7 @@ Reads every file git tracks or would add (`git ls-files --cached --others
   * the names of private datasets;
   * private paths (/mnt/, home folders);
   * email addresses, in an author field or anywhere else;
-  * links to the private app repository;
-  * spatial-scale-spectrum anywhere but placeholders.json and index.json: it is
-    listed as Coming soon, and has no code, README or artwork.
+  * links to the private app repository.
 
 A JSON file is also read with its escapes decoded (an escaped "@" is still an
 email address), as build_index.py reads it: tools are merged without review, and
@@ -57,8 +55,6 @@ RULES = (
     ("a link to the private app repository",
      re.compile(r"(?:github\.com|githubusercontent\.com)[/:]lamanno-epfl/pointillviz(?![\w-])",
                 re.I), ()),
-    ("spatial-scale-spectrum, which may appear only in placeholders.json and index.json",
-     re.compile(r"spatial[-_ ]scale[-_ ]spectrum", re.I), ("placeholders.json", "index.json")),
 )
 
 

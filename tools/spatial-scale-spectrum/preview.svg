@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 140" width="240" height="140" role="img" aria-label="Structure factor against wavelength for three cell populations, both axes log: one dips below the random-labelling line at short wavelength and climbs to a marked patch scale, one stays flat at every scale">
+  <polygon points="15.3,89.6 22.4,89.7 29.5,89.4 36.6,89.5 43.8,89.5 50.9,89.6 58.0,89.5 65.1,89.5 72.2,89.4 79.3,89.3 86.4,88.9 93.5,88.9 100.7,89.0 107.8,88.6 114.9,89.0 122.0,87.7 129.1,88.1 136.2,88.7 143.3,87.3 150.5,87.1 157.6,87.9 164.7,87.5 171.8,84.0 178.9,85.2 186.0,84.8 193.1,83.6 200.2,85.3 207.4,83.9 214.5,84.6 228.7,81.8 228.7,108.3 214.5,98.3 207.4,100.1 200.2,96.7 193.1,100.9 186.0,97.9 178.9,97.0 171.8,99.9 164.7,93.0 157.6,92.4 150.5,93.6 143.3,93.3 136.2,91.4 129.1,92.1 122.0,92.7 114.9,91.1 107.8,91.5 100.7,91.0 93.5,91.2 86.4,91.2 79.3,90.7 72.2,90.6 65.1,90.5 58.0,90.5 50.9,90.4 43.8,90.5 36.6,90.5 29.5,90.6 22.4,90.3 15.3,90.4" fill="#94a3b8" fill-opacity="0.30"/>
+  <line x1="12.0" y1="90.0" x2="232.0" y2="90.0" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3 3"/>
+  <polyline points="15.3,100.4 22.4,98.8 29.5,96.0 36.6,92.3 43.8,88.1 50.9,83.3 58.0,77.6 65.1,73.6 72.2,68.2 79.3,62.5 86.4,57.8 93.5,56.7 100.7,53.1 107.8,48.6 114.9,43.9 122.0,39.5 129.1,39.9 136.2,30.7 143.3,36.1 150.5,34.5 157.6,30.8 164.7,32.7 171.8,23.3 178.9,22.6 186.0,22.6 193.1,26.7 200.2,22.3 207.4,33.1 214.5,18.4 228.7,16.0" fill="none" stroke="#5b8def" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <polyline points="15.3,93.2 22.4,92.5 29.5,91.8 36.6,91.7 43.8,89.6 50.9,87.4 58.0,84.2 65.1,81.5 72.2,78.4 79.3,74.6 86.4,72.2 93.5,69.3 100.7,65.7 107.8,62.9 114.9,58.2 122.0,55.5 129.1,53.4 136.2,51.4 143.3,50.2 150.5,48.2 157.6,45.0 164.7,46.6 171.8,42.6 178.9,37.6 186.0,41.8 193.1,36.0 200.2,43.5 207.4,40.6 214.5,43.1 228.7,26.6" fill="none" stroke="#d1743f" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <polyline points="15.3,88.4 22.4,87.9 29.5,87.5 36.6,87.4 43.8,86.8 50.9,85.8 58.0,86.0 65.1,86.1 72.2,85.5 79.3,84.6 86.4,85.1 93.5,84.8 100.7,84.1 107.8,84.7 114.9,83.0 122.0,83.5 129.1,82.7 136.2,82.1 143.3,79.6 150.5,79.7 157.6,81.3 164.7,80.6 171.8,82.8 178.9,84.4 186.0,78.0 193.1,88.3 200.2,86.0 207.4,84.0 214.5,85.2 228.7,78.3" fill="none" stroke="#4f9d7a" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+  <line x1="136.2" y1="30.7" x2="136.2" y2="112.0" stroke="#5b8def" stroke-width="0.9" stroke-dasharray="2 3" opacity="0.7"/>
+  <g fill="#5b8def" font-family="ui-sans-serif, system-ui, sans-serif" font-size="8">
+    <circle cx="136.2" cy="30.7" r="3"/>
+    <circle cx="15.3" cy="100.4" r="3"/>
+    <text x="130.2" y="33.7" text-anchor="end">patch scale 753 u</text>
+    <text x="20.8" y="107.9">S 0.51</text>
+  </g>
+  <line x1="12.0" y1="112.0" x2="232.0" y2="112.0" stroke="#94a3b8" stroke-width="1"/>
+  <line x1="12.0" y1="122.0" x2="20.0" y2="122.0" stroke="#5b8def" stroke-width="2"/>
+  <line x1="124.0" y1="122.0" x2="132.0" y2="122.0" stroke="#d1743f" stroke-width="2"/>
+  <line x1="12.0" y1="133.0" x2="20.0" y2="133.0" stroke="#4f9d7a" stroke-width="2"/>
+  <g fill="#8a8f98" font-family="ui-sans-serif, system-ui, sans-serif">
+    <text x="12.0" y="10.0" font-size="9">S(&#955;)</text>
+    <text x="232.0" y="98.5" text-anchor="end" font-size="8">S = 1 &#183; random labelling</text>
+    <text x="23.0" y="125.0" font-size="8">Mature enterocytes I</text>
+    <text x="135.0" y="125.0" font-size="8">Car8&#43; GCs II</text>
+    <text x="23.0" y="136.0" font-size="8">Neurog3&#43; EEC</text>
+    <text x="232.0" y="136.0" text-anchor="end" font-size="8">&#955; 75&#8211;4,416 units, both axes log</text>
+  </g>
+</svg>
