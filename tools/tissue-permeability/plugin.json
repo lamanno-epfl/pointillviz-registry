@@ -2,7 +2,7 @@
   "schema": 3,
   "id": "tissue-permeability",
   "name": "Tissue Permeability",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "author": "PointillViz reference tools",
   "description": "Which cells one cell type seals off from the rest of the tissue.",
   "icon": "route",

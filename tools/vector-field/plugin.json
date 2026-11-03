@@ -2,7 +2,7 @@
   "schema": 3,
   "id": "vector-field",
   "name": "Vector Field",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "author": "PointillViz reference tools",
   "description": "Which way a quantity increases across the tissue, as arrows over the section. Gene, cell type or any annotation column — with every arrow that could be noise removed.",
   "icon": "near_me",
