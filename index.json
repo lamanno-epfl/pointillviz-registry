@@ -2362,7 +2362,7 @@
     {
       "id": "tissue-permeability",
       "name": "Tissue Permeability",
-      "version": "2.0.0",
+      "version": "2.0.1",
       "description": "Which cells one cell type seals off from the rest of the tissue.",
       "author": "PointillViz reference tools",
       "icon": "route",
@@ -2395,7 +2395,7 @@
         "schema": 3,
         "id": "tissue-permeability",
         "name": "Tissue Permeability",
-        "version": "2.0.0",
+        "version": "2.0.1",
         "author": "PointillViz reference tools",
         "description": "Which cells one cell type seals off from the rest of the tissue.",
         "long_description": "",
@@ -2530,9 +2530,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/tissue-permeability-v2.0.0/tissue-permeability-2.0.0.pvtool",
-        "sha256": "2efff72d0a6c8506accc421786a15346dce7e8f6f9b6692b1ee54ff8f89f4462",
-        "size": 51142
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/tissue-permeability-v2.0.1/tissue-permeability-2.0.1.pvtool",
+        "sha256": "de2e098e4e123c0cd852b9b3fd270f4d7774ba71765fd162ba691498ca758d26",
+        "size": 35642
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/tissue-permeability/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/tissue-permeability/preview.svg",
@@ -2544,13 +2544,13 @@
             "id": "bundle",
             "required": true,
             "status": "pass",
-            "message": "6 files, 49.9 kB packed and 272.3 kB unpacked, plugin.json at the root."
+            "message": "6 files, 34.8 kB packed and 149.5 kB unpacked, plugin.json at the root."
           },
           {
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "tissue-permeability 2.0.0 by PointillViz reference tools; Python entry tool.py, outputs summary, cells, series, table."
+            "message": "tissue-permeability 2.0.1 by PointillViz reference tools; Python entry tool.py, outputs summary, cells, series, table."
           },
           {
             "id": "environment",
@@ -2586,7 +2586,7 @@
             "id": "edge",
             "required": true,
             "status": "pass",
-            "message": "at the minimum corner (barrier_width=0.0, max_gap=1.5, n_null=2) it refused in words rather than crashing: Nothing here is more than one cell spacing from a source, so there is no route to measure and nothing is enclosed. At a gap of 1.5 spacings almost every cell counts as exposed surface — raise it, or route towards a cell type instead of the surface. (code: no_interior); ran at the maximum corner (barrier_width=3.0, max_gap=20.0, n_null=20, paint='tau', source='type') in 0.25 s."
+            "message": "at the minimum corner (barrier_width=0.0, max_gap=1.5, n_null=2) it refused in words rather than crashing: Nothing here is more than one cell spacing from a source, so there is no route to measure and nothing is enclosed. At a gap of 1.5 spacings almost every cell counts as exposed surface — raise it, or route towards a cell type instead of the surface. (code: no_interior); ran at the maximum corner (barrier_width=3.0, max_gap=20.0, n_null=20, paint='tau', source='type') in 0.23 s."
           },
           {
             "id": "no_mutation",
@@ -2597,12 +2597,12 @@
         ],
         "risks": []
       },
-      "published": "2026-10-28"
+      "published": "2026-11-03"
     },
     {
       "id": "vector-field",
       "name": "Vector Field",
-      "version": "2.0.0",
+      "version": "2.0.1",
       "description": "Which way a quantity increases across the tissue, as arrows over the section. Gene, cell type or any annotation column — with every arrow that could be noise removed.",
       "author": "PointillViz reference tools",
       "icon": "near_me",
@@ -2633,7 +2633,7 @@
         "schema": 3,
         "id": "vector-field",
         "name": "Vector Field",
-        "version": "2.0.0",
+        "version": "2.0.1",
         "author": "PointillViz reference tools",
         "description": "Which way a quantity increases across the tissue, as arrows over the section. Gene, cell type or any annotation column — with every arrow that could be noise removed.",
         "long_description": "",
@@ -2763,9 +2763,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/vector-field-v2.0.0/vector-field-2.0.0.pvtool",
-        "sha256": "8f620b459f90bcb95ff6e52b8c526772e9d1a69249360be6e39d7b8a4e34b92e",
-        "size": 53664
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/vector-field-v2.0.1/vector-field-2.0.1.pvtool",
+        "sha256": "72aa3112fc7415594f4d003002d79a0fdf9fb101d488383e7a36c98576739f75",
+        "size": 42999
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/vector-field/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/vector-field/preview.svg",
@@ -2777,13 +2777,13 @@
             "id": "bundle",
             "required": true,
             "status": "pass",
-            "message": "7 files, 52.4 kB packed and 235.8 kB unpacked, plugin.json at the root."
+            "message": "7 files, 42.0 kB packed and 170.5 kB unpacked, plugin.json at the root."
           },
           {
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "vector-field 2.0.0 by PointillViz reference tools; Python entry tool.py, outputs summary, cells, vectors, series."
+            "message": "vector-field 2.0.1 by PointillViz reference tools; Python entry tool.py, outputs summary, cells, vectors, series."
           },
           {
             "id": "environment",
@@ -2830,7 +2830,7 @@
         ],
         "risks": []
       },
-      "published": "2026-10-28"
+      "published": "2026-11-03"
     }
   ],
   "placeholders": []
