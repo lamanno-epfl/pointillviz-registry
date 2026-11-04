@@ -1,0 +1,57 @@
+{
+  "schema": 3,
+  "id": "ridge-map",
+  "name": "Ridge Map",
+  "version": "1.0.0",
+  "author": "PointillViz authors",
+  "description": "A tissue section as a relief of ridges, their height a gene or the cell density, their colour the most common cell type.",
+  "icon": "landscape",
+  "tags": ["spatial", "expression", "density", "cell types", "relief", "figure"],
+  "entry": "tool.py",
+  "license": "MIT",
+  "outputs": ["summary", "images", "files"],
+  "requires": {
+    "cell_types": true,
+    "spatial": "2d",
+    "min_cells": 200
+  },
+  "params": [
+    {
+      "name": "gene",
+      "type": "gene",
+      "label": "Gene",
+      "optional": true,
+      "help": "Selects the gene whose local expression sets the height of the ridges.\nWith no gene chosen, the height is the local cell density."
+    },
+    {
+      "name": "strips",
+      "type": "int",
+      "label": "Strips",
+      "default": 120,
+      "min": 20,
+      "max": 300,
+      "step": 5,
+      "help": "Sets how many horizontal strips the section is cut into, one ridge each.\nMore strips draw finer detail; fewer draw a bolder figure."
+    },
+    {
+      "name": "relief",
+      "type": "float",
+      "label": "Relief",
+      "default": 8,
+      "min": 1,
+      "max": 30,
+      "step": 0.5,
+      "help": "Sets how tall the tallest ridge stands, in strip heights.\nTaller ridges make a more dramatic landscape and hide more of what stands behind them."
+    },
+    {
+      "name": "smoothing",
+      "type": "float",
+      "label": "Smoothing",
+      "default": 0.75,
+      "min": 0.25,
+      "max": 3,
+      "step": 0.05,
+      "help": "Sets the width of the neighbourhood each height and colour is measured in, the σ of a Gaussian, in strip heights.\nLarger values draw calmer ridges and longer stretches of one colour."
+    }
+  ]
+}
