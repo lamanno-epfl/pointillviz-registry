@@ -2144,6 +2144,188 @@
       "published": "2026-10-28"
     },
     {
+      "id": "ridge-map",
+      "name": "Ridge Map",
+      "version": "1.0.0",
+      "description": "A tissue section as a relief of ridges, their height a gene or the cell density, their colour the most common cell type.",
+      "author": "PointillViz authors",
+      "icon": "landscape",
+      "tags": [
+        "spatial",
+        "expression",
+        "density",
+        "cell types",
+        "relief",
+        "figure"
+      ],
+      "license": "MIT",
+      "citation": "",
+      "language": "python",
+      "gpu": null,
+      "outputs": [
+        "summary",
+        "images",
+        "files"
+      ],
+      "optional_outputs": [],
+      "requires": {
+        "genes": false,
+        "cell_types": true,
+        "categoricals": false,
+        "spatial": "2d",
+        "min_cells": 200
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "ridge-map",
+        "name": "Ridge Map",
+        "version": "1.0.0",
+        "author": "PointillViz authors",
+        "description": "A tissue section as a relief of ridges, their height a gene or the cell density, their colour the most common cell type.",
+        "long_description": "",
+        "icon": "landscape",
+        "tags": [
+          "spatial",
+          "expression",
+          "density",
+          "cell types",
+          "relief",
+          "figure"
+        ],
+        "entry": "tool.py",
+        "homepage": "",
+        "license": "MIT",
+        "citation": "",
+        "gpu": null,
+        "outputs": [
+          "summary",
+          "images",
+          "files"
+        ],
+        "optional_outputs": [],
+        "params": [
+          {
+            "name": "gene",
+            "type": "gene",
+            "label": "Gene",
+            "help": "Selects the gene whose local expression sets the height of the ridges.\nWith no gene chosen, the height is the local cell density.",
+            "default": null,
+            "optional": true
+          },
+          {
+            "name": "strips",
+            "type": "int",
+            "label": "Strips",
+            "help": "Sets how many horizontal strips the section is cut into, one ridge each.\nMore strips draw finer detail; fewer draw a bolder figure.",
+            "default": 120,
+            "optional": false,
+            "min": 20.0,
+            "max": 300.0,
+            "step": 5.0
+          },
+          {
+            "name": "relief",
+            "type": "float",
+            "label": "Relief",
+            "help": "Sets how tall the tallest ridge stands, in strip heights.\nTaller ridges make a more dramatic landscape and hide more of what stands behind them.",
+            "default": 8,
+            "optional": false,
+            "min": 1.0,
+            "max": 30.0,
+            "step": 0.5
+          },
+          {
+            "name": "smoothing",
+            "type": "float",
+            "label": "Smoothing",
+            "help": "Sets the width of the neighbourhood each height and colour is measured in, the σ of a Gaussian, in strip heights.\nLarger values draw calmer ridges and longer stretches of one colour.",
+            "default": 0.75,
+            "optional": false,
+            "min": 0.25,
+            "max": 3.0,
+            "step": 0.05
+          }
+        ],
+        "requires": {
+          "genes": false,
+          "cell_types": true,
+          "categoricals": false,
+          "spatial": "2d",
+          "min_cells": 200
+        },
+        "sweep": null
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/ridge-map-v1.0.0/ridge-map-1.0.0.pvtool",
+        "sha256": "3327c82ae5b4a9cb278e8b3334c5f44103f7232fa0177ee34fb2780b66e05dec",
+        "size": 37110
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/ridge-map/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/ridge-map/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/ridge-map",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "6 files, 36.2 kB packed and 166.4 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "ridge-map 1.0.0 by PointillViz authors; Python entry tool.py, outputs summary, images, files."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.py imported in 0.17 s and defines run(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "pass",
+            "message": "1 source file, using colorsys, html, math, numpy, pointillviz_tool, re, scipy; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 0.14 s, returning summary, files, images."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, files, images."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "ran at the minimum corner (relief=1.0, smoothing=0.25, strips=20) in 0.14 s; ran at the maximum corner (relief=30.0, smoothing=3.0, strips=300) in 0.21 s."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": []
+      },
+      "published": "2026-11-04"
+    },
+    {
       "id": "ripley-cross-l",
       "name": "Ripley's Cross-L Function",
       "version": "2.0.0",
