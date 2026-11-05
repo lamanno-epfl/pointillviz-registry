@@ -2,7 +2,7 @@
   "schema": 3,
   "id": "ridge-map",
   "name": "Ridge Map",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "PointillViz authors",
   "description": "A tissue section as a relief of ridges, their height a gene or the cell density, their colour the most common cell type.",
   "icon": "landscape",

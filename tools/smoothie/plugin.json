@@ -2,7 +2,7 @@
   "schema": 3,
   "id": "smoothie",
   "name": "Smoothie",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "PointillViz authors",
   "description": "Gene modules that share a spatial pattern, found by the published Smoothie package.",
   "long_description": "Runs Smoothie (Holdener & De Vlaminck, Commun Biol 2026) as its authors ship it: it smooths every gene over the tissue with a Gaussian, correlates the smoothed genes, links the pairs above a cutoff and clusters that network into modules. Returns the modules as a table, a figure mapping each one on the tissue, and every gene's module as a download.",
