@@ -680,6 +680,194 @@
       "published": "2026-10-28"
     },
     {
+      "id": "celltype-contact-network",
+      "name": "Cell-type contact network",
+      "version": "1.0.0",
+      "description": "Which cell types touch which, from a Delaunay triangulation of the cells, as a network and a matrix corrected for abundance.",
+      "author": "PointillViz authors",
+      "icon": "hub",
+      "tags": [
+        "spatial",
+        "cell types",
+        "contacts",
+        "neighbours",
+        "network",
+        "enrichment",
+        "figure"
+      ],
+      "license": "MIT",
+      "citation": "",
+      "language": "python",
+      "gpu": null,
+      "outputs": [
+        "summary",
+        "images",
+        "table",
+        "files"
+      ],
+      "optional_outputs": [],
+      "requires": {
+        "genes": false,
+        "cell_types": false,
+        "categoricals": true,
+        "spatial": "any",
+        "min_cells": 20
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "celltype-contact-network",
+        "name": "Cell-type contact network",
+        "version": "1.0.0",
+        "author": "PointillViz authors",
+        "description": "Which cell types touch which, from a Delaunay triangulation of the cells, as a network and a matrix corrected for abundance.",
+        "long_description": "Triangulates each section's cells and counts every edge as a contact. Draws the cell types as a network with arrows whose width is the share of a type's contacts and whose colour is the enrichment over abundance, and as a matrix of the same numbers, with types of similar contacts seated together. Returns the numbers as a table and as downloads.",
+        "icon": "hub",
+        "tags": [
+          "spatial",
+          "cell types",
+          "contacts",
+          "neighbours",
+          "network",
+          "enrichment",
+          "figure"
+        ],
+        "entry": "tool.py",
+        "homepage": "",
+        "license": "MIT",
+        "citation": "",
+        "gpu": null,
+        "outputs": [
+          "summary",
+          "images",
+          "table",
+          "files"
+        ],
+        "optional_outputs": [],
+        "params": [
+          {
+            "name": "field",
+            "type": "categorical_field",
+            "label": "Cell-type column",
+            "help": "Selects the annotation whose groups are the network's nodes.\nCell types, unless the dataset has none or you choose another column.",
+            "default": null,
+            "optional": true
+          },
+          {
+            "name": "max_distance",
+            "type": "float",
+            "label": "Longest contact (microns)",
+            "help": "Drops contacts longer than this, so that cells across a gap do not count as touching.\n0 keeps every contact. In the dataset's own coordinates when it records no physical size.",
+            "default": 0,
+            "optional": false,
+            "min": 0.0,
+            "max": 500.0,
+            "step": 0.5
+          },
+          {
+            "name": "cutoff",
+            "type": "float",
+            "label": "Arrow cutoff (%)",
+            "help": "Draws an arrow from one type to another only when at least this share of the first type's contacts are with the second.\nThe matrix has no cutoff.",
+            "default": 4,
+            "optional": false,
+            "min": 0.5,
+            "max": 50.0,
+            "step": 0.5
+          },
+          {
+            "name": "max_types",
+            "type": "int",
+            "label": "Cell types shown",
+            "help": "Shows only this many of the most abundant types, in the network and in the matrix.\nThe others still count in every share, and the download holds them all.",
+            "default": 30,
+            "optional": false,
+            "min": 5.0,
+            "max": 60.0,
+            "step": 1.0
+          }
+        ],
+        "requires": {
+          "genes": false,
+          "cell_types": false,
+          "categoricals": true,
+          "spatial": "any",
+          "min_cells": 20
+        },
+        "sweep": null
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/celltype-contact-network-v1.0.0/celltype-contact-network-1.0.0.pvtool",
+        "sha256": "c607213af693eb44389e8811611204628389ebe873c27b235ce50ec45c515462",
+        "size": 39383
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/celltype-contact-network/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/celltype-contact-network/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/celltype-contact-network",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "6 files, 38.5 kB packed and 134.1 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "celltype-contact-network 1.0.0 by PointillViz authors; Python entry tool.py, outputs summary, images, table, files."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.py imported in 0.24 s and defines run(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "warn",
+            "message": "this tool uses filesystem_write — os.makedirs() at tool.py:462; numpy.savez() at tool.py:463; os.replace() at tool.py:464 (+1 more). None of it is blocked: a tool is arbitrary code run with the privileges of whoever started PointillViz, so this is disclosure for a human to weigh, not a sandbox."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 0.21 s, returning summary, table, files, images."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, table, files, images."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "ran at the minimum corner (cutoff=0.5, max_types=5) in 0.18 s; ran at the maximum corner (cutoff=50.0, max_distance=500.0, max_types=60) in 0.16 s."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": [
+          "filesystem_write"
+        ]
+      },
+      "published": "2026-11-05"
+    },
+    {
       "id": "celltype-cooccurrence",
       "name": "Cell-Type Co-occurrence",
       "version": "2.0.0",
