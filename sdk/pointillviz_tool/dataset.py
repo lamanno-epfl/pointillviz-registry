@@ -53,14 +53,16 @@ painting them the low end of the ramp — which is the difference between
 
 from __future__ import annotations
 
+import hashlib
+import json
 import os
 from typing import Optional
 
 import numpy as np
 
 from ._format import (
-    PluginError, _gene_index, _load_cells_bin, _load_meta, _read_gene,
-    _size_factors, _total_counts, categorical_fields,
+    PluginError, _gene_index, _is_full_composition, _load_cells_bin, _load_meta, _read_gene,
+    _size_factors, _total_counts, bind_composition, categorical_fields,
 )
 
 __all__ = ["Dataset", "PluginError"]
@@ -132,16 +134,17 @@ class Dataset:
             raise ValueError(f"device must be 'cpu' or 'cuda', not {device!r}.")
         self.dir = dataset_dir
         self.meta = _load_meta(dataset_dir)
-        if composition is not None:
+        if composition and self.meta.get("atlas"):
             # THE extension point every atlas-aware reader honours —
             # `_load_cells_bin` and `_gene_index` both check
             # `meta.get("_composition")` before falling back to
-            # `default_composition(meta)`. Setting it here, before any lazy
+            # `default_composition(meta)`. Binding it here, before any lazy
             # accessor below is ever touched, is what makes `ds.fields`,
             # `ds.xy`, `ds.gene(...)` and friends all read from the SAME
             # composed cell space a bound selection's indices were drawn in —
-            # not a freshly-derived default one.
-            self.meta["_composition"] = composition
+            # not a freshly-derived default one — and `ds.n_cells` and
+            # `ds.sections` describe that same space.
+            self.meta = bind_composition(self.meta, composition)
         self.name = self.meta.get("name") or os.path.basename(dataset_dir)
         self.title = self.meta.get("title") or self.name
         self.n_cells = int(self.meta["n_cells"])
@@ -431,7 +434,7 @@ class Dataset:
         if hit is not None:
             return hit
         cache = os.path.join(self.dir, "plugin_cache",
-                             f"knn_k{k}_s{self.section_filter}.npz")
+                             f"knn_k{k}_s{self.section_filter}{self._composition_tag()}.npz")
         if os.path.exists(cache):
             try:
                 z = np.load(cache)
@@ -479,6 +482,15 @@ class Dataset:
         return idx, dist
 
     # ---- internals --------------------------------------------------------
+    def _composition_tag(self) -> str:
+        """Part of a cache file's name: its rows are cell indices, and those mean
+        other cells under a composition that is not the whole dataset in order."""
+        comp = self.meta.get("_composition")
+        if not comp or _is_full_composition(self.dir, self.meta):
+            return ""
+        cells = json.dumps([[c["section_id"], c.get("count") or 0] for c in comp])
+        return "_c" + hashlib.sha256(cells.encode("utf-8")).hexdigest()[:16]
+
     def _gene_index(self):
         if self._gi is None:
             # self.meta, not a fresh read: on an atlas the gene reads must

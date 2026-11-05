@@ -223,6 +223,41 @@ def test_a_partial_composition_cuts_every_gene_to_its_prefix(atlas):
     assert np.array_equal(totals, expected.sum(axis=1))
 
 
+def test_the_handle_reads_through_a_composition(atlas):
+    # The sections on view, in the viewer's order, one of them at a level of detail.
+    comp = [{"section_id": "B", "count": 3, "offset_x": 10.0, "offset_y": 0.0},
+            {"section_id": "A", "count": 0, "offset_x": 0.0, "offset_y": 0.0}]
+    ds = Dataset(atlas, composition=comp)
+    assert ds.n_cells == 8
+    assert ds.xy.shape == (8, 2) and ds.total_counts().shape == (8,)
+    assert ds.section.tolist() == [0] * 3 + [1] * 5
+    assert [(s["section_id"], s["index"]) for s in ds.sections] == [("B", 0), ("A", 1)]
+    expected = np.vstack([SHARDS["B"][:3], SHARDS["A"]])
+    assert np.array_equal(ds.gene("G1", "raw"), expected[:, 1].astype(np.float32))
+    assert Dataset(atlas).n_cells == 9, "the handle without one still holds every section"
+
+
+def test_a_composition_of_a_section_the_atlas_lacks_is_refused(atlas):
+    with pytest.raises(PluginError) as caught:
+        Dataset(atlas, composition=[{"section_id": "Z", "count": 1}])
+    assert caught.value.code == "bad_composition"
+
+
+def test_compositions_keep_their_own_neighbour_graphs(atlas):
+    # Two of one size in another order: the same file would hand each the other's cell indices.
+    a = {"section_id": "A", "count": 4, "offset_x": 0.0, "offset_y": 0.0}
+    b = {"section_id": "B", "count": 4, "offset_x": 0.0, "offset_y": 0.0}
+    first, second = Dataset(atlas, composition=[a, b]), Dataset(atlas, composition=[b, a])
+    for ds in (first, second):
+        idx, _ = ds.knn(2)
+        for row in range(ds.n_cells):
+            assert (ds.section[idx[row]] == ds.section[row]).all()
+    assert first.knn(2)[0][0].max() < 4 and second.knn(2)[0][0].max() < 4
+    assert first._composition_tag() != second._composition_tag()
+    whole = fmt.default_composition(fmt._load_meta(atlas))
+    assert Dataset(atlas, composition=whole)._composition_tag() == ""
+
+
 def test_atlas_totals_are_summed_without_writing(atlas, snapshot):
     meta = fmt._load_meta(atlas)
     changed = snapshot(atlas)

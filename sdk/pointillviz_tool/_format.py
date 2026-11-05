@@ -98,6 +98,35 @@ def default_composition(meta: dict) -> list:
              "offset_x": 0.0, "offset_y": 0.0} for s in meta.get("sections", [])]
 
 
+def bind_composition(meta: dict, composition: list) -> dict:
+    """`meta` as it reads through a composition: the sections and cells on view.
+
+    An atlas's meta.json describes the whole cohort, and the viewer shows some
+    of its sections at some level of detail. The cell arrays follow the
+    composition (compose_cells), so everything else a reader takes from the meta
+    has to as well: `n_cells` is the composed length, and `sections` lists the
+    composed sections, with `index` their position, which is the code cells
+    carry in `section_idx`. `n_cells` counts as compose_cells does: an absent or
+    zero count is the whole shard, and a count is clamped to it.
+    """
+    known = {s.get("section_id"): s for s in meta.get("sections") or []}
+    sections, n_cells = [], 0
+    for i, entry in enumerate(composition):
+        sec = known.get(entry["section_id"])
+        if sec is None:
+            raise PluginError("bad_composition",
+                              f"This atlas has no section {entry['section_id']!r}.")
+        on_disk = int(sec.get("n_cells") or 0)
+        n_cells += max(0, min(int(entry.get("count") or on_disk), on_disk))
+        sections.append({**sec, "index": i, "offset_x": entry.get("offset_x") or 0.0,
+                         "offset_y": entry.get("offset_y") or 0.0})
+    bound = dict(meta)
+    bound.update(_composition=composition, n_cells=n_cells, sections=sections,
+                 n_sections=len(sections),
+                 section_levels=[c["section_id"] for c in composition])
+    return bound
+
+
 def compose_cells(dataset_dir: str, meta: dict, composition) -> dict:
     """
     Reproduce the browser's composed cell arrays for an atlas dataset.
