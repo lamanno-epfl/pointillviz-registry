@@ -2599,6 +2599,192 @@
       "published": "2026-10-28"
     },
     {
+      "id": "seurat-niches",
+      "name": "Seurat niches",
+      "version": "1.0.0",
+      "description": "Tissue niches from the cell types around each cell, imported from the authors' own Seurat package.",
+      "author": "PointillViz reference tools",
+      "icon": "scatter_plot",
+      "tags": [
+        "spatial",
+        "niches",
+        "cell types",
+        "neighbourhoods",
+        "R"
+      ],
+      "license": "MIT",
+      "citation": "Hao Y, Stuart T, Kowalski MH, et al. Dictionary learning for integrative, multimodal and scalable single-cell analysis. Nat Biotechnol 42, 293-304 (2024).",
+      "language": "r",
+      "gpu": null,
+      "outputs": [
+        "summary",
+        "labels",
+        "matrix",
+        "table"
+      ],
+      "optional_outputs": [
+        "files"
+      ],
+      "requires": {
+        "genes": false,
+        "cell_types": false,
+        "categoricals": true,
+        "spatial": "2d",
+        "min_cells": 100
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "seurat-niches",
+        "name": "Seurat niches",
+        "version": "1.0.0",
+        "author": "PointillViz reference tools",
+        "description": "Tissue niches from the cell types around each cell, imported from the authors' own Seurat package.",
+        "long_description": "Runs the niche analysis of Seurat (Hao et al., Nat Biotechnol 2024) with the authors' published R package, imported as they ship it, with no method code of its own. It counts the cell types among each cell's nearest cells and groups cells with similar surroundings into niches with k-means. The niches are painted on the map, with their cell types and a downloadable list of every cell's niche.",
+        "icon": "scatter_plot",
+        "tags": [
+          "spatial",
+          "niches",
+          "cell types",
+          "neighbourhoods",
+          "R"
+        ],
+        "entry": "tool.R",
+        "homepage": "https://satijalab.org/seurat/",
+        "license": "MIT",
+        "citation": "Hao Y, Stuart T, Kowalski MH, et al. Dictionary learning for integrative, multimodal and scalable single-cell analysis. Nat Biotechnol 42, 293-304 (2024).",
+        "gpu": null,
+        "outputs": [
+          "summary",
+          "labels",
+          "matrix",
+          "table"
+        ],
+        "optional_outputs": [
+          "files"
+        ],
+        "params": [
+          {
+            "name": "field",
+            "type": "categorical_field",
+            "label": "Cell-type column (group.by)",
+            "help": "The annotation counted around each cell: cell types, unless the dataset has none or you choose another column.",
+            "default": null,
+            "optional": false
+          },
+          {
+            "name": "niches_k",
+            "type": "int",
+            "label": "Number of niches (niches.k)",
+            "help": "How many niches k-means makes. The authors' Xenium analysis uses 5; the function's own default is 4.",
+            "default": 5,
+            "optional": false,
+            "min": 2.0,
+            "max": 30.0,
+            "step": 1.0
+          },
+          {
+            "name": "neighbors_k",
+            "type": "int",
+            "label": "Spatial neighbours (neighbors.k)",
+            "help": "How many nearest cells make up a cell's surroundings. More neighbours give broader niches.\nThe authors' Xenium analysis uses 30; the function's own default is 20.",
+            "default": 30,
+            "optional": false,
+            "min": 5.0,
+            "max": 100.0,
+            "step": 1.0
+          },
+          {
+            "name": "iter_max",
+            "type": "int",
+            "label": "K-means iterations (iter.max)",
+            "help": "The most iterations for each of k-means' 30 starts. 10 is what the authors' function uses.\nRaise it when the summary says that starts stopped at this limit.",
+            "default": 10,
+            "optional": false,
+            "min": 10.0,
+            "max": 500.0,
+            "step": 10.0
+          }
+        ],
+        "requires": {
+          "genes": false,
+          "cell_types": false,
+          "categoricals": true,
+          "spatial": "2d",
+          "min_cells": 100
+        },
+        "sweep": null
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/seurat-niches-v1.0.0/seurat-niches-1.0.0.pvtool",
+        "sha256": "85e09bfe6f32346231beb0cdf1a3e308aec92fcb4a3c5034ac3ebece324bceb8",
+        "size": 155569
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/seurat-niches/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/seurat-niches/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/seurat-niches",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "6 files, 151.9 kB packed and 528.1 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "seurat-niches 1.0.0 by PointillViz reference tools; R entry tool.R, outputs summary, labels, matrix, table."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy, r-base, r-jsonlite for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.R sourced in 3.63 s and defines run <- function(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "pass",
+            "message": "1 source file, using Matrix, Seurat, jsonlite, ps, stats, utils; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 4.39 s, returning summary, table, matrix, files, labels and 1 log line."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, table, matrix, files, labels."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "ran at the minimum corner (neighbors_k=5, niches_k=2) in 4.38 s; ran at the maximum corner (iter_max=500, neighbors_k=100, niches_k=30) in 4.65 s."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": []
+      },
+      "published": "2026-11-05"
+    },
+    {
       "id": "smoothie",
       "name": "Smoothie",
       "version": "1.0.1",
