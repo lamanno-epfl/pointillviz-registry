@@ -1,0 +1,58 @@
+{
+  "schema": 3,
+  "id": "celltype-contact-network",
+  "name": "Cell-type contact network",
+  "version": "1.0.0",
+  "author": "PointillViz authors",
+  "description": "Which cell types touch which, from a Delaunay triangulation of the cells, as a network and a matrix corrected for abundance.",
+  "long_description": "Triangulates each section's cells and counts every edge as a contact. Draws the cell types as a network with arrows whose width is the share of a type's contacts and whose colour is the enrichment over abundance, and as a matrix of the same numbers, with types of similar contacts seated together. Returns the numbers as a table and as downloads.",
+  "icon": "hub",
+  "tags": ["spatial", "cell types", "contacts", "neighbours", "network", "enrichment", "figure"],
+  "entry": "tool.py",
+  "license": "MIT",
+  "outputs": ["summary", "images", "table", "files"],
+  "requires": {
+    "categoricals": true,
+    "spatial": "any",
+    "min_cells": 20
+  },
+  "params": [
+    {
+      "name": "field",
+      "type": "categorical_field",
+      "label": "Cell-type column",
+      "optional": true,
+      "help": "Selects the annotation whose groups are the network's nodes.\nCell types, unless the dataset has none or you choose another column."
+    },
+    {
+      "name": "max_distance",
+      "type": "float",
+      "label": "Longest contact (microns)",
+      "default": 0,
+      "min": 0,
+      "max": 500,
+      "step": 0.5,
+      "help": "Drops contacts longer than this, so that cells across a gap do not count as touching.\n0 keeps every contact. In the dataset's own coordinates when it records no physical size."
+    },
+    {
+      "name": "cutoff",
+      "type": "float",
+      "label": "Arrow cutoff (%)",
+      "default": 4,
+      "min": 0.5,
+      "max": 50,
+      "step": 0.5,
+      "help": "Draws an arrow from one type to another only when at least this share of the first type's contacts are with the second.\nThe matrix has no cutoff."
+    },
+    {
+      "name": "max_types",
+      "type": "int",
+      "label": "Cell types shown",
+      "default": 30,
+      "min": 5,
+      "max": 60,
+      "step": 1,
+      "help": "Shows only this many of the most abundant types, in the network and in the matrix.\nThe others still count in every share, and the download holds them all."
+    }
+  ]
+}
