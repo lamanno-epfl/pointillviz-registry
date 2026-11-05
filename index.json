@@ -5,8 +5,8 @@
     {
       "id": "banksy-niches",
       "name": "BANKSY niches",
-      "version": "1.0.0",
-      "description": "Tissue niches from each cell's expression and its neighbourhood's, by the BANKSY method.",
+      "version": "2.0.0",
+      "description": "Tissue niches from each cell's expression and its neighbourhood's, imported from the authors' own BANKSY package.",
       "author": "PointillViz reference tools",
       "icon": "hub",
       "tags": [
@@ -16,7 +16,7 @@
         "clustering",
         "genes"
       ],
-      "license": "MIT",
+      "license": "GPL-3.0",
       "citation": "Singhal V, Chou N, Lee J, et al. BANKSY unifies cell typing and tissue domain segmentation for scalable spatial omics data analysis. Nat Genet 56, 431-441 (2024).",
       "language": "python",
       "gpu": null,
@@ -40,10 +40,10 @@
         "schema": 3,
         "id": "banksy-niches",
         "name": "BANKSY niches",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "author": "PointillViz reference tools",
-        "description": "Tissue niches from each cell's expression and its neighbourhood's, by the BANKSY method.",
-        "long_description": "Joins every cell's expression to that of its spatial neighbours, as BANKSY does, and clusters the result into niches with the authors' Leiden recipe or with k-means. The niches are painted on the map, with their cell types, marker genes and a downloadable list of every cell's niche.",
+        "description": "Tissue niches from each cell's expression and its neighbourhood's, imported from the authors' own BANKSY package.",
+        "long_description": "Runs BANKSY (Singhal et al., Nat Genet 2024) with the authors' published Python package, pybanksy, imported as they ship it, with no method code of its own. It joins every cell's expression to that of its spatial neighbours and clusters the result into niches with Leiden. The niches are painted on the map, with their cell types, marker genes and a downloadable list of every cell's niche.",
         "icon": "hub",
         "tags": [
           "spatial",
@@ -53,8 +53,8 @@
           "genes"
         ],
         "entry": "tool.py",
-        "homepage": "",
-        "license": "MIT",
+        "homepage": "https://github.com/prabhakarlab/Banksy_py",
+        "license": "GPL-3.0",
         "citation": "Singhal V, Chou N, Lee J, et al. BANKSY unifies cell typing and tissue domain segmentation for scalable spatial omics data analysis. Nat Genet 56, 431-441 (2024).",
         "gpu": null,
         "outputs": [
@@ -68,50 +68,10 @@
         ],
         "params": [
           {
-            "name": "clustering",
-            "type": "select",
-            "label": "Clustering",
-            "help": "Leiden finds as many niches as the resolution calls for, on a graph of cells that share neighbours.\nk-means divides the cells into exactly the number of niches you ask for.",
-            "default": "leiden",
-            "optional": false,
-            "options": [
-              {
-                "value": "leiden",
-                "label": "Leiden (the authors' default)"
-              },
-              {
-                "value": "kmeans",
-                "label": "k-means"
-              }
-            ]
-          },
-          {
-            "name": "resolution",
+            "name": "lambda_param",
             "type": "float",
-            "label": "Resolution (Leiden)",
-            "help": "Leiden only. Higher values give more, smaller niches; lower values give fewer, larger ones.",
-            "default": 0.3,
-            "optional": false,
-            "min": 0.05,
-            "max": 2.0,
-            "step": 0.05
-          },
-          {
-            "name": "n_niches",
-            "type": "int",
-            "label": "Niches (k-means)",
-            "help": "k-means only: how many niches to divide the tissue into.\nIf two niches share their marker genes and cell types, try fewer.",
-            "default": 8,
-            "optional": false,
-            "min": 2.0,
-            "max": 30.0,
-            "step": 1.0
-          },
-          {
-            "name": "lambda",
-            "type": "float",
-            "label": "Neighbourhood weight (λ)",
-            "help": "How much a cell's neighbourhood counts against its own expression.\n0.8 finds tissue domains; 0.2 finds spatially informed cell types; 0 ignores space.",
+            "label": "Neighbourhood weight (lambda)",
+            "help": "How much a cell's neighbourhood counts against its own expression (pybanksy's lambda).\nThe authors use 0.8 for tissue domains and 0.2 for spatially informed cell types; 0 ignores space.",
             "default": 0.8,
             "optional": false,
             "min": 0.0,
@@ -121,8 +81,8 @@
           {
             "name": "k_geom",
             "type": "int",
-            "label": "Spatial neighbours (k)",
-            "help": "How many nearest cells make a neighbourhood. The gradient features use twice as many.",
+            "label": "Spatial neighbours (k_geom)",
+            "help": "How many nearest cells make a neighbourhood. The authors' default is 15, for single cells.",
             "default": 15,
             "optional": false,
             "min": 5.0,
@@ -130,29 +90,65 @@
             "step": 1.0
           },
           {
-            "name": "agf",
-            "type": "bool",
-            "label": "Include gradients (AGF)",
-            "help": "Adds BANKSY's azimuthal Gabor filter, which responds where expression changes across a neighbourhood, as at a border.",
-            "default": true,
-            "optional": false
-          },
-          {
-            "name": "n_genes",
+            "name": "max_m",
             "type": "int",
-            "label": "Variable genes",
-            "help": "How many of the most variable genes to use. More genes take longer.",
-            "default": 2000,
+            "label": "AGF order (max_m)",
+            "help": "1 adds BANKSY's azimuthal Gabor filter, over twice the neighbours: it responds where expression changes across a neighbourhood, as at a border. It is the authors' recommended default.\n0 uses the neighbourhood's mean alone, and a third less memory.",
+            "default": 1,
             "optional": false,
-            "min": 50.0,
-            "max": 5000.0,
-            "step": 50.0
+            "min": 0.0,
+            "max": 1.0,
+            "step": 1.0
           },
           {
-            "name": "n_pcs",
+            "name": "nbr_weight_decay",
+            "type": "select",
+            "label": "Neighbour weights",
+            "help": "How a neighbour's weight falls with its distance.",
+            "default": "scaled_gaussian",
+            "optional": false,
+            "options": [
+              {
+                "value": "scaled_gaussian",
+                "label": "Scaled Gaussian (the authors' default)"
+              },
+              {
+                "value": "reciprocal",
+                "label": "Reciprocal"
+              },
+              {
+                "value": "ranked",
+                "label": "Ranked (AGF order 0 only)"
+              },
+              {
+                "value": "uniform",
+                "label": "Uniform"
+              }
+            ]
+          },
+          {
+            "name": "zscore_by",
+            "type": "select",
+            "label": "Z-score",
+            "help": "Sets over which cells each gene is z-scored when a run holds several sections. It changes nothing on one section.\nPer section evens out differences in a gene's overall level between sections, which suits replicates of one tissue. Across all sections keeps them, which suits sections of different tissues.",
+            "default": "section",
+            "optional": false,
+            "options": [
+              {
+                "value": "section",
+                "label": "Per section (the authors' multi-sample way)"
+              },
+              {
+                "value": "all",
+                "label": "Across all sections"
+              }
+            ]
+          },
+          {
+            "name": "pca_dims",
             "type": "int",
-            "label": "Principal components",
-            "help": "How many principal components of the joint matrix the clustering sees.",
+            "label": "Principal components (pca_dims)",
+            "help": "How many components of the BANKSY matrix the clustering sees. The authors' default is 20.",
             "default": 20,
             "optional": false,
             "min": 5.0,
@@ -160,12 +156,59 @@
             "step": 1.0
           },
           {
-            "name": "smooth",
-            "type": "bool",
-            "label": "Smooth labels",
-            "help": "Gives a cell the niche held by more than half of itself and its 15 nearest cells, repeated until nothing changes (BANKSY's smoothLabels).",
-            "default": false,
-            "optional": false
+            "name": "resolution",
+            "type": "float",
+            "label": "Leiden resolution",
+            "help": "Higher values give more, smaller niches; lower values give fewer, larger ones.\n0.7 is the authors' default. Not used when Number of niches is set.",
+            "default": 0.7,
+            "optional": false,
+            "min": 0.05,
+            "max": 3.0,
+            "step": 0.05
+          },
+          {
+            "name": "max_labels",
+            "type": "int",
+            "label": "Number of niches (max_labels)",
+            "help": "0 goes by the resolution. Any other number has pybanksy search for a resolution that gives that many niches, up to 25 tries of Leiden, so it takes longer and may stop short.",
+            "default": 0,
+            "optional": false,
+            "min": 0.0,
+            "max": 30.0,
+            "step": 1.0
+          },
+          {
+            "name": "num_nn",
+            "type": "int",
+            "label": "Expression neighbours (num_nn)",
+            "help": "How many neighbours each cell has in the graph Leiden partitions, in the space of the principal components. The authors use 50.",
+            "default": 50,
+            "optional": false,
+            "min": 10.0,
+            "max": 100.0,
+            "step": 1.0
+          },
+          {
+            "name": "n_top_genes",
+            "type": "int",
+            "label": "Variable genes (n_top_genes)",
+            "help": "How many of the most variable genes to use. The authors use 2000.\nTime and memory grow in proportion.",
+            "default": 2000,
+            "optional": false,
+            "min": 50.0,
+            "max": 5000.0,
+            "step": 50.0
+          },
+          {
+            "name": "refine_iterations",
+            "type": "int",
+            "label": "Label refinement (iterations)",
+            "help": "How many times a cell takes the label of most of its 6 nearest cells. 0 is off.\nThe authors offer it for domain segmentation, and warn against excess: it wears out fine domains.",
+            "default": 0,
+            "optional": false,
+            "min": 0.0,
+            "max": 5.0,
+            "step": 1.0
           }
         ],
         "requires": {
@@ -178,9 +221,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/banksy-niches-v1.0.0/banksy-niches-1.0.0.pvtool",
-        "sha256": "58ec74514ad19c7f75d2d4e168ff2fed336e95f3473344591a7df3463fb11550",
-        "size": 41293
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/banksy-niches-v2.0.0/banksy-niches-2.0.0.pvtool",
+        "sha256": "a24947114986d9a01eca19cc378e48d30a2d6891fd670453824a62f000d40c71",
+        "size": 62977
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/banksy-niches/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/banksy-niches/preview.svg",
@@ -192,13 +235,13 @@
             "id": "bundle",
             "required": true,
             "status": "pass",
-            "message": "6 files, 40.3 kB packed and 178.3 kB unpacked, plugin.json at the root."
+            "message": "6 files, 61.5 kB packed and 288.9 kB unpacked, plugin.json at the root."
           },
           {
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "banksy-niches 1.0.0 by PointillViz reference tools; Python entry tool.py, outputs summary, labels, matrix, table."
+            "message": "banksy-niches 2.0.0 by PointillViz reference tools; Python entry tool.py, outputs summary, labels, matrix, table."
           },
           {
             "id": "environment",
@@ -210,19 +253,19 @@
             "id": "entry",
             "required": true,
             "status": "pass",
-            "message": "tool.py imported in 0.47 s and defines run(ds, params)."
+            "message": "tool.py imported in 11.57 s and defines run(ds, params)."
           },
           {
             "id": "imports",
             "required": false,
             "status": "pass",
-            "message": "1 source file, using collections, concurrent, gzip, igraph, leidenalg, numpy, os, pointillviz_tool, scipy; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+            "message": "1 source file, using anndata, banksy, banksy_utils, gc, gzip, matplotlib, numpy, pandas, pointillviz_tool, psutil, random, scanpy, scipy, threadpoolctl, warnings; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
           },
           {
             "id": "fixture",
             "required": true,
             "status": "pass",
-            "message": "ran on the 600-cell fixture in 0.31 s, returning summary, table, matrix, files, labels and 2 log lines."
+            "message": "ran on the 600-cell fixture in 6.59 s, returning summary, table, matrix, files, labels and 113 log lines."
           },
           {
             "id": "result",
@@ -234,7 +277,7 @@
             "id": "edge",
             "required": true,
             "status": "pass",
-            "message": "ran at the minimum corner (agf=False, k_geom=5, lambda=0.0, n_genes=50, n_niches=2, n_pcs=5, resolution=0.05) in 0.28 s; ran at the maximum corner (clustering='kmeans', k_geom=30, lambda=1.0, n_genes=5000, n_niches=30, n_pcs=50, resolution=2.0, smooth=True) in 0.29 s."
+            "message": "ran at the minimum corner (k_geom=5, lambda_param=0.0, max_m=0, n_top_genes=50, num_nn=10, pca_dims=5, resolution=0.05) in 6.02 s; ran at the maximum corner (k_geom=30, lambda_param=1.0, max_labels=30, n_top_genes=5000, nbr_weight_decay='uniform', num_nn=100, pca_dims=50, refine_iterations=5, resolution=3.0, zscore_by='all') in 6.76 s."
           },
           {
             "id": "no_mutation",
@@ -245,7 +288,7 @@
         ],
         "risks": []
       },
-      "published": "2026-10-28"
+      "published": "2026-11-05"
     },
     {
       "id": "beeswarm-plot",
