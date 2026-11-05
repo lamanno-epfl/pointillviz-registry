@@ -18,10 +18,16 @@ a block, and the niches back on the map with a description of each.
 import gc
 import gzip
 import random
+import warnings
 
 import matplotlib
 
 matplotlib.use("Agg")  # the package imports pyplot, and a tool opens no window
+
+# A warning opens with the path of its file, and the registry refuses a gate report that holds a path.
+warnings.formatwarning = lambda message, category, *_: f"{category.__name__}: {message}\n"
+# The package's note at import that mclust needs rpy2. mclust is not offered here.
+warnings.filterwarnings("ignore", message=r"\s*No rpy2 installed", category=UserWarning)
 
 import anndata as ad
 import banksy
