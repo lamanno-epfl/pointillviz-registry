@@ -2542,6 +2542,184 @@
       "published": "2026-10-28"
     },
     {
+      "id": "smoothie",
+      "name": "Smoothie",
+      "version": "1.0.0",
+      "description": "Gene modules that share a spatial pattern, found by the published Smoothie package.",
+      "author": "PointillViz authors",
+      "icon": "hub",
+      "tags": [
+        "spatial",
+        "genes",
+        "modules",
+        "co-expression",
+        "network",
+        "smoothing",
+        "figure"
+      ],
+      "license": "MIT",
+      "citation": "Holdener C, De Vlaminck I. Smoothie: efficient inference and integration of spatial co-expression networks from denoised spatial transcriptomics data. Commun Biol 9, 459 (2026). https://doi.org/10.1038/s42003-026-09898-z",
+      "language": "python",
+      "gpu": null,
+      "outputs": [
+        "summary",
+        "table",
+        "images",
+        "files"
+      ],
+      "optional_outputs": [],
+      "requires": {
+        "genes": true,
+        "cell_types": false,
+        "categoricals": false,
+        "spatial": "2d",
+        "min_cells": 200
+      },
+      "manifest": {
+        "schema": 3,
+        "id": "smoothie",
+        "name": "Smoothie",
+        "version": "1.0.0",
+        "author": "PointillViz authors",
+        "description": "Gene modules that share a spatial pattern, found by the published Smoothie package.",
+        "long_description": "Runs Smoothie (Holdener & De Vlaminck, Commun Biol 2026) as its authors ship it: it smooths every gene over the tissue with a Gaussian, correlates the smoothed genes, links the pairs above a cutoff and clusters that network into modules. Returns the modules as a table, a figure mapping each one on the tissue, and every gene's module as a download.",
+        "icon": "hub",
+        "tags": [
+          "spatial",
+          "genes",
+          "modules",
+          "co-expression",
+          "network",
+          "smoothing",
+          "figure"
+        ],
+        "entry": "tool.py",
+        "homepage": "https://caholdener01.github.io/Smoothie/",
+        "license": "MIT",
+        "citation": "Holdener C, De Vlaminck I. Smoothie: efficient inference and integration of spatial co-expression networks from denoised spatial transcriptomics data. Commun Biol 9, 459 (2026). https://doi.org/10.1038/s42003-026-09898-z",
+        "gpu": null,
+        "outputs": [
+          "summary",
+          "table",
+          "images",
+          "files"
+        ],
+        "optional_outputs": [],
+        "params": [
+          {
+            "name": "smoothing_width",
+            "type": "float",
+            "label": "Smoothing width (microns)",
+            "help": "Sets the width of the Gaussian that smooths each gene over the tissue, its standard deviation.\nThe authors find 20 to 40 µm works best. Wider finds broader patterns; sparse tissue needs it wider.",
+            "default": 20,
+            "optional": false,
+            "min": 5.0,
+            "max": 200.0,
+            "step": 1.0
+          },
+          {
+            "name": "correlation_cutoff",
+            "type": "float",
+            "label": "Correlation cutoff",
+            "help": "Links two genes when their smoothed maps correlate above this.\nHigher keeps fewer genes, in tighter modules. Lower takes longer. The summary gives the authors' lower bound for this run.",
+            "default": 0.4,
+            "optional": false,
+            "min": 0.1,
+            "max": 0.95,
+            "step": 0.01
+          },
+          {
+            "name": "clustering_power",
+            "type": "float",
+            "label": "Clustering power",
+            "help": "Sets how strongly weak links are discounted when the network is clustered.\nHigher gives more, smaller modules. The authors find 1 to 6 reasonable.",
+            "default": 4,
+            "optional": false,
+            "min": 1.0,
+            "max": 9.0,
+            "step": 0.5
+          }
+        ],
+        "requires": {
+          "genes": true,
+          "cell_types": false,
+          "categoricals": false,
+          "spatial": "2d",
+          "min_cells": 200
+        },
+        "sweep": null
+      },
+      "bundle": {
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/smoothie-v1.0.0/smoothie-1.0.0.pvtool",
+        "sha256": "6b70170c06fe7fd3e342d98414e8996dd839ef334c08385e9bb2d79032cb4408",
+        "size": 60838
+      },
+      "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/smoothie/README.md",
+      "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/smoothie/preview.svg",
+      "source_url": "https://github.com/lamanno-epfl/pointillviz-registry/tree/main/tools/smoothie",
+      "report": {
+        "ok": true,
+        "gates": [
+          {
+            "id": "bundle",
+            "required": true,
+            "status": "pass",
+            "message": "6 files, 59.4 kB packed and 276.1 kB unpacked, plugin.json at the root."
+          },
+          {
+            "id": "manifest",
+            "required": true,
+            "status": "pass",
+            "message": "smoothie 1.0.0 by PointillViz authors; Python entry tool.py, outputs summary, table, images, files."
+          },
+          {
+            "id": "environment",
+            "required": true,
+            "status": "pass",
+            "message": "pixi.lock matches pixi.toml, which declares python, numpy, scipy for linux-64, osx-64, osx-arm64, win-64; environments: default."
+          },
+          {
+            "id": "entry",
+            "required": true,
+            "status": "pass",
+            "message": "tool.py imported in 4.60 s and defines run(ds, params)."
+          },
+          {
+            "id": "imports",
+            "required": false,
+            "status": "pass",
+            "message": "1 source file, using anndata, csv, io, itertools, math, matplotlib, numpy, os, pointillviz_tool, scanpy, scipy, smoothie, tempfile, warnings; no network, subprocess, filesystem-write, dynamic-exec or environment use found."
+          },
+          {
+            "id": "fixture",
+            "required": true,
+            "status": "pass",
+            "message": "ran on the 600-cell fixture in 11.44 s, returning summary, table, files, images and 57 log lines."
+          },
+          {
+            "id": "result",
+            "required": true,
+            "status": "pass",
+            "message": "returned the declared outputs: summary, table, files, images."
+          },
+          {
+            "id": "edge",
+            "required": true,
+            "status": "pass",
+            "message": "at the minimum corner (clustering_power=1.0, correlation_cutoff=0.1, smoothing_width=5.0) it refused in words rather than crashing: At a smoothing width of 5 µm, more than 15% of the tissue has fewer than 10 cells within 15 µm, the reach of the smoothing. Widen it to at least 7 µm. (code: too_sparse); ran at the maximum corner (clustering_power=9.0, correlation_cutoff=0.95, smoothing_width=200.0) in 10.24 s."
+          },
+          {
+            "id": "no_mutation",
+            "required": true,
+            "status": "pass",
+            "message": "the fixture dataset's 4 files are byte-identical after every run (plugin_cache/, where ds.knn caches, is excluded by design)."
+          }
+        ],
+        "risks": []
+      },
+      "published": "2026-11-05"
+    },
+    {
       "id": "tissue-permeability",
       "name": "Tissue Permeability",
       "version": "2.0.1",
