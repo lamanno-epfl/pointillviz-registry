@@ -149,6 +149,22 @@ def test_knn_marks_what_it_could_not_fill(fixture_dir):
     assert refusal(lambda: ds.knn(0)).code == "bad_k"
 
 
+def test_a_section_of_another_panel_reads_nan_not_zero(fresh_fixture):
+    path = os.path.join(fresh_fixture, "meta.json")
+    with open(path) as fh:
+        meta = json.load(fh)
+    meta["sections"][1]["unmeasured_genes"] = [0]
+    with open(path, "w") as fh:
+        json.dump(meta, fh)
+    ds = Dataset(fresh_fixture)
+    name = ds.gene_names[0]
+    measured = ds.gene_measured(name)
+    assert measured.tolist() == (ds.section != ds.sections[1]["index"]).tolist()
+    got = ds.gene(name, "raw")
+    assert np.isnan(got[~measured]).all() and not np.isnan(got[measured]).any()
+    assert ds.gene_measured(ds.gene_names[1]).all()
+
+
 def test_knn_never_crosses_a_section(fixture_dir):
     ds = Dataset(fixture_dir)
     idx, _ = ds.knn(8)

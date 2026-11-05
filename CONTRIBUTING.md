@@ -201,6 +201,7 @@ ds.gene_names           list of gene names
 ds.has_gene(name)
 ds.gene(name, normalize="cp10k")      (n,) float32; normalize is "raw", "cp10k" or "log1p"
 ds.genes(names, normalize="cp10k")    (n, k) float32; column j is names[j]
+ds.gene_measured(name)  (n,) bool; False on cells whose section did not measure the gene
 ds.total_counts()       (n,) float64 transcripts per cell
 
 ds.cell_types()         (levels, codes); codes is (n,) int32, -1 where unlabelled
@@ -220,6 +221,8 @@ ds.progress(fraction, message=None)
 - `ds.knn` and `ds.kdtrees` work per section, because sections sit side by side on one canvas and a single tree would give a cell neighbours from another specimen. Neighbour graphs are cached in the dataset's `plugin_cache/` folder, the one place a tool may write in a dataset.
 - **Mask `-1`.** `codes[idx]` with `idx == -1` silently reads the last cell. Clamp with `np.where(idx >= 0, idx, 0)`, then mask.
 - Honouring `ds.subset` is optional. A tool that does still returns full-length per-cell outputs, with NaN outside the selection.
+- **Sections of different gene panels.** `ds.gene` and `ds.genes` are NaN on the cells of a section that did not measure the gene, and zero only where it measured the gene and saw none. Use `np.nanmean` and the like, or restrict to `ds.gene_measured(name)`.
+- **Multi-section atlases.** `ds` holds the sections the viewer has loaded, at their level of detail: `ds.n_cells`, `ds.section` and `ds.sections` all describe those, and `ds.section` is a section's position among them.
 - When `ds` refuses (an unknown gene, a dataset without cell types), it raises `PluginError`, and the user reads its sentence.
 
 ## 5. R tools

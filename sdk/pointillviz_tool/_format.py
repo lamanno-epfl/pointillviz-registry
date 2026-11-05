@@ -307,6 +307,110 @@ def _size_factors(totals: np.ndarray) -> np.ndarray:
 # arrays were composed with, plus a reader `_read_gene` dispatches to, so every
 # caller keeps the one pattern open(counts_path) + _read_gene(fh, gi, g).
 # ---------------------------------------------------------------------------
+
+
+# ---------------------------------------------------------------------------
+# Genes a section did not measure.
+#
+# A multi-section dataset whose sections were measured on different panels (a
+# Xenium 5K section beside a ~500-gene MERFISH one) keeps the UNION of the
+# genes. A section holds an EMPTY column for a gene it did not measure, so
+# `_read_gene` returns nothing for those cells — exactly what it returns for a
+# measured zero. The difference is recorded beside the matrix, as each
+# section's `unmeasured_genes` in meta.json; GenePanels turns it into per-cell
+# masks. The app's copy is backend/diffexp.py's GenePanels, held to this one
+# by the app's tests.
+# ---------------------------------------------------------------------------
+class GenePanels:
+    """Which cells' sections did not measure which gene, for one gene index.
+
+    `groups` holds one entry per section that lacks some gene, in the index
+    space the gene reads live in: {"section_id", "range": (lo, hi)} for an
+    atlas composition, or {"section_id", "code"} for a flat dataset, whose
+    cells carry their section as `section_idx`. `by_gene` maps a gene index to
+    the positions in `groups` lacking it; a gene it does not list was measured
+    everywhere. The cells a gene is missing from are always whole sections, so
+    masks are built once per distinct set of sections and cached.
+    """
+
+    def __init__(self, n_cells: int, groups=(), by_gene=None,
+                 section_codes=None):
+        self.n_cells = int(n_cells)
+        self.groups = list(groups)
+        self._by_gene = dict(by_gene or {})
+        self._section_codes = section_codes
+        self._codes = None
+        self._masks: dict = {}
+
+    @property
+    def partial(self) -> bool:
+        """True when some gene is missing from some cells of this dataset."""
+        return bool(self._by_gene)
+
+    def lacking(self, gene_idx: int) -> tuple:
+        """Positions in `groups` that did not measure the gene; () when every
+        section did."""
+        return self._by_gene.get(int(gene_idx), ())
+
+    def section_ids(self, sig) -> list:
+        return [self.groups[k]["section_id"] for k in sig]
+
+    def mask(self, sig) -> np.ndarray:
+        """Boolean over cells, True where the cell's section is in `sig`."""
+        hit = self._masks.get(sig)
+        if hit is not None:
+            return hit
+        out = np.zeros(self.n_cells, dtype=bool)
+        for k in sig:
+            grp = self.groups[k]
+            if "range" in grp:
+                lo, hi = grp["range"]
+                out[lo:hi] = True
+            else:
+                if self._codes is None:
+                    self._codes = np.asarray(self._section_codes())
+                out |= self._codes == grp["code"]
+        self._masks[sig] = out
+        return out
+
+    def unmeasured_mask(self, gene_idx: int):
+        """Boolean over cells, True where the gene was not measured; None when
+        every cell's section measured it."""
+        sig = self.lacking(gene_idx)
+        return self.mask(sig) if sig else None
+
+
+_NO_PANELS = GenePanels(0)
+
+
+def gene_panels(gi: dict) -> GenePanels:
+    """The GenePanels a `_gene_index` dict carries (an empty one if none)."""
+    return gi.get("_panels") or _NO_PANELS
+
+
+def _flat_panels(dataset_dir: str, meta: dict, n_cells: int) -> GenePanels:
+    """GenePanels for a flat dataset, from meta.json's `sections[]`."""
+    if meta is None:
+        try:
+            meta = _load_meta(dataset_dir)
+        except (OSError, ValueError):
+            return GenePanels(n_cells)
+    groups, by_gene = [], {}
+    for s in meta.get("sections") or []:
+        miss = s.get("unmeasured_genes")
+        if not miss:
+            continue
+        k = len(groups)
+        groups.append({"section_id": s.get("section_id"), "code": int(s.get("index") or 0)})
+        for g in miss:
+            by_gene.setdefault(int(g), []).append(k)
+    if not groups:
+        return GenePanels(n_cells)
+    return GenePanels(
+        n_cells, groups, {g: tuple(v) for g, v in by_gene.items()},
+        section_codes=lambda: _load_cells_bin(dataset_dir, meta)["section_idx"])
+
+
 def _gene_index(dataset_dir: str, meta: dict = None) -> tuple[dict, str]:
     """(gene index dict, counts path) for flat AND sharded-atlas datasets.
 
@@ -322,11 +426,15 @@ def _gene_index(dataset_dir: str, meta: dict = None) -> tuple[dict, str]:
     `_load_cells_bin`'s output. With meta=None the meta is read from disk,
     which can only ever produce the default composition (every section, full
     detail).
+
+    Both shapes carry `_panels`, a GenePanels: which cells' sections did not
+    measure which gene. Read it with `gene_panels(gi)`.
     """
     root = os.path.join(dataset_dir, "gene_index.json")
     if os.path.exists(root):
         with open(root, "r", encoding="utf-8") as f:
             gi = json.load(f)
+        gi["_panels"] = _flat_panels(dataset_dir, meta, int(gi.get("n_cells") or 0))
         return gi, os.path.join(dataset_dir, "gene_counts.bin")
     if meta is None:
         meta = _load_meta(dataset_dir)
@@ -361,6 +469,12 @@ class _AtlasGeneReader:
         self.value_dtype = g_meta.get("value_dtype", "u16")
         sec_cells = {s.get("section_id"): int(s.get("n_cells") or 0)
                      for s in meta.get("sections") or []}
+        # By section_id, not position: a composition-bound meta may list only
+        # the composed sections.
+        sec_missing = {s.get("section_id"): s.get("unmeasured_genes")
+                       for s in meta.get("sections") or []
+                       if s.get("unmeasured_genes")}
+        groups, by_gene = [], {}
         self._parts = []            # (bin path, shard gi, base index, cuts)
         pos = 0
         for entry in composition:
@@ -382,8 +496,9 @@ class _AtlasGeneReader:
                     count = int(gi["n_cells"])
                 count = max(0, min(count, int(gi["n_cells"])))
                 if not self.genes:
-                    # Shard panels are identical by construction (the atlas
-                    # builder hands every section the harmonized common list).
+                    # Shard gene lists are identical by construction (the
+                    # atlas builder writes every shard over the union list; a
+                    # gene a section lacks is an empty column there).
                     self.genes = list(gi.get("genes") or [])
                 cuts = _gene_cuts_for_count(sec_dir, gi, count,
                                             len(gi["genes"]))
@@ -398,8 +513,15 @@ class _AtlasGeneReader:
                 if count == 0:
                     count = sec_cells.get(sid, 0)
                 count = max(0, count)
+            if sec_missing.get(sid) and count > 0:
+                k = len(groups)
+                groups.append({"section_id": sid, "range": (pos, pos + count)})
+                for g in sec_missing[sid]:
+                    by_gene.setdefault(int(g), []).append(k)
             pos += count
         self.n_cells = pos
+        self.panels = GenePanels(pos, groups,
+                                 {g: tuple(v) for g, v in by_gene.items()})
 
     def read(self, gene_idx: int) -> tuple[np.ndarray, np.ndarray]:
         """(composed cell indices uint32, values float64) for one gene."""
@@ -452,6 +574,7 @@ class _AtlasGeneReader:
             "max_counts": mx.tolist(),
             "total_nnz": int(nnz.sum()),
             "_atlas_reader": self,
+            "_panels": self.panels,
         }
 
 

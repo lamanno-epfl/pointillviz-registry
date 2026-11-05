@@ -258,6 +258,28 @@ def test_compositions_keep_their_own_neighbour_graphs(atlas):
     assert Dataset(atlas, composition=whole)._composition_tag() == ""
 
 
+def test_a_gene_a_section_did_not_measure_is_nan_there_not_zero(atlas):
+    # What the atlas builder records for sections of different panels: an empty
+    # column, and the gene's index in the section's `unmeasured_genes`.
+    path = os.path.join(atlas, "meta.json")
+    with open(path) as fh:
+        meta = json.load(fh)
+    meta["sections"][0]["unmeasured_genes"] = [GENES.index("G1")]
+    with open(path, "w") as fh:
+        json.dump(meta, fh)
+    ds = Dataset(atlas)
+    got = ds.gene("G1", "raw")
+    assert np.isnan(got[:5]).all(), "A did not measure G1"
+    assert np.array_equal(got[5:], SHARDS["B"][:, 1].astype(np.float32))
+    assert (got[5:] == 0).any(), "a zero stays a zero where the gene was measured"
+    assert ds.gene_measured("G1").tolist() == [False] * 5 + [True] * 4
+    assert ds.gene_measured("G0").all() and not np.isnan(ds.gene("G0", "raw")).any()
+    assert np.isnan(ds.genes(["G0", "G1"], "raw")[:5, 1]).all()
+    # With only the section that measured it on view, nothing is missing.
+    bound = Dataset(atlas, composition=[{"section_id": "B", "count": 4}])
+    assert not np.isnan(bound.gene("G1", "raw")).any() and bound.gene_measured("G1").all()
+
+
 def test_atlas_totals_are_summed_without_writing(atlas, snapshot):
     meta = fmt._load_meta(atlas)
     changed = snapshot(atlas)

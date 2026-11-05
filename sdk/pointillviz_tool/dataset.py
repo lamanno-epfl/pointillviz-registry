@@ -49,6 +49,14 @@ masks before anything that would otherwise poison a sum. The viewer applies the
 same rule to a tool's own `cells` output, dimming NaN cells rather than
 painting them the low end of the ramp — which is the difference between
 "unmeasured" and "measured zero", and those are not the same statement.
+
+Expression follows the same rule. A multi-section dataset whose sections were
+measured on different gene panels (a Xenium 5K section beside a ~500-gene
+MERFISH one) holds the UNION of the genes, and `ds.gene(name)` is NaN on every
+cell whose section did not measure that gene — a zero only where a section
+measured it and saw none. `ds.gene_measured(name)` is the matching boolean
+mask, and `ds.sections[i]["unmeasured_genes"]` lists, per section, the indices
+into `ds.gene_names` it lacks (absent when it measured every gene).
 """
 
 from __future__ import annotations
@@ -62,7 +70,7 @@ import numpy as np
 
 from ._format import (
     PluginError, _gene_index, _is_full_composition, _load_cells_bin, _load_meta, _read_gene,
-    _size_factors, _total_counts, bind_composition, categorical_fields,
+    _size_factors, _total_counts, bind_composition, categorical_fields, gene_panels,
 )
 
 __all__ = ["Dataset", "PluginError"]
@@ -247,7 +255,9 @@ class Dataset:
         The viewer's own ranking: its gene search boxes list genes in this order
         with nothing typed, and the Marker Dot Plot's "Top markers" takes its
         head. Counted over the whole dataset (the gene index's non-zero counts,
-        so it reads no expression), not over a selection.
+        so it reads no expression), not over a selection. On a dataset whose
+        sections have different panels the counts are over the cells that
+        measured each gene — see `gene_measured`.
         """
         gi = self._gene_index()[0]
         nnz = np.asarray(gi["nnz"], dtype=np.int64)
@@ -266,6 +276,11 @@ class Dataset:
         is gene-major sparse and every tool would otherwise reimplement the
         same scatter. A gene costs one seek and one read regardless of how many
         cells express it.
+
+        NaN on every cell whose section did not measure the gene (sections of
+        different panels; module docstring), in every normalisation: "not
+        measured" is not a zero, so use `np.nanmean` and friends, or restrict
+        to `gene_measured(name)` first.
         """
         if normalize not in ("raw", "cp10k", "log1p"):
             raise PluginError("bad_normalize",
@@ -292,6 +307,9 @@ class Dataset:
             out = out * self._size_factor()
             if normalize == "log1p":
                 out = np.log1p(out, out=out)
+        missing = gene_panels(gi).unmeasured_mask(pos)
+        if missing is not None:
+            out[missing] = np.nan
         # Bounded: a tool sweeping a 5,000-gene panel would otherwise hold the
         # whole dense matrix. 64 genes at 135k cells is 35 MB.
         if len(self._gene_cache) >= 64:
@@ -299,8 +317,25 @@ class Dataset:
         self._gene_cache[key] = out
         return out
 
+    def gene_measured(self, name: str) -> np.ndarray:
+        """(n_cells,) bool: True where the cell's section measured `name`.
+
+        All True unless the dataset joins sections of different gene panels;
+        False exactly where `gene(name)` is NaN.
+        """
+        pos = self._gene_positions().get(name)
+        if pos is None:
+            raise PluginError(
+                "unknown_gene",
+                f"{name!r} is not in this dataset's panel ({len(self._gene_positions())} genes).")
+        missing = gene_panels(self._gene_index()[0]).unmeasured_mask(pos)
+        if missing is None:
+            return np.ones(self.n_cells, dtype=bool)
+        return ~missing
+
     def genes(self, names, normalize: str = "cp10k") -> np.ndarray:
-        """(n_cells, len(names)) float32. Column j is `names[j]`."""
+        """(n_cells, len(names)) float32. Column j is `names[j]`, NaN where a
+        section did not measure that gene."""
         names = list(names)
         out = np.empty((self.n_cells, len(names)), dtype=np.float32)
         for j, nm in enumerate(names):
