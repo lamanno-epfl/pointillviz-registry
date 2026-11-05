@@ -2601,7 +2601,7 @@
     {
       "id": "seurat-niches",
       "name": "Seurat niches",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "Tissue niches from the cell types around each cell, imported from the authors' own Seurat package.",
       "author": "PointillViz reference tools",
       "icon": "scatter_plot",
@@ -2636,7 +2636,7 @@
         "schema": 3,
         "id": "seurat-niches",
         "name": "Seurat niches",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "author": "PointillViz reference tools",
         "description": "Tissue niches from the cell types around each cell, imported from the authors' own Seurat package.",
         "long_description": "Runs the niche analysis of Seurat (Hao et al., Nat Biotechnol 2024) with the authors' published R package, imported as they ship it, with no method code of its own. It counts the cell types among each cell's nearest cells and groups cells with similar surroundings into niches with k-means. The niches are painted on the map, with their cell types and a downloadable list of every cell's niche.",
@@ -2715,9 +2715,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/seurat-niches-v1.0.0/seurat-niches-1.0.0.pvtool",
-        "sha256": "85e09bfe6f32346231beb0cdf1a3e308aec92fcb4a3c5034ac3ebece324bceb8",
-        "size": 155569
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/seurat-niches-v1.0.1/seurat-niches-1.0.1.pvtool",
+        "sha256": "01444dfe8df6152b35bdc44cb1b5ad339da4d46eea7ca7a436bb81c81bfba9e3",
+        "size": 155572
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/seurat-niches/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/seurat-niches/preview.svg",
@@ -2735,7 +2735,7 @@
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "seurat-niches 1.0.0 by PointillViz reference tools; R entry tool.R, outputs summary, labels, matrix, table."
+            "message": "seurat-niches 1.0.1 by PointillViz reference tools; R entry tool.R, outputs summary, labels, matrix, table."
           },
           {
             "id": "environment",
@@ -2747,7 +2747,7 @@
             "id": "entry",
             "required": true,
             "status": "pass",
-            "message": "tool.R sourced in 3.63 s and defines run <- function(ds, params)."
+            "message": "tool.R sourced in 3.07 s and defines run <- function(ds, params)."
           },
           {
             "id": "imports",
@@ -2759,7 +2759,7 @@
             "id": "fixture",
             "required": true,
             "status": "pass",
-            "message": "ran on the 600-cell fixture in 4.39 s, returning summary, table, matrix, files, labels and 1 log line."
+            "message": "ran on the 600-cell fixture in 3.85 s, returning summary, table, matrix, files, labels and 1 log line."
           },
           {
             "id": "result",
@@ -2771,7 +2771,7 @@
             "id": "edge",
             "required": true,
             "status": "pass",
-            "message": "ran at the minimum corner (neighbors_k=5, niches_k=2) in 4.38 s; ran at the maximum corner (iter_max=500, neighbors_k=100, niches_k=30) in 4.65 s."
+            "message": "ran at the minimum corner (neighbors_k=5, niches_k=2) in 3.69 s; ran at the maximum corner (iter_max=500, neighbors_k=100, niches_k=30) in 3.95 s."
           },
           {
             "id": "no_mutation",
