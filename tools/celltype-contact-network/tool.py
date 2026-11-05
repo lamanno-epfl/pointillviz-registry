@@ -7,8 +7,8 @@ with the abundance of j gives the enrichment E. Sections pool by averaging W row
 how many cells of type i each section has.
 
 The network's layout comes from the whole dataset's pooled contacts, with no distance limit, whatever
-is isolated, selected or set in the form, so a node stands in the same place in every run on one
-annotation. It is computed once and kept in plugin_cache/; computed again, it comes out the same.
+is isolated, selected, loaded or set in the form, so a node stands in the same place in every run on
+one annotation. It is computed once and kept in plugin_cache/; computed again, it comes out the same.
 """
 
 import csv
@@ -25,7 +25,7 @@ from scipy.cluster.hierarchy import leaves_list, linkage
 from scipy.spatial import Delaunay, QhullError
 from scipy.spatial.distance import pdist
 
-from pointillviz_tool import PluginError, download_file, image
+from pointillviz_tool import Dataset, PluginError, download_file, image
 
 PSEUDO = 1e-4           # the enrichment's pseudocount
 MAX_LEVELS = 1000       # groups in one annotation: past this a column is not a set of cell types
@@ -80,7 +80,7 @@ def run(ds, params):
 
     ds.progress(0.3, "Placing the cell types")
     panel = _panel(tissue.n_types)
-    places = _layout(ds, tissue, panel)
+    places = _layout(ds, tissue, panel, params.get("field") or None)
 
     shown = _most_abundant(found["cells"], n_shown)
     frame = {"tissue": tissue, "run": found, "shown": shown, "cutoff": cutoff, "panel": panel,
@@ -427,9 +427,21 @@ def _seriate(W):
 
 
 # ---- the layout -----------------------------------------------------------------------------------
-def _layout(ds, tissue, panel):
-    """Each type's place in the panel, in px, (K, 2). It depends on the dataset and the annotation
-    alone, so it is computed once: a hash of what it depends on names the file that keeps it."""
+def _layout(ds, tissue, panel, field):
+    """Each type's place in the panel, in px, (K, 2). On an atlas this run's handle holds only the
+    sections on view, which change as the user moves between them, so the places come from the whole
+    dataset, opened here, and the nodes stand still across those moves."""
+    if not ds.meta.get("_composition"):
+        return _places(ds, tissue, panel)
+    whole = _Tissue(Dataset(ds.dir), field)
+    whole.in_run = set()
+    at = {name: i for i, name in enumerate(whole.names)}
+    return _places(ds, whole, panel)[[at[name] for name in tissue.names]]
+
+
+def _places(ds, tissue, panel):
+    """The layout of these cells. It depends on the dataset and the annotation alone, so it is computed
+    once: a hash of what it depends on names the file that keeps it."""
     key = hashlib.sha256(f"{LAYOUT_VERSION}|{tissue.names}".encode("utf-8"))
     placed = tissue.has_place
     key.update(tissue.coords[placed].tobytes())
