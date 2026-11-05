@@ -725,7 +725,7 @@
     {
       "id": "celltype-contact-network",
       "name": "Cell-type contact network",
-      "version": "1.0.1",
+      "version": "1.0.2",
       "description": "Which cell types touch which, from a Delaunay triangulation of the cells, as a network and a matrix corrected for abundance.",
       "author": "PointillViz authors",
       "icon": "hub",
@@ -760,7 +760,7 @@
         "schema": 3,
         "id": "celltype-contact-network",
         "name": "Cell-type contact network",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "author": "PointillViz authors",
         "description": "Which cell types touch which, from a Delaunay triangulation of the cells, as a network and a matrix corrected for abundance.",
         "long_description": "Triangulates each section's cells and counts every edge as a contact. Draws the cell types as a network and as a matrix, coloured by enrichment over abundance.",
@@ -839,9 +839,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/celltype-contact-network-v1.0.1/celltype-contact-network-1.0.1.pvtool",
-        "sha256": "17fbbd829c22db58c382a9df1d1e983c856ea81ef5ee41fe4e590f395488a36b",
-        "size": 36262
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/celltype-contact-network-v1.0.2/celltype-contact-network-1.0.2.pvtool",
+        "sha256": "94aa024a08eba5fdf83a5aad7884de49c2108db78c8659a45704e6620942a56c",
+        "size": 36462
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/celltype-contact-network/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/celltype-contact-network/preview.svg",
@@ -853,13 +853,13 @@
             "id": "bundle",
             "required": true,
             "status": "pass",
-            "message": "6 files, 35.4 kB packed and 126.3 kB unpacked, plugin.json at the root."
+            "message": "6 files, 35.6 kB packed and 126.9 kB unpacked, plugin.json at the root."
           },
           {
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "celltype-contact-network 1.0.1 by PointillViz authors; Python entry tool.py, outputs summary, images, table, files."
+            "message": "celltype-contact-network 1.0.2 by PointillViz authors; Python entry tool.py, outputs summary, images, table, files."
           },
           {
             "id": "environment",
@@ -877,13 +877,13 @@
             "id": "imports",
             "required": false,
             "status": "warn",
-            "message": "this tool uses filesystem_write — os.makedirs() at tool.py:462; numpy.savez() at tool.py:463; os.replace() at tool.py:464 (+1 more). None of it is blocked: a tool is arbitrary code run with the privileges of whoever started PointillViz, so this is disclosure for a human to weigh, not a sandbox."
+            "message": "this tool uses filesystem_write — os.makedirs() at tool.py:474; numpy.savez() at tool.py:475; os.replace() at tool.py:476 (+1 more). None of it is blocked: a tool is arbitrary code run with the privileges of whoever started PointillViz, so this is disclosure for a human to weigh, not a sandbox."
           },
           {
             "id": "fixture",
             "required": true,
             "status": "pass",
-            "message": "ran on the 600-cell fixture in 0.28 s, returning summary, table, files, images."
+            "message": "ran on the 600-cell fixture in 0.29 s, returning summary, table, files, images."
           },
           {
             "id": "result",
@@ -2377,7 +2377,7 @@
     {
       "id": "ridge-map",
       "name": "Ridge Map",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "A tissue section as a relief of ridges, their height a gene or the cell density, their colour the most common cell type.",
       "author": "PointillViz authors",
       "icon": "landscape",
@@ -2410,7 +2410,7 @@
         "schema": 3,
         "id": "ridge-map",
         "name": "Ridge Map",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "author": "PointillViz authors",
         "description": "A tissue section as a relief of ridges, their height a gene or the cell density, their colour the most common cell type.",
         "long_description": "",
@@ -2487,9 +2487,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/ridge-map-v1.0.0/ridge-map-1.0.0.pvtool",
-        "sha256": "3327c82ae5b4a9cb278e8b3334c5f44103f7232fa0177ee34fb2780b66e05dec",
-        "size": 37110
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/ridge-map-v1.0.1/ridge-map-1.0.1.pvtool",
+        "sha256": "316443ed0f93c0efdec60b5d5c31898ec81d016088366908b81c59c1a8f715f8",
+        "size": 35939
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/ridge-map/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/ridge-map/preview.svg",
@@ -2501,13 +2501,13 @@
             "id": "bundle",
             "required": true,
             "status": "pass",
-            "message": "6 files, 36.2 kB packed and 166.4 kB unpacked, plugin.json at the root."
+            "message": "6 files, 35.1 kB packed and 163.3 kB unpacked, plugin.json at the root."
           },
           {
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "ridge-map 1.0.0 by PointillViz authors; Python entry tool.py, outputs summary, images, files."
+            "message": "ridge-map 1.0.1 by PointillViz authors; Python entry tool.py, outputs summary, images, files."
           },
           {
             "id": "environment",
@@ -2519,7 +2519,7 @@
             "id": "entry",
             "required": true,
             "status": "pass",
-            "message": "tool.py imported in 0.17 s and defines run(ds, params)."
+            "message": "tool.py imported in 0.20 s and defines run(ds, params)."
           },
           {
             "id": "imports",
@@ -2531,7 +2531,7 @@
             "id": "fixture",
             "required": true,
             "status": "pass",
-            "message": "ran on the 600-cell fixture in 0.14 s, returning summary, files, images."
+            "message": "ran on the 600-cell fixture in 0.18 s, returning summary, files, images."
           },
           {
             "id": "result",
@@ -2543,7 +2543,7 @@
             "id": "edge",
             "required": true,
             "status": "pass",
-            "message": "ran at the minimum corner (relief=1.0, smoothing=0.25, strips=20) in 0.14 s; ran at the maximum corner (relief=30.0, smoothing=3.0, strips=300) in 0.21 s."
+            "message": "ran at the minimum corner (relief=1.0, smoothing=0.25, strips=20) in 0.17 s; ran at the maximum corner (relief=30.0, smoothing=3.0, strips=300) in 0.25 s."
           },
           {
             "id": "no_mutation",
@@ -2554,7 +2554,7 @@
         ],
         "risks": []
       },
-      "published": "2026-11-04"
+      "published": "2026-11-05"
     },
     {
       "id": "ripley-cross-l",
@@ -2775,7 +2775,7 @@
     {
       "id": "smoothie",
       "name": "Smoothie",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "Gene modules that share a spatial pattern, found by the published Smoothie package.",
       "author": "PointillViz authors",
       "icon": "hub",
@@ -2810,7 +2810,7 @@
         "schema": 3,
         "id": "smoothie",
         "name": "Smoothie",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "author": "PointillViz authors",
         "description": "Gene modules that share a spatial pattern, found by the published Smoothie package.",
         "long_description": "Runs Smoothie (Holdener & De Vlaminck, Commun Biol 2026) as its authors ship it: it smooths every gene over the tissue with a Gaussian, correlates the smoothed genes, links the pairs above a cutoff and clusters that network into modules. Returns the modules as a table, a figure mapping each one on the tissue, and every gene's module as a download.",
@@ -2881,9 +2881,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/smoothie-v1.0.0/smoothie-1.0.0.pvtool",
-        "sha256": "6b70170c06fe7fd3e342d98414e8996dd839ef334c08385e9bb2d79032cb4408",
-        "size": 60838
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/smoothie-v1.0.1/smoothie-1.0.1.pvtool",
+        "sha256": "de9e820ad2a740698b32e84e44302b63e857dc4001a78db48948a4cf1e6bdde6",
+        "size": 58724
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/smoothie/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/smoothie/preview.svg",
@@ -2895,13 +2895,13 @@
             "id": "bundle",
             "required": true,
             "status": "pass",
-            "message": "6 files, 59.4 kB packed and 276.1 kB unpacked, plugin.json at the root."
+            "message": "6 files, 57.3 kB packed and 271.0 kB unpacked, plugin.json at the root."
           },
           {
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "smoothie 1.0.0 by PointillViz authors; Python entry tool.py, outputs summary, table, images, files."
+            "message": "smoothie 1.0.1 by PointillViz authors; Python entry tool.py, outputs summary, table, images, files."
           },
           {
             "id": "environment",
@@ -2913,7 +2913,7 @@
             "id": "entry",
             "required": true,
             "status": "pass",
-            "message": "tool.py imported in 4.60 s and defines run(ds, params)."
+            "message": "tool.py imported in 5.23 s and defines run(ds, params)."
           },
           {
             "id": "imports",
@@ -2925,7 +2925,7 @@
             "id": "fixture",
             "required": true,
             "status": "pass",
-            "message": "ran on the 600-cell fixture in 11.44 s, returning summary, table, files, images and 57 log lines."
+            "message": "ran on the 600-cell fixture in 10.32 s, returning summary, table, files, images and 57 log lines."
           },
           {
             "id": "result",
@@ -2937,7 +2937,7 @@
             "id": "edge",
             "required": true,
             "status": "pass",
-            "message": "at the minimum corner (clustering_power=1.0, correlation_cutoff=0.1, smoothing_width=5.0) it refused in words rather than crashing: At a smoothing width of 5 µm, more than 15% of the tissue has fewer than 10 cells within 15 µm, the reach of the smoothing. Widen it to at least 7 µm. (code: too_sparse); ran at the maximum corner (clustering_power=9.0, correlation_cutoff=0.95, smoothing_width=200.0) in 10.24 s."
+            "message": "at the minimum corner (clustering_power=1.0, correlation_cutoff=0.1, smoothing_width=5.0) it refused in words rather than crashing: At a smoothing width of 5 µm, more than 15% of the tissue has fewer than 10 cells within 15 µm, the reach of the smoothing. Widen it to at least 7 µm. (code: too_sparse); ran at the maximum corner (clustering_power=9.0, correlation_cutoff=0.95, smoothing_width=200.0) in 10.17 s."
           },
           {
             "id": "no_mutation",
