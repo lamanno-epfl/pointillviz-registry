@@ -2,46 +2,30 @@
 
 Answers the question: **Which tissue domains, or niches, does a section divide into, judged by what each cell and its neighbours express?**
 
-BANKSY (Singhal, Chou, Lee et al., *Nature Genetics* 2024) describes every cell by its own expression together with the expression around it, and clusters the cells on that joint description. With most of the weight on the neighbourhood, the clusters are tissue domains; with little, they are cell types refined by their surroundings.
+The tool runs [BANKSY](https://github.com/prabhakarlab/Banksy_py) (Singhal, Chou, Lee et al., *Nature Genetics* 2024) with the authors' own Python package, **imported from PyPI as they ship it** (`pybanksy` 1.3.5). It calls the package's functions in the order of the authors' notebooks, with their values, and holds no copy of their method:
 
-## What you get
+1. normalises the counts and keeps the most variable genes (`normalize_total`, `filter_hvg`);
+2. builds a spatial graph of each cell's nearest neighbours (`initialize_banksy`);
+3. builds the BANKSY matrix: each cell's expression, its neighbours' weighted mean and, by default, the azimuthal Gabor filter (AGF), which responds where expression changes across a neighbourhood (`generate_banksy_matrix`);
+4. reduces it with PCA (`pca_umap`) and clusters the components with Leiden (`run_Leiden_partition`).
 
-- **Map.** Every cell painted by its niche, one colour per niche. Niches are numbered N1, N2, … from the largest, and the numbers carry no other order. Cells without spatial neighbours, or outside a selection, are left unpainted.
-- **Matrix.** Each niche's cell-type composition when the dataset has cell types; its marker genes otherwise.
-- **Table.** Each niche's size, its five strongest marker genes and its three main cell types.
-- **Download.** A CSV (gzip) of every cell's niche, when it fits in the result.
+Called directly on the same counts, with no code of this tool, the authors' functions give the same niches, cell for cell, on Xenium 5K sections of 135,231 and 235,803 cells.
 
-On a Xenium 5K mouse colon section of 135,000 cells, the defaults give 8 niches that follow the structure of the gut wall: the muscle layers, the lamina propria, crypt and surface epithelium, and a small niche of lymphoid aggregates (ILC3s and dendritic cells, with Cxcl13 and Ltb).
+**Map.** Every cell painted by its niche, numbered N1, N2, … from the largest.
 
-## Parameters
+**Matrix.** Each niche's cell-type composition, or its marker genes if the dataset has no cell types.
 
-- **Clustering.** *Leiden*, the authors' default, finds as many niches as the resolution calls for. *k-means* divides the cells into exactly the number of niches you ask for.
-- **Resolution (Leiden).** Higher values give more, smaller niches; lower values give fewer, larger ones.
-- **Niches (k-means).** How many niches k-means makes.
-- **Neighbourhood weight (λ).** 0.8 finds tissue domains, 0.2 spatially informed cell types, and 0 ignores space.
-- **Spatial neighbours (k).** How many nearest cells make a neighbourhood. The gradient features use twice as many.
-- **Include gradients (AGF).** Adds BANKSY's azimuthal Gabor filter, which responds where expression changes across a neighbourhood, as at a border.
-- **Variable genes.** How many of the most variable genes to use. More genes take longer.
-- **Principal components.** How many components of the joint matrix the clustering sees.
-- **Smooth labels.** Gives a cell the niche held by more than half of itself and its 15 nearest cells, repeated until nothing changes (BANKSY's smoothLabels).
+**Table.** Each niche's size, marker genes and main cell types, with a download of every cell's niche.
 
-## Method
+**Several sections.** A cell's neighbours always come from its own section. **Z-score** sets the rest. Per section, the default, each section gets its own z-scores and the matrices are joined before the PCA, as in the authors' multi-sample notebook. Across all sections, the package runs once over every cell, with the sections set apart in space so that no neighbourhood crosses between them.
 
-For each cell, three blocks over the most variable genes, ranked by dispersion as in scanpy's `flavor="seurat"`:
+**What the package does as shipped.** The tool leaves these as they are:
 
-- **own**: the cell's library-size-normalised expression;
-- **neighbourhood mean**: a Gaussian-weighted average over its *k* nearest cells, the kernel scaled by the cell's median neighbour distance;
-- **gradient (AGF)**: the azimuthal Gabor filter over its 2*k* nearest cells. It is large where expression changes across the neighbourhood.
+- The AGF is not centred: `generate_banksy_matrix` passes its `variance_balance` argument (False) into the `center` slot of `create_nbr_matrix`. Results can therefore differ from the authors' R package.
+- Ranked weights fail with the AGF, so the tool refuses that combination with a sentence.
+- With scaled Gaussian or reciprocal weights, cells on the same spot make the package lose the whole neighbourhood block without a word. The tool refuses, and names the uniform weights.
+- The package's other clustering, `mclust`, needs R and `rpy2`, and is not offered.
 
-Each column is z-scored, the blocks are weighted by √(1−λ), √(2λ/3) and √(λ/3) (√(1−λ) and √λ without the gradient), and the joint matrix is reduced to its top principal components. The components are then clustered:
+**Cost.** 135,231 cells take about 6 minutes and 21 GB at 2,000 variable genes, and a selection of 20,000 cells about 30 s. If the memory is not there, the tool says so before it starts, and which control to lower.
 
-- **Leiden**, as the authors' Python package runs it. Each cell is linked to its 50 nearest cells in component space, with weight 1/(1 + distance). A link is kept when the two cells share five or more of those neighbours, or when it is one of the three links the cell shares the most neighbours over. Leiden (RBConfiguration quality, seed 1234, repeated until no cell moves) partitions this graph.
-- **k-means**, with k-means++ seeding and the best of four fixed starts. The authors' R package offers it too (`clusterBanksy(algo = "kmeans")`).
-
-The joint matrix is streamed in chunks rather than stored, so memory stays near the size of its Gram matrix, and the chunks are built on up to 16 processors.
-
-This is a reimplementation in NumPy and SciPy, with python-igraph and leidenalg for Leiden. It takes no code from the authors' packages. On that section, its three feature blocks match `pybanksy` 1.3.5 to within 5 × 10⁻⁸, and its principal components are exact, where `pybanksy`'s default randomized PCA is unseeded and changes slightly from run to run.
-
-## Citation
-
-Singhal V, Chou N, Lee J, et al. BANKSY unifies cell typing and tissue domain segmentation for scalable spatial omics data analysis. *Nature Genetics* 56, 431–441 (2024).
+`pybanksy` is under the GPL-3.0 licence, and so is this tool.

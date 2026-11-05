@@ -2,15 +2,16 @@
   "schema": 3,
   "id": "banksy-niches",
   "name": "BANKSY niches",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "author": "PointillViz reference tools",
-  "description": "Tissue niches from each cell's expression and its neighbourhood's, by the BANKSY method.",
-  "long_description": "Joins every cell's expression to that of its spatial neighbours, as BANKSY does, and clusters the result into niches with the authors' Leiden recipe or with k-means. The niches are painted on the map, with their cell types, marker genes and a downloadable list of every cell's niche.",
+  "description": "Tissue niches from each cell's expression and its neighbourhood's, imported from the authors' own BANKSY package.",
+  "long_description": "Runs BANKSY (Singhal et al., Nat Genet 2024) with the authors' published Python package, pybanksy, imported as they ship it, with no method code of its own. It joins every cell's expression to that of its spatial neighbours and clusters the result into niches with Leiden. The niches are painted on the map, with their cell types, marker genes and a downloadable list of every cell's niche.",
   "icon": "hub",
   "tags": ["spatial", "niches", "domains", "clustering", "genes"],
   "entry": "tool.py",
-  "license": "MIT",
+  "license": "GPL-3.0",
   "citation": "Singhal V, Chou N, Lee J, et al. BANKSY unifies cell typing and tissue domain segmentation for scalable spatial omics data analysis. Nat Genet 56, 431-441 (2024).",
+  "homepage": "https://github.com/prabhakarlab/Banksy_py",
   "outputs": ["summary", "labels", "matrix", "table"],
   "optional_outputs": ["files"],
   "requires": {
@@ -20,89 +21,118 @@
   },
   "params": [
     {
-      "name": "clustering",
-      "type": "select",
-      "label": "Clustering",
-      "default": "leiden",
-      "options": [
-        {"value": "leiden", "label": "Leiden (the authors' default)"},
-        {"value": "kmeans", "label": "k-means"}
-      ],
-      "help": "Leiden finds as many niches as the resolution calls for, on a graph of cells that share neighbours.\nk-means divides the cells into exactly the number of niches you ask for."
-    },
-    {
-      "name": "resolution",
+      "name": "lambda_param",
       "type": "float",
-      "label": "Resolution (Leiden)",
-      "default": 0.3,
-      "min": 0.05,
-      "max": 2,
-      "step": 0.05,
-      "help": "Leiden only. Higher values give more, smaller niches; lower values give fewer, larger ones."
-    },
-    {
-      "name": "n_niches",
-      "type": "int",
-      "label": "Niches (k-means)",
-      "default": 8,
-      "min": 2,
-      "max": 30,
-      "step": 1,
-      "help": "k-means only: how many niches to divide the tissue into.\nIf two niches share their marker genes and cell types, try fewer."
-    },
-    {
-      "name": "lambda",
-      "type": "float",
-      "label": "Neighbourhood weight (λ)",
+      "label": "Neighbourhood weight (lambda)",
       "default": 0.8,
       "min": 0,
       "max": 1,
       "step": 0.05,
-      "help": "How much a cell's neighbourhood counts against its own expression.\n0.8 finds tissue domains; 0.2 finds spatially informed cell types; 0 ignores space."
+      "help": "How much a cell's neighbourhood counts against its own expression (pybanksy's lambda).\nThe authors use 0.8 for tissue domains and 0.2 for spatially informed cell types; 0 ignores space."
     },
     {
       "name": "k_geom",
       "type": "int",
-      "label": "Spatial neighbours (k)",
+      "label": "Spatial neighbours (k_geom)",
       "default": 15,
       "min": 5,
       "max": 30,
       "step": 1,
-      "help": "How many nearest cells make a neighbourhood. The gradient features use twice as many."
+      "help": "How many nearest cells make a neighbourhood. The authors' default is 15, for single cells."
     },
     {
-      "name": "agf",
-      "type": "bool",
-      "label": "Include gradients (AGF)",
-      "default": true,
-      "help": "Adds BANKSY's azimuthal Gabor filter, which responds where expression changes across a neighbourhood, as at a border."
-    },
-    {
-      "name": "n_genes",
+      "name": "max_m",
       "type": "int",
-      "label": "Variable genes",
-      "default": 2000,
-      "min": 50,
-      "max": 5000,
-      "step": 50,
-      "help": "How many of the most variable genes to use. More genes take longer."
+      "label": "AGF order (max_m)",
+      "default": 1,
+      "min": 0,
+      "max": 1,
+      "step": 1,
+      "help": "1 adds BANKSY's azimuthal Gabor filter, over twice the neighbours: it responds where expression changes across a neighbourhood, as at a border. It is the authors' recommended default.\n0 uses the neighbourhood's mean alone, and a third less memory."
     },
     {
-      "name": "n_pcs",
+      "name": "nbr_weight_decay",
+      "type": "select",
+      "label": "Neighbour weights",
+      "default": "scaled_gaussian",
+      "options": [
+        {"value": "scaled_gaussian", "label": "Scaled Gaussian (the authors' default)"},
+        {"value": "reciprocal", "label": "Reciprocal"},
+        {"value": "ranked", "label": "Ranked (AGF order 0 only)"},
+        {"value": "uniform", "label": "Uniform"}
+      ],
+      "help": "How a neighbour's weight falls with its distance."
+    },
+    {
+      "name": "zscore_by",
+      "type": "select",
+      "label": "Z-score",
+      "default": "section",
+      "options": [
+        {"value": "section", "label": "Per section (the authors' multi-sample way)"},
+        {"value": "all", "label": "Across all sections"}
+      ],
+      "help": "Sets over which cells each gene is z-scored when a run holds several sections. It changes nothing on one section.\nPer section evens out differences in a gene's overall level between sections, which suits replicates of one tissue. Across all sections keeps them, which suits sections of different tissues."
+    },
+    {
+      "name": "pca_dims",
       "type": "int",
-      "label": "Principal components",
+      "label": "Principal components (pca_dims)",
       "default": 20,
       "min": 5,
       "max": 50,
       "step": 1,
-      "help": "How many principal components of the joint matrix the clustering sees."
+      "help": "How many components of the BANKSY matrix the clustering sees. The authors' default is 20."
     },
     {
-      "name": "smooth",
-      "type": "bool",
-      "label": "Smooth labels",
-      "default": false,
-      "help": "Gives a cell the niche held by more than half of itself and its 15 nearest cells, repeated until nothing changes (BANKSY's smoothLabels)."
+      "name": "resolution",
+      "type": "float",
+      "label": "Leiden resolution",
+      "default": 0.7,
+      "min": 0.05,
+      "max": 3,
+      "step": 0.05,
+      "help": "Higher values give more, smaller niches; lower values give fewer, larger ones.\n0.7 is the authors' default. Not used when Number of niches is set."
+    },
+    {
+      "name": "max_labels",
+      "type": "int",
+      "label": "Number of niches (max_labels)",
+      "default": 0,
+      "min": 0,
+      "max": 30,
+      "step": 1,
+      "help": "0 goes by the resolution. Any other number has pybanksy search for a resolution that gives that many niches, up to 25 tries of Leiden, so it takes longer and may stop short."
+    },
+    {
+      "name": "num_nn",
+      "type": "int",
+      "label": "Expression neighbours (num_nn)",
+      "default": 50,
+      "min": 10,
+      "max": 100,
+      "step": 1,
+      "help": "How many neighbours each cell has in the graph Leiden partitions, in the space of the principal components. The authors use 50."
+    },
+    {
+      "name": "n_top_genes",
+      "type": "int",
+      "label": "Variable genes (n_top_genes)",
+      "default": 2000,
+      "min": 50,
+      "max": 5000,
+      "step": 50,
+      "help": "How many of the most variable genes to use. The authors use 2000.\nTime and memory grow in proportion."
+    },
+    {
+      "name": "refine_iterations",
+      "type": "int",
+      "label": "Label refinement (iterations)",
+      "default": 0,
+      "min": 0,
+      "max": 5,
+      "step": 1,
+      "help": "How many times a cell takes the label of most of its 6 nearest cells. 0 is off.\nThe authors offer it for domain segmentation, and warn against excess: it wears out fine domains."
     }
   ]
 }
