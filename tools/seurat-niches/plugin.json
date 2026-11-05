@@ -2,7 +2,7 @@
   "schema": 3,
   "id": "seurat-niches",
   "name": "Seurat niches",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "PointillViz reference tools",
   "description": "Tissue niches from the cell types around each cell, imported from the authors' own Seurat package.",
   "long_description": "Runs the niche analysis of Seurat (Hao et al., Nat Biotechnol 2024) with the authors' published R package, imported as they ship it, with no method code of its own. It counts the cell types among each cell's nearest cells and groups cells with similar surroundings into niches with k-means. The niches are painted on the map, with their cell types and a downloadable list of every cell's niche.",

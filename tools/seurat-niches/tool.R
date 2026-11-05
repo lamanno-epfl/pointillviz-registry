@@ -21,9 +21,9 @@ SEED <- 42L           # the seed Seurat's own functions default to
 STARTS <- 30L         # BuildNicheAssay's nstart, which it does not let a caller set
 #: Bytes at the peak, measured: the libraries, and dense matrices of cells x groups
 #: (the tallies, their sum, the assay's scaled copy and k-means' own), at 1.8 GB for
-#: 135,231 cells x 73 groups, 1.4 GB for 235,803 x 19 and 24 GB for 708,889 x 327.
+#: 135,231 cells x 73 groups, 1.4 GB for 235,803 x 19 and 29 GB for 708,889 x 327.
 BASE_BYTES <- 1e9
-DENSE_COPIES <- 13
+DENSE_COPIES <- 15
 MAX_SHOWN <- 60L      # cell types in the composition matrix
 MAX_MATRIX <- 10000L  # the matrix output's limit on cells
 RESULT_BUDGET <- 7500000  # views and files share an 8 MiB budget per result

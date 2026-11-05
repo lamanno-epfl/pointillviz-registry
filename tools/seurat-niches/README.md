@@ -28,6 +28,6 @@ Called directly with the real counts in the object, with no code of this tool, t
 - Neighbours come from an approximate search (Annoy), the default of `FindNeighbors`.
 - Each k-means start stops at R's default of 10 iterations, and the summary says when that cut one short. On the section above, 100 iterations changed no cell's niche.
 
-**Cost.** Memory and time grow with cells × cell types: 135,231 cells with 73 cell types take about 2 minutes and 2 GB, and 708,889 cells with 327 about 24 GB. If the memory is not there, the tool says so before it starts. It needs 2D coordinates.
+**Cost.** Memory and time grow with cells × cell types: 135,231 cells with 73 cell types take about 2 minutes and 2 GB, and 708,889 cells with 327 about 26 minutes and 29 GB. If the memory is not there, the tool says so before it starts. It needs 2D coordinates.
 
 `Seurat` is under the MIT licence, and so is this tool.
