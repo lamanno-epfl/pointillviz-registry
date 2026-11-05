@@ -682,7 +682,7 @@
     {
       "id": "celltype-contact-network",
       "name": "Cell-type contact network",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "Which cell types touch which, from a Delaunay triangulation of the cells, as a network and a matrix corrected for abundance.",
       "author": "PointillViz authors",
       "icon": "hub",
@@ -717,10 +717,10 @@
         "schema": 3,
         "id": "celltype-contact-network",
         "name": "Cell-type contact network",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "author": "PointillViz authors",
         "description": "Which cell types touch which, from a Delaunay triangulation of the cells, as a network and a matrix corrected for abundance.",
-        "long_description": "Triangulates each section's cells and counts every edge as a contact. Draws the cell types as a network with arrows whose width is the share of a type's contacts and whose colour is the enrichment over abundance, and as a matrix of the same numbers, with types of similar contacts seated together. Returns the numbers as a table and as downloads.",
+        "long_description": "Triangulates each section's cells and counts every edge as a contact. Draws the cell types as a network and as a matrix, coloured by enrichment over abundance.",
         "icon": "hub",
         "tags": [
           "spatial",
@@ -796,9 +796,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/celltype-contact-network-v1.0.0/celltype-contact-network-1.0.0.pvtool",
-        "sha256": "c607213af693eb44389e8811611204628389ebe873c27b235ce50ec45c515462",
-        "size": 39383
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/celltype-contact-network-v1.0.1/celltype-contact-network-1.0.1.pvtool",
+        "sha256": "17fbbd829c22db58c382a9df1d1e983c856ea81ef5ee41fe4e590f395488a36b",
+        "size": 36262
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/celltype-contact-network/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/celltype-contact-network/preview.svg",
@@ -810,13 +810,13 @@
             "id": "bundle",
             "required": true,
             "status": "pass",
-            "message": "6 files, 38.5 kB packed and 134.1 kB unpacked, plugin.json at the root."
+            "message": "6 files, 35.4 kB packed and 126.3 kB unpacked, plugin.json at the root."
           },
           {
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "celltype-contact-network 1.0.0 by PointillViz authors; Python entry tool.py, outputs summary, images, table, files."
+            "message": "celltype-contact-network 1.0.1 by PointillViz authors; Python entry tool.py, outputs summary, images, table, files."
           },
           {
             "id": "environment",
@@ -828,7 +828,7 @@
             "id": "entry",
             "required": true,
             "status": "pass",
-            "message": "tool.py imported in 0.24 s and defines run(ds, params)."
+            "message": "tool.py imported in 0.29 s and defines run(ds, params)."
           },
           {
             "id": "imports",
@@ -840,7 +840,7 @@
             "id": "fixture",
             "required": true,
             "status": "pass",
-            "message": "ran on the 600-cell fixture in 0.21 s, returning summary, table, files, images."
+            "message": "ran on the 600-cell fixture in 0.28 s, returning summary, table, files, images."
           },
           {
             "id": "result",
@@ -852,7 +852,7 @@
             "id": "edge",
             "required": true,
             "status": "pass",
-            "message": "ran at the minimum corner (cutoff=0.5, max_types=5) in 0.18 s; ran at the maximum corner (cutoff=50.0, max_distance=500.0, max_types=60) in 0.16 s."
+            "message": "ran at the minimum corner (cutoff=0.5, max_types=5) in 0.22 s; ran at the maximum corner (cutoff=50.0, max_distance=500.0, max_types=60) in 0.20 s."
           },
           {
             "id": "no_mutation",
