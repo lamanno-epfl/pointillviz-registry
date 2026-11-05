@@ -1,0 +1,19 @@
+# The tool's environment. pixi builds it exactly as pixi.lock pins it; run
+# `pixi lock` after every change to this file, and ship both files.
+# PointillViz's tool SDK is not a dependency: PointillViz provides it.
+[workspace]
+name = "smoothie"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
+
+[dependencies]
+python = ">=3.10,<3.14"
+numpy = "*"
+scipy = "*"
+# A dependency of scanpy. PyPI has no build of it for Intel Macs, conda-forge does.
+numba = "*"
+
+[pypi-dependencies]
+# The published package, exactly as its authors ship it. It brings anndata,
+# scanpy, igraph, matplotlib and pandas with it.
+smoothie-st = ">=1.0.2,<2"

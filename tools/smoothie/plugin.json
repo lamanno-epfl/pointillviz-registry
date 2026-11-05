@@ -1,0 +1,53 @@
+{
+  "schema": 3,
+  "id": "smoothie",
+  "name": "Smoothie",
+  "version": "1.0.0",
+  "author": "PointillViz authors",
+  "description": "Gene modules that share a spatial pattern, found by the published Smoothie package.",
+  "long_description": "Runs Smoothie (Holdener & De Vlaminck, Commun Biol 2026) as its authors ship it: it smooths every gene over the tissue with a Gaussian, correlates the smoothed genes, links the pairs above a cutoff and clusters that network into modules. Returns the modules as a table, a figure mapping each one on the tissue, and every gene's module as a download.",
+  "icon": "hub",
+  "tags": ["spatial", "genes", "modules", "co-expression", "network", "smoothing", "figure"],
+  "entry": "tool.py",
+  "license": "MIT",
+  "citation": "Holdener C, De Vlaminck I. Smoothie: efficient inference and integration of spatial co-expression networks from denoised spatial transcriptomics data. Commun Biol 9, 459 (2026). https://doi.org/10.1038/s42003-026-09898-z",
+  "homepage": "https://caholdener01.github.io/Smoothie/",
+  "outputs": ["summary", "table", "images", "files"],
+  "requires": {
+    "genes": true,
+    "spatial": "2d",
+    "min_cells": 200
+  },
+  "params": [
+    {
+      "name": "smoothing_width",
+      "type": "float",
+      "label": "Smoothing width (microns)",
+      "default": 20,
+      "min": 5,
+      "max": 200,
+      "step": 1,
+      "help": "Sets the width of the Gaussian that smooths each gene over the tissue, its standard deviation.\nThe authors find 20 to 40 µm works best. Wider finds broader patterns; sparse tissue needs it wider."
+    },
+    {
+      "name": "correlation_cutoff",
+      "type": "float",
+      "label": "Correlation cutoff",
+      "default": 0.4,
+      "min": 0.1,
+      "max": 0.95,
+      "step": 0.01,
+      "help": "Links two genes when their smoothed maps correlate above this.\nHigher keeps fewer genes, in tighter modules. Lower takes longer. The summary gives the authors' lower bound for this run."
+    },
+    {
+      "name": "clustering_power",
+      "type": "float",
+      "label": "Clustering power",
+      "default": 4,
+      "min": 1,
+      "max": 9,
+      "step": 0.5,
+      "help": "Sets how strongly weak links are discounted when the network is clustered.\nHigher gives more, smaller modules. The authors find 1 to 6 reasonable."
+    }
+  ]
+}
