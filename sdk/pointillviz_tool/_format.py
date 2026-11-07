@@ -3,10 +3,11 @@
 A converted dataset is a folder: `meta.json` says what the dataset holds,
 `cells.bin` has one fixed-width record per cell in the layout `meta.json`
 declares, and, when there is expression, `gene_counts.bin` holds gene-major
-sparse counts indexed by `gene_index.json`. A sharded atlas has no root
-`cells.bin` or gene matrix. It keeps one of each per section under
-`sections/<id>/`, and the cell order a reader sees is the order a
-*composition* lays those shards out in.
+sparse counts indexed by `gene_index.json`: one block per gene in the packed
+layout `_genecodec` reads (a copy of the app's backend/genecodec.py). A
+sharded atlas has no root `cells.bin` or gene matrix. It keeps one of each per
+section under `sections/<id>/`, and the cell order a reader sees is the order
+a *composition* lays those shards out in.
 
 These readers are the part of PointillViz's own (`backend/diffexp.py`,
 `backend/atlas.py`, `backend/convert.py`) that the `ds` handle needs, moved
@@ -24,6 +25,10 @@ Two things differ from the app on purpose:
   * A dataset with no gene matrix refuses with `PluginError("no_genes")`, a
     sentence the user can act on, rather than a FileNotFoundError that the
     runner can only report as a crash.
+
+Gene files that are not in the packed layout (a dataset converted before it)
+refuse with `PluginError("gene_layout")`, whose message says to convert the
+dataset again from its source; they are never read as a dataset without genes.
 """
 
 from __future__ import annotations
@@ -33,6 +38,8 @@ import os
 import re
 
 import numpy as np
+
+from . import _genecodec
 
 
 class PluginError(ValueError):
@@ -54,7 +61,24 @@ class PluginError(ValueError):
         self.message = message
 
 
+GENE_LAYOUT_CODE = "gene_layout"
+
+
+def _check_gene_index(gi: dict, what: str = "gene_index.json") -> None:
+    """Refuse a gene index that is not in the packed layout (or has a value
+    dtype the layout does not know) with PluginError("gene_layout"), in the
+    codec's words: convert the dataset again from its source."""
+    try:
+        _genecodec.check_index(gi, what)
+    except _genecodec.GeneLayoutError as exc:
+        raise PluginError(GENE_LAYOUT_CODE, str(exc)) from None
+
+
 TARGET_SUM = 1e4           # CP10K, the scanpy default
+SCAN_ENTRIES = 8_000_000   # entries a whole-matrix pass decodes at once
+                           # (_genecodec.decode_blocks): memory, never a number
+READ_AHEAD_ENTRIES = 1 << 18  # entries of whole blocks an atlas shard decodes
+                              # ahead in a gene-by-gene pass (memory only)
 
 _NP_DTYPE = {
     "u8": np.uint8, "u16": np.uint16, "u32": np.uint32,
@@ -280,11 +304,12 @@ def _total_counts(dataset_dir: str, meta: dict,
 
     gi, counts_path = _gene_index(dataset_dir, meta)
     totals = np.zeros(n, dtype=np.float64)
-    with open(counts_path, "rb") as fh:
-        for g in range(len(gi["lengths"])):
-            idx, val = _read_gene(fh, gi, g)
-            if idx.size:
-                np.add.at(totals, idx, val)
+    # Many genes per decode (_scan_matrix). np.add.at adds in the order given,
+    # and each cell still takes its genes in gene order, so these are the
+    # float64 sums of a gene-by-gene pass over _read_gene, bit for bit.
+    for idx, val in _scan_matrix(gi, counts_path):
+        if idx.size:
+            np.add.at(totals, idx, val)
     return totals
 
 
@@ -297,8 +322,10 @@ def _size_factors(totals: np.ndarray) -> np.ndarray:
 
 
 # ---------------------------------------------------------------------------
-# Gene matrix access. gene_counts.bin is gene-major: for every gene a block of
-# uint32 cell indices followed by the matching values.
+# Gene matrix access. gene_counts.bin is gene-major: for every gene one block
+# of its cell indices and values in the packed layout `_genecodec` decodes back
+# to exactly the arrays that were written. An index not marked
+# `"layout": "packed"` is refused with PluginError("gene_layout").
 #
 # Two dataset shapes reach this API. A flat dataset has ONE root
 # gene_index.json / gene_counts.bin pair. A sharded atlas has one pair PER
@@ -429,11 +456,15 @@ def _gene_index(dataset_dir: str, meta: dict = None) -> tuple[dict, str]:
 
     Both shapes carry `_panels`, a GenePanels: which cells' sections did not
     measure which gene. Read it with `gene_panels(gi)`.
+
+    An index (root or shard) that is not in the packed layout refuses with
+    PluginError("gene_layout").
     """
     root = os.path.join(dataset_dir, "gene_index.json")
     if os.path.exists(root):
         with open(root, "r", encoding="utf-8") as f:
             gi = json.load(f)
+        _check_gene_index(gi, "gene_index.json")
         gi["_panels"] = _flat_panels(dataset_dir, meta, int(gi.get("n_cells") or 0))
         return gi, os.path.join(dataset_dir, "gene_counts.bin")
     if meta is None:
@@ -489,6 +520,9 @@ class _AtlasGeneReader:
             except (OSError, ValueError):
                 pass
             if gi is not None:
+                # Outside the try: a shard in the old layout is refused, never
+                # composed as a shard without a gene index (empty genes).
+                _check_gene_index(gi, f"sections/{_safe_name(sid)}/gene_index.json")
                 # compose_cells' exact rule: an absent or ZERO count means
                 # the full shard (`entry.get("count") or on_disk`); a
                 # NEGATIVE count clamps to zero rows (`max(0, min(...))`).
@@ -522,28 +556,113 @@ class _AtlasGeneReader:
         self.n_cells = pos
         self.panels = GenePanels(pos, groups,
                                  {g: tuple(v) for g, v in by_gene.items()})
+        # Read-ahead for a pass over the genes (read): per part, the run it
+        # decoded ahead, (first gene, end gene, indptr, indices, values), the
+        # shard's cumulative nnz, and whether it reads directly from now on.
+        self._last, self._streak = -2, 0
+        self._ahead = [None] * len(self._parts)
+        self._cum = [None] * len(self._parts)
+        self._direct = [False] * len(self._parts)
 
     def read(self, gene_idx: int) -> tuple[np.ndarray, np.ndarray]:
-        """(composed cell indices uint32, values float64) for one gene."""
+        """(composed cell indices uint32, values float64) for one gene.
+
+        In a pass over the genes (the third gene in a row asked for right
+        after the one before it) each shard decodes a run of genes ahead
+        (_run_ahead), and genes a held run covers come from it; any other
+        request reads its blocks directly. The same arrays either way."""
+        g = int(gene_idx)
+        self._streak = self._streak + 1 if g == self._last + 1 else 0
+        self._last = g
+        sequential = self._streak >= 2
         idx_parts, val_parts = [], []
-        for path, gi, base, cuts in self._parts:
-            cut = int(cuts[gene_idx])
+        for p, (path, gi, base, cuts) in enumerate(self._parts):
+            nnz, length = gi["nnz"][g], gi["lengths"][g]
+            if (nnz == 0) != (length == 0):
+                # read_gene's rule, also where the cut below would skip it.
+                raise _genecodec.GeneLayoutError(
+                    f"gene {g}: {nnz} entries with a {length}-byte block")
+            cut = int(cuts[g])
             if cut <= 0:
                 continue
-            nnz = int(gi["nnz"][gene_idx])
-            off = int(gi["offsets"][gene_idx])
-            np_val = {"u16": np.uint16, "f32": np.float32}[gi["value_dtype"]]
-            with open(path, "rb") as fh:
-                fh.seek(off)
-                idx = np.frombuffer(fh.read(cut * 4), dtype=np.uint32)
-                fh.seek(off + nnz * 4)
-                val = np.frombuffer(
-                    fh.read(cut * np.dtype(np_val).itemsize), dtype=np_val)
+            run = self._ahead[p]
+            if (run is None or not run[0] <= g < run[1]) and sequential and not self._direct[p]:
+                run = self._run_ahead(p, g)
+            if run is not None and run[0] <= g < run[1]:
+                a, b = run[2][g - run[0]], run[2][g - run[0] + 1]
+                idx, val = run[3][a:b], run[4][a:b]
+            else:
+                with open(path, "rb") as fh:
+                    # The first `cut` entries, reading only their bytes.
+                    idx, val = _genecodec.read_gene(fh, gi, g, cut=cut)
             idx_parts.append(idx + np.uint32(base))
             val_parts.append(val.astype(np.float64))
         if not idx_parts:
             return np.zeros(0, dtype=np.uint32), np.zeros(0, dtype=np.float64)
         return np.concatenate(idx_parts), np.concatenate(val_parts)
+
+    def _run_ahead(self, p: int, g: int):
+        """Part p's genes from g on, about READ_AHEAD_ENTRIES entries of whole
+        blocks decoded at once (_genecodec.decode_blocks) and cut to each gene's
+        first `cut` entries, held in place of the part's last run. On a block
+        that does not decode, None and direct reads for this part from then on,
+        so a broken gene raises when it is read, as before."""
+        path, gi, base, cuts = self._parts[p]
+        if self._cum[p] is None:
+            self._cum[p] = np.cumsum(np.asarray(gi["nnz"], dtype=np.int64))
+        cum = self._cum[p]
+        end = int(np.searchsorted(cum, (cum[g - 1] if g else 0) + READ_AHEAD_ENTRIES, side="right"))
+        end = min(len(cuts), max(end, g + 1))
+        cut = cuts[g:end]
+        nnz = np.asarray(gi["nnz"][g:end], dtype=np.int64)
+        want = g + np.flatnonzero(cut > 0)
+        try:
+            indptr, idx, val = _genecodec.decode_blocks(_file_bytes(path), gi, want)
+        except (_genecodec.GeneLayoutError, KeyError):
+            self._ahead[p], self._direct[p] = None, True
+            return None
+        take = np.clip(np.minimum(cut, nnz), 0, None)       # read_gene's min(cut, nnz)
+        counts = np.diff(indptr)
+        if not np.array_equal(take[want - g], counts):
+            within = np.arange(idx.size, dtype=np.int64) - np.repeat(indptr[:-1], counts)
+            keep = within < np.repeat(take[want - g], counts)
+            idx, val = idx[keep], val[keep]
+        ptr = np.zeros(end - g + 1, dtype=np.int64)
+        np.cumsum(take, out=ptr[1:])
+        run = (g, end, ptr, idx, val)
+        self._ahead[p] = run
+        return run
+
+    def scan(self):
+        """What `read` returns for every gene, (composed cell indices uint32,
+        values float64), shard by shard and many genes per decode: for a pass
+        that only sums per cell (_scan_matrix). A cell lies in one shard, so
+        its sums still take its genes in gene order.
+
+        Whole blocks are decoded and cut to each gene's retained entries, the
+        same first `cut` entries `read` takes. Every gene is checked first,
+        those the cuts skip too, as `read` checks them."""
+        n_genes = len(self.genes)
+        for path, gi, base, cuts in self._parts:
+            _check_entries(gi, n_genes)
+            cut = cuts[np.arange(n_genes)]
+            want = np.flatnonzero(cut > 0)
+            if not want.size:
+                continue
+            raw = _file_bytes(path)
+            for run in _gene_runs(want, gi["nnz"]):
+                indptr, idx, val = _genecodec.decode_blocks(raw, gi, run)
+                counts = np.diff(indptr)
+                within = np.arange(idx.size, dtype=np.int64) - np.repeat(indptr[:-1], counts)
+                keep = within < np.repeat(cut[run], counts)
+                yield idx[keep] + np.uint32(base), val[keep].astype(np.float64)
+
+    def check_entries(self) -> None:
+        """read_gene's rule over every shard's index at once (_check_entries):
+        for a pass that skips genes by their counts and never reads them."""
+        n_genes = len(self.genes)
+        for _path, gi, _base, _cuts in self._parts:
+            _check_entries(gi, n_genes)
 
     def as_gene_index(self) -> dict:
         """A dict shaped like a root gene_index.json, for this composition.
@@ -595,32 +714,84 @@ def _gene_cuts_for_count(sec_dir: str, gi: dict, count: int, n_genes: int):
     for k, v in enumerate(cells):
         if v == count and k < len(cuts) and cuts[k]:
             return cuts[k]
-    path = os.path.join(sec_dir, "gene_counts.bin")
-    out = []
-    with open(path, "rb") as f:
-        for g in range(n_genes):
-            nnz = int(gi["nnz"][g])
-            if nnz == 0:
-                out.append(0)
-                continue
-            f.seek(int(gi["offsets"][g]))
-            idx = np.frombuffer(f.read(nnz * 4), dtype="<u4")
-            out.append(int(np.searchsorted(idx, count, side="left")))
+    # Many genes per decode (_gene_runs bounds the memory); the binary search
+    # stays per gene.
+    raw = _file_bytes(os.path.join(sec_dir, "gene_counts.bin"))
+    nnz = np.asarray([int(gi["nnz"][g]) for g in range(n_genes)], dtype=np.int64)
+    out = [0] * n_genes
+    for run in _gene_runs(np.flatnonzero(nnz), nnz):
+        indptr, idx, _vals = _genecodec.decode_blocks(raw, gi, run)
+        for j, g in enumerate(run):
+            out[int(g)] = int(np.searchsorted(idx[indptr[j]:indptr[j + 1]], count, side="left"))
     return out
 
 
 def _read_gene(fh, gi: dict, gene_idx: int) -> tuple[np.ndarray, np.ndarray]:
+    """(cell indices uint32, values float64) of one gene, as stored. An empty
+    gene of a flat dataset is (uint32[0], float32[0]); of an atlas,
+    (uint32[0], float64[0])."""
     reader = gi.get("_atlas_reader")
     if reader is not None:
         return reader.read(gene_idx)
-    off = gi["offsets"][gene_idx]
+    if gi.get("layout") != _genecodec.LAYOUT:
+        _check_gene_index(gi)          # an index loaded without the check
     length = gi["lengths"][gene_idx]
     nnz = gi["nnz"][gene_idx]
-    if length == 0 or nnz == 0:
+    if length == 0 and nnz == 0:
         return np.zeros(0, dtype=np.uint32), np.zeros(0, dtype=np.float32)
-    np_val = {"u16": np.uint16, "f32": np.float32}[gi["value_dtype"]]
-    fh.seek(off)
-    raw = fh.read(length)
-    idx = np.frombuffer(raw, dtype=np.uint32, count=nnz)
-    val = np.frombuffer(raw, dtype=np_val, count=nnz, offset=nnz * 4)
+    # Only one of the two 0 is a broken index entry: read_gene raises GeneLayoutError.
+    idx, val = _genecodec.read_gene(fh, gi, gene_idx)
     return idx, val.astype(np.float64)
+
+
+def _check_entries(gi: dict, n=None) -> None:
+    """_genecodec.read_gene's rule over a whole index (its first `n` genes): an
+    entry with exactly one of nnz and length 0 raises GeneLayoutError, never
+    reads as an empty gene, also in a pass that skips genes by their counts."""
+    nnz = np.asarray(gi["nnz"][:n], dtype=np.int64)
+    lengths = np.asarray(gi["lengths"][:n], dtype=np.int64)
+    bad = np.flatnonzero((nnz == 0) != (lengths == 0))
+    if bad.size:
+        g = int(bad[0])
+        raise _genecodec.GeneLayoutError(
+            f"gene {g}: {int(nnz[g])} entries with a {int(lengths[g])}-byte block")
+
+
+def _gene_runs(genes, nnz, limit: int = SCAN_ENTRIES) -> list:
+    """`genes` cut into consecutive pieces of about `limit` entries (by `nnz`);
+    a gene with more is a piece of its own. Bounds the memory of a decode of
+    many genes at once."""
+    genes = np.asarray(genes, dtype=np.int64)
+    cum = np.cumsum(np.asarray(nnz, dtype=np.int64)[genes])
+    out, s = [], 0
+    while s < genes.size:
+        e = int(np.searchsorted(cum, (cum[s - 1] if s else 0) + limit, side="right"))
+        e = min(genes.size, max(e, s + 1))
+        out.append(genes[s:e])
+        s = e
+    return out
+
+
+def _file_bytes(path: str) -> np.ndarray:
+    """A whole gene file as a read-only uint8 memmap (np.memmap refuses an
+    empty file, which holds no block: an empty array then)."""
+    if os.path.getsize(path) == 0:
+        return np.zeros(0, dtype=np.uint8)
+    return np.memmap(path, dtype=np.uint8, mode="r")
+
+
+def _scan_matrix(gi: dict, counts_path: str):
+    """Every gene's entries as `_read_gene` gives them (cell indices uint32,
+    values float64), concatenated a run of genes at a time and decoded
+    together (_genecodec.decode_blocks): for a pass that only sums per cell,
+    which adds each cell's genes in gene order either way."""
+    reader = gi.get("_atlas_reader")
+    if reader is not None:
+        yield from reader.scan()
+        return
+    if gi.get("layout") != _genecodec.LAYOUT:
+        _check_gene_index(gi)          # an index loaded without the check
+    raw = _file_bytes(counts_path)
+    for run in _gene_runs(np.arange(len(gi["lengths"])), gi["nnz"]):
+        _, idx, val = _genecodec.decode_blocks(raw, gi, run)
+        yield idx, val.astype(np.float64)

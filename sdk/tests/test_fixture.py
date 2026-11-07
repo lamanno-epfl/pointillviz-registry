@@ -1,11 +1,13 @@
 """The fixture: the dataset every gate validates a tool against."""
 
+import hashlib
 import json
 import os
+import re
 
 import numpy as np
 
-from pointillviz_tool import Dataset
+from pointillviz_tool import Dataset, _genecodec
 from pointillviz_tool.fixture import (CELL_TYPES, FIXTURE_SEED, N_CELLS, N_GENES,
                                       N_SECTIONS, make_fixture, write_fixture)
 from pointillviz_tool.manifest import check_requires, validate
@@ -44,6 +46,39 @@ def test_fixture_is_awkward_on_purpose(fixture_dir):
     assert len(np.unique(ds.section)) == 2, "must carry two sections"
     assert float(ds.gene("Silent", "raw").max()) == 0.0
     assert int((ds.gene("Ubiquitous", "raw") > 0).sum()) == N_CELLS
+
+
+def test_the_genes_are_in_the_packed_layout_the_converter_writes(fixture_dir):
+    with open(os.path.join(fixture_dir, "gene_index.json")) as fh:
+        gi = json.load(fh)
+    with open(os.path.join(fixture_dir, "meta.json")) as fh:
+        meta = json.load(fh)
+    size = os.path.getsize(os.path.join(fixture_dir, "gene_counts.bin"))
+    assert gi["layout"] == "packed" and gi["value_dtype"] == "u16"
+    assert gi["file_size"] == meta["genes"]["file_size"] == size == sum(gi["lengths"])
+    assert gi["offsets"] == [0] + np.cumsum(gi["lengths"])[:-1].tolist(), \
+        "one block per gene, back to back, in gene order"
+    assert len(gi["n_esc_idx"]) == len(gi["n_esc_val"]) == N_GENES
+    assert gi["lengths"][gi["genes"].index("Silent")] == 0, "an empty gene is an empty block"
+    with open(os.path.join(fixture_dir, "gene_counts.bin"), "rb") as fh:
+        for g in range(N_GENES):
+            idx, val = _genecodec.read_gene(fh, gi, g)
+            assert idx.size == val.size == gi["nnz"][g]
+            assert (np.diff(idx.astype(np.int64)) > 0).all() and (val > 0).all()
+    _genecodec.check_index(gi)
+
+
+def test_the_index_carries_the_counts_files_checksum(fixture_dir):
+    # The browser's cache key and a requirement of its index check: the
+    # lowercase hex SHA-1 of the whole counts file, right after file_size.
+    with open(os.path.join(fixture_dir, "gene_index.json")) as fh:
+        gi = json.load(fh)
+    with open(os.path.join(fixture_dir, "gene_counts.bin"), "rb") as fh:
+        want = hashlib.sha1(fh.read()).hexdigest()
+    assert gi["checksum"] == want
+    assert re.fullmatch(r"[0-9a-f]{40}", gi["checksum"])
+    keys = list(gi)
+    assert keys[keys.index("file_size") + 1] == "checksum"
 
 
 def test_fixture_satisfies_an_ordinary_manifest(fixture_dir):

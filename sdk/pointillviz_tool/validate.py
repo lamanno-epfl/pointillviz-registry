@@ -27,10 +27,10 @@ to the CPU, and that fallback is the path CI can test.
 Why a fixture and not a real dataset
 ------------------------------------
 `pointillviz_tool.fixture` builds a real converted dataset (same `cells.bin`
-layout, same gene-major `gene_counts.bin`) that is deliberately awkward: 8
-cells with NaN coordinates, a cell type with zero members, a gene expressed
-nowhere, two sections. A tool validated against a clean rectangle passes here
-and fails on the first slide someone opens.
+layout, same gene-major `gene_counts.bin` in the packed layout) that is
+deliberately awkward: 8 cells with NaN coordinates, a cell type with zero
+members, a gene expressed nowhere, two sections. A tool validated against a
+clean rectangle passes here and fails on the first slide someone opens.
 
 Where the tool runs
 -------------------

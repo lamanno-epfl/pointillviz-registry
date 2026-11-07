@@ -18,11 +18,12 @@ dataset, and that installing one cannot break the viewer. Both follow from the
 same boundary: tools use a dataset API and run outside the server process.
 
   * **Same input shape everywhere.** `cells.bin` is a fixed-width record whose
-    layout is per-dataset, and `gene_counts.bin` is gene-major sparse with a
-    per-dataset value dtype. A tool that read either directly would be a tool
-    that works on one dataset. Everything here hands back plain dense NumPy of
-    a documented shape, so `ds.gene("Cd3e")` is `(n_cells,) float32` on a
-    5,106-gene Xenium section and on a 10.4 M-cell atlas alike.
+    layout is per-dataset, and `gene_counts.bin` is gene-major sparse, one
+    packed block per gene, with a per-dataset value dtype. A tool that read
+    either directly would be a tool that works on one dataset. Everything
+    here hands back plain dense NumPy of a documented shape, so
+    `ds.gene("Cd3e")` is `(n_cells,) float32` on a 5,106-gene Xenium section
+    and on a 10.4 M-cell atlas alike.
   * **Generated forms, extensible results.** Native outputs use the viewer's
     renderers. Tools can also return self-contained HTML views, file
     downloads and static images without changes to the host. Views run in an
@@ -273,9 +274,9 @@ class Dataset:
           "log1p" — log1p of cp10k, which is what most statistics want
 
         Densification is deliberate and is the point of this method: the file
-        is gene-major sparse and every tool would otherwise reimplement the
-        same scatter. A gene costs one seek and one read regardless of how many
-        cells express it.
+        is gene-major sparse, one packed block per gene, and every tool would
+        otherwise reimplement the same decoding and scatter. A gene costs one
+        seek and one read regardless of how many cells express it.
 
         NaN on every cell whose section did not measure the gene (sections of
         different panels; module docstring), in every normalisation: "not

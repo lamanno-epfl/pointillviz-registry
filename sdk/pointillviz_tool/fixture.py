@@ -2,9 +2,9 @@
 
 Every gate runs a candidate tool against this, never against a user's data. It
 has to be a REAL dataset — the same `cells.bin` record layout, the same
-gene-major `gene_counts.bin`, the same `meta.json` keys — because the point of
-the gate is "does this tool work on the thing it will be given", and a mock
-handle would validate against the mock.
+gene-major `gene_counts.bin` in the packed layout, the same `meta.json` keys —
+because the point of the gate is "does this tool work on the thing it will be
+given", and a mock handle would validate against the mock.
 
 It is also deliberately awkward. Real datasets have cells with no coordinates,
 categories with no members, genes expressed in nothing, and more than one
@@ -24,10 +24,13 @@ not promise the same random streams across its own versions.)
 
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 
 import numpy as np
+
+from . import _genecodec
 
 FIXTURE_SEED = 20260820
 N_CELLS = 600
@@ -118,12 +121,15 @@ def make_fixture(out_dir: str, seed: int = FIXTURE_SEED) -> str:
     genes, gi = _write_genes(out_dir, rng, codes, totals)
     meta = _meta(out_dir, record, genes, gi)
     with open(os.path.join(out_dir, "meta.json"), "w", encoding="utf-8") as fh:
-        json.dump(meta, fh, indent=1)
+        json.dump(meta, fh, indent=1, allow_nan=False)
     return out_dir
 
 
 def _write_genes(out_dir: str, rng, codes: np.ndarray, totals: np.ndarray):
-    """Gene-major sparse counts, in the layout PointillViz's converter writes."""
+    """Gene-major sparse counts, in the layout PointillViz's converter writes:
+    one packed block per gene (`_genecodec`), an empty gene a block of length 0,
+    and the index's `checksum`, the lowercase hex SHA-1 of the whole counts file
+    (the browser's cache key; no Python reader uses it)."""
     names = [f"Gene{i:03d}" for i in range(N_GENES)]
     names[0] = "Silent"                        # expressed in nothing
     names[1] = "Ubiquitous"                    # expressed in everything
@@ -131,7 +137,9 @@ def _write_genes(out_dir: str, rng, codes: np.ndarray, totals: np.ndarray):
     names[3] = "Marker1"                       # tracks cell type 1
 
     offsets, lengths, nnz_list, max_vals = [], [], [], []
+    n_esc_idx, n_esc_val = [], []
     offset = 0
+    sha1 = hashlib.sha1()
     with open(os.path.join(out_dir, "gene_counts.bin"), "wb") as fh:
         for g, name in enumerate(names):
             if name == "Silent":
@@ -148,23 +156,28 @@ def _write_genes(out_dir: str, rng, codes: np.ndarray, totals: np.ndarray):
                 dense = dense.astype(np.float64)
             idx = np.flatnonzero(dense > 0).astype(np.uint32)
             val = dense[idx].astype(np.uint16)
-            blob = idx.tobytes() + val.tobytes()
+            blob, ne, nv = _genecodec.encode_block(idx, val, "u16")
             fh.write(blob)
+            sha1.update(blob)
             offsets.append(offset)
             lengths.append(len(blob))
             nnz_list.append(int(idx.size))
+            n_esc_idx.append(ne)
+            n_esc_val.append(nv)
             max_vals.append(float(dense.max()))
             offset += len(blob)
 
     gi = {
-        "n_cells": N_CELLS, "n_genes": N_GENES,
+        "n_cells": N_CELLS, "n_genes": N_GENES, "layout": _genecodec.LAYOUT,
         "value_dtype": "u16", "index_dtype": "u4",
         "genes": names, "offsets": offsets, "lengths": lengths,
-        "nnz": nnz_list, "max_counts": max_vals,
+        "nnz": nnz_list, "n_esc_idx": n_esc_idx, "n_esc_val": n_esc_val,
+        "max_counts": max_vals,
         "total_nnz": int(sum(nnz_list)), "file_size": offset,
+        "checksum": sha1.hexdigest(),
     }
     with open(os.path.join(out_dir, "gene_index.json"), "w", encoding="utf-8") as fh:
-        json.dump(gi, fh)
+        json.dump(gi, fh, allow_nan=False)   # strict JSON, as the browser parses it
     return names, gi
 
 

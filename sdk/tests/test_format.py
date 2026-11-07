@@ -5,6 +5,9 @@ counts never writes into the dataset folder, and a dataset without a gene
 matrix refuses with `no_genes` rather than crashing. Everything else must read
 exactly what the app reads; PointillViz's own tests check that against its
 readers on a real dataset.
+
+Gene files are in the packed layout (`_genecodec`); files in any other layout
+refuse with `gene_layout`, never read as a dataset without genes.
 """
 
 import json
@@ -15,6 +18,7 @@ import pytest
 
 from pointillviz_tool import Dataset, PluginError
 from pointillviz_tool import _format as fmt
+from pointillviz_tool import _genecodec
 
 
 def _meta(path):
@@ -113,6 +117,71 @@ def test_a_missing_gene_matrix_is_a_refusal(fresh_fixture):
     assert exc.value.code == "no_genes" and "gene" in exc.value.message
 
 
+def _edit_index(path, edit):
+    with open(path) as fh:
+        gi = json.load(fh)
+    edit(gi)
+    with open(path, "w") as fh:
+        json.dump(gi, fh)
+
+
+def test_gene_files_in_the_old_layout_are_a_refusal(fresh_fixture):
+    _edit_index(os.path.join(fresh_fixture, "gene_index.json"), lambda gi: gi.pop("layout"))
+    with pytest.raises(PluginError) as exc:
+        fmt._gene_index(fresh_fixture)
+    assert exc.value.code == "gene_layout"
+    assert "convert it again" in exc.value.message, "the message says what to do"
+    ds = Dataset(fresh_fixture)
+    for ask in (lambda: ds.gene("Silent"), lambda: ds.gene_names):
+        with pytest.raises(PluginError) as exc:
+            ask()
+        assert exc.value.code == "gene_layout", "never an empty gene"
+
+
+def test_a_value_dtype_the_layout_does_not_know_is_a_refusal(fresh_fixture):
+    _edit_index(os.path.join(fresh_fixture, "gene_index.json"),
+                lambda gi: gi.update(value_dtype="u32"))
+    with pytest.raises(PluginError) as exc:
+        fmt._gene_index(fresh_fixture)
+    assert exc.value.code == "gene_layout"
+
+
+@pytest.mark.parametrize("gene, key, value", [("Ubiquitous", "lengths", 0), ("Silent", "lengths", 8),
+                                              ("Ubiquitous", "nnz", 0)])
+def test_an_entry_whose_nnz_and_length_disagree_is_never_an_empty_gene(fresh_fixture, gene, key, value):
+    path = os.path.join(fresh_fixture, "gene_index.json")
+    _edit_index(path, lambda gi: gi[key].__setitem__(gi["genes"].index(gene), value))
+    with pytest.raises(_genecodec.GeneLayoutError):
+        _dense(fresh_fixture, gene)
+    # The whole-matrix pass (no totals column) meets it as well.
+    meta = _rewrite_meta(fresh_fixture, _drop_totals_column)
+    with pytest.raises(_genecodec.GeneLayoutError):
+        fmt._total_counts(fresh_fixture, meta, fmt._load_cells_bin(fresh_fixture, meta))
+
+
+def test_escaped_gaps_and_values_read_back_exactly(fresh_fixture):
+    # Gaps of 255 or more and u16 values of 255 or more are escaped in a block;
+    # the fixture's own genes have neither, so one gene here has both.
+    n = int(_meta(fresh_fixture)["n_cells"])
+    dense = np.zeros(n)
+    rows = np.array([0, 254, 255, 256, 511, 599])
+    dense[rows] = [255, 1, 65535, 254, 300, 7]
+    idx = np.flatnonzero(dense).astype(np.uint32)
+    block, ne, nv = _genecodec.encode_block(idx, dense[idx].astype(np.uint16), "u16")
+    assert ne > 0 and nv > 0, "the gene must exercise both escapes"
+    with open(os.path.join(fresh_fixture, "gene_counts.bin"), "ab") as fh:
+        offset = fh.tell()
+        fh.write(block)
+
+    def put(gi):
+        g = gi["genes"].index("Silent")
+        gi["offsets"][g], gi["lengths"][g], gi["nnz"][g] = offset, len(block), int(idx.size)
+        gi["n_esc_idx"][g], gi["n_esc_val"][g] = ne, nv
+    _edit_index(os.path.join(fresh_fixture, "gene_index.json"), put)
+    assert np.array_equal(_dense(fresh_fixture, "Silent"), dense)
+    assert np.array_equal(Dataset(fresh_fixture).gene("Silent", "raw"), dense.astype(np.float32))
+
+
 # ---------------------------------------------------------------------------
 # Sharded atlases
 # ---------------------------------------------------------------------------
@@ -134,17 +203,20 @@ def _write_shard(sec_dir, si, counts, lod=None):
     rec["y"] = 10.0 * si
     rec["cat_tissue"] = si
     rec.tofile(os.path.join(sec_dir, "cells.bin"))
-    offsets, lengths, nnz = [], [], []
+    offsets, lengths, nnz, n_esc_idx, n_esc_val = [], [], [], [], []
     with open(os.path.join(sec_dir, "gene_counts.bin"), "wb") as fh:
         for g in range(counts.shape[1]):
             idx = np.flatnonzero(counts[:, g]).astype("<u4")
-            blob = idx.tobytes() + counts[idx, g].astype("<u2").tobytes()
+            block, ne, nv = _genecodec.encode_block(idx, counts[idx, g].astype("<u2"), "u16")
             offsets.append(fh.tell())
-            lengths.append(len(blob))
+            lengths.append(len(block))
             nnz.append(int(idx.size))
-            fh.write(blob)
-    gi = {"n_cells": n, "n_genes": len(GENES), "value_dtype": "u16", "genes": GENES,
-          "offsets": offsets, "lengths": lengths, "nnz": nnz,
+            n_esc_idx.append(ne)
+            n_esc_val.append(nv)
+            fh.write(block)
+    gi = {"n_cells": n, "n_genes": len(GENES), "layout": "packed", "value_dtype": "u16",
+          "genes": GENES, "offsets": offsets, "lengths": lengths, "nnz": nnz,
+          "n_esc_idx": n_esc_idx, "n_esc_val": n_esc_val,
           "max_counts": counts.max(axis=0).astype(float).tolist()}
     if lod is not None:
         gi["lod_cells"] = [lod]
@@ -153,14 +225,12 @@ def _write_shard(sec_dir, si, counts, lod=None):
         json.dump(gi, fh)
 
 
-@pytest.fixture
-def atlas(tmp_path):
-    root = str(tmp_path / "atlas")
-    for si, (sid, counts) in enumerate(SHARDS.items()):
-        _write_shard(os.path.join(root, "sections", sid), si, counts,
-                     lod=3 if sid == "B" else None)
+def _write_atlas(root, shards, lods):
+    for si, (sid, counts) in enumerate(shards.items()):
+        _write_shard(os.path.join(root, "sections", sid), si, counts, lod=lods.get(sid))
     meta = {
-        "atlas": True, "name": "atlas_probe", "n_cells": 9,
+        "atlas": True, "name": "atlas_probe",
+        "n_cells": int(sum(c.shape[0] for c in shards.values())),
         "record_layout": [
             {"name": "x", "dtype": "f32", "role": "x", "offset": 0},
             {"name": "y", "dtype": "f32", "role": "y", "offset": 4},
@@ -170,15 +240,20 @@ def atlas(tmp_path):
             {"name": "_pad2", "dtype": "u8", "role": "padding", "offset": 11}],
         "record_size": 12,
         "sections": [{"section_id": sid, "n_cells": int(c.shape[0])}
-                     for sid, c in SHARDS.items()],
+                     for sid, c in shards.items()],
         "genes": {"n_genes": len(GENES), "genes": GENES, "value_dtype": "u16"},
         "extra_categorical": [{"name": "cat_tissue", "source_obs": "tissue",
-                               "levels": list(SHARDS), "missing_idx": 255}],
+                               "levels": list(shards), "missing_idx": 255}],
         "spatial": {"mode": "2d"},
     }
     with open(os.path.join(root, "meta.json"), "w") as fh:
         json.dump(meta, fh)
     return root
+
+
+@pytest.fixture
+def atlas(tmp_path):
+    return _write_atlas(str(tmp_path / "atlas"), SHARDS, {"B": 3})
 
 
 def _atlas_gene(root, meta, name):
@@ -296,3 +371,97 @@ def test_the_handle_reads_an_atlas(atlas):
     assert ds.section.tolist() == [0] * 5 + [1] * 4
     levels, codes = ds.categorical("tissue")
     assert levels == ["A", "B"] and codes.tolist() == [0] * 5 + [1] * 4
+
+
+def test_atlas_prefixes_read_escaped_entries_exactly(tmp_path):
+    # Gaps and values a block escapes, cut at an LOD level (a prefix read) and
+    # at a count that is not one (a binary search over the decoded indices),
+    # behind a shard that shifts every index.
+    wide = np.zeros((700, len(GENES)), dtype=np.int64)
+    wide[[0, 300, 301, 399, 400, 650], 0] = [1, 1000, 254, 255, 2, 65535]
+    wide[[5, 260, 699], 1] = [300, 3, 4]
+    root = _write_atlas(str(tmp_path / "wide"), {"A": SHARDS["A"], "W": wide}, {"W": 400})
+    meta = fmt._load_meta(root)
+    for count in (0, 400, 350, 300, 1):
+        bound = dict(meta, _composition=[{"section_id": "A", "count": 0},
+                                         {"section_id": "W", "count": count}])
+        expected = np.vstack([SHARDS["A"], wide[:count or 700]])
+        for g, name in enumerate(GENES):
+            assert np.array_equal(_atlas_gene(root, bound, name), expected[:, g]), (count, name)
+        assert fmt._gene_index(root, bound)[0]["nnz"] == (expected > 0).sum(axis=0).tolist()
+
+
+def test_an_atlas_shard_in_the_old_layout_is_a_refusal(atlas):
+    _edit_index(os.path.join(atlas, "sections", "B", "gene_index.json"),
+                lambda gi: gi.pop("layout"))
+    with pytest.raises(PluginError) as exc:
+        fmt._gene_index(atlas, fmt._load_meta(atlas))
+    assert exc.value.code == "gene_layout" and "sections/B/gene_index.json" in exc.value.message
+    with pytest.raises(PluginError) as exc:
+        Dataset(atlas).gene("G0", "raw")
+    assert exc.value.code == "gene_layout", "never a section without genes"
+
+
+@pytest.mark.parametrize("order", ["sequential", "skips", "reverse", "random"])
+def test_a_pass_over_the_genes_reads_what_single_reads_do(tmp_path, monkeypatch, order):
+    # A gene-by-gene pass decodes runs of genes ahead per shard; tiny runs here
+    # cross every run boundary, over escaped entries and LOD cuts.
+    monkeypatch.setattr(fmt, "READ_AHEAD_ENTRIES", 2)
+    wide = np.zeros((700, len(GENES)), dtype=np.int64)
+    wide[[0, 300, 301, 399, 400, 650], 0] = [1, 1000, 254, 255, 2, 65535]
+    wide[[5, 260, 699], 1] = [300, 3, 4]
+    root = _write_atlas(str(tmp_path / "wide"), {"A": SHARDS["A"], "W": wide}, {"W": 400})
+    meta = fmt._load_meta(root)
+    genes = {"sequential": [0, 1, 2] * 3, "skips": [0, 2, 0, 1, 2],
+             "reverse": [2, 1, 0, 2, 1, 0], "random": [1, 0, 2, 2, 0, 1, 1]}[order]
+    for count in (0, 400, 350, 1):
+        bound = dict(meta, _composition=[{"section_id": "A", "count": 0},
+                                         {"section_id": "W", "count": count}])
+        direct, path = fmt._gene_index(root, bound)
+        direct["_atlas_reader"]._direct = [True] * len(direct["_atlas_reader"]._parts)
+        gi, _ = fmt._gene_index(root, bound)
+        with open(path, "rb") as fh:
+            for g in genes:
+                i, v = fmt._read_gene(fh, gi, g)
+                ri, rv = fmt._read_gene(fh, direct, g)
+                assert (i.dtype, v.dtype) == (ri.dtype, rv.dtype) == (np.uint32, np.float64)
+                assert i.tobytes() == ri.tobytes() and v.tobytes() == rv.tobytes(), (count, g)
+
+
+def test_a_broken_block_ahead_fails_the_pass_at_that_gene(tmp_path, monkeypatch):
+    # A run decoded ahead that holds a broken block falls back to direct reads,
+    # so the genes before it still read and the broken one raises when read.
+    monkeypatch.setattr(fmt, "READ_AHEAD_ENTRIES", 1 << 20)
+    root = _write_atlas(str(tmp_path / "broken"), SHARDS, {})
+    _edit_index(os.path.join(root, "sections", "B", "gene_index.json"),
+                lambda gi: gi["lengths"].__setitem__(2, 0))
+    gi, path = fmt._gene_index(root, fmt._load_meta(root))
+    with open(path, "rb") as fh:
+        for g in (0, 1):
+            fmt._read_gene(fh, gi, g)
+        with pytest.raises(_genecodec.GeneLayoutError):
+            fmt._read_gene(fh, gi, 2)
+
+
+@pytest.mark.parametrize("key", ["lengths", "nnz"])
+def test_a_shard_entry_with_one_of_nnz_and_length_0_raises_in_every_reader(atlas, key):
+    # Exactly one of the two 0 is a broken index entry. A shard's cut skips a
+    # gene with nnz 0, so the readers check the entry itself, never reading
+    # it as a gene without entries in that section.
+    _edit_index(os.path.join(atlas, "sections", "B", "gene_index.json"),
+                lambda gi: gi[key].__setitem__(2, 0))
+    meta = fmt._load_meta(atlas)
+
+    def read(order):
+        gi, path = fmt._gene_index(atlas, meta)
+        with open(path, "rb") as fh:
+            for g in order:
+                fmt._read_gene(fh, gi, g)
+    readers = {"direct read": lambda: read([2]),
+               "pass over the genes (read-ahead)": lambda: read([0, 1, 2]),
+               "_total_counts (whole-matrix pass)":
+                   lambda: fmt._total_counts(atlas, meta, fmt._load_cells_bin(atlas, meta)),
+               "ds.gene": lambda: Dataset(atlas).gene("G2", "raw")}
+    for name, fn in readers.items():
+        with pytest.raises(_genecodec.GeneLayoutError):
+            fn()
