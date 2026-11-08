@@ -743,9 +743,9 @@
     {
       "id": "celltype-contact-network",
       "name": "Cell-type contact network",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "description": "Which cell types touch which, from a Delaunay triangulation of the cells, as a network and a matrix corrected for abundance.",
-      "author": "PointillViz authors",
+      "author": "PointillViz reference tools",
       "icon": "hub",
       "tags": [
         "spatial",
@@ -778,8 +778,8 @@
         "schema": 3,
         "id": "celltype-contact-network",
         "name": "Cell-type contact network",
-        "version": "1.0.2",
-        "author": "PointillViz authors",
+        "version": "1.0.3",
+        "author": "PointillViz reference tools",
         "description": "Which cell types touch which, from a Delaunay triangulation of the cells, as a network and a matrix corrected for abundance.",
         "long_description": "Triangulates each section's cells and counts every edge as a contact. Draws the cell types as a network and as a matrix, coloured by enrichment over abundance.",
         "icon": "hub",
@@ -857,9 +857,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/celltype-contact-network-v1.0.2/celltype-contact-network-1.0.2.pvtool",
-        "sha256": "94aa024a08eba5fdf83a5aad7884de49c2108db78c8659a45704e6620942a56c",
-        "size": 36462
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/celltype-contact-network-v1.0.3/celltype-contact-network-1.0.3.pvtool",
+        "sha256": "5bb51dcd3342dc58f570a218e2d3c648d76e5e5b1c60cfe05dfafb9c3efbf693",
+        "size": 36468
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/celltype-contact-network/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/celltype-contact-network/preview.svg",
@@ -877,7 +877,7 @@
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "celltype-contact-network 1.0.2 by PointillViz authors; Python entry tool.py, outputs summary, images, table, files."
+            "message": "celltype-contact-network 1.0.3 by PointillViz reference tools; Python entry tool.py, outputs summary, images, table, files."
           },
           {
             "id": "environment",
@@ -901,7 +901,7 @@
             "id": "fixture",
             "required": true,
             "status": "pass",
-            "message": "ran on the 600-cell fixture in 0.29 s, returning summary, table, files, images."
+            "message": "ran on the 600-cell fixture in 0.28 s, returning summary, table, files, images."
           },
           {
             "id": "result",
@@ -913,7 +913,7 @@
             "id": "edge",
             "required": true,
             "status": "pass",
-            "message": "ran at the minimum corner (cutoff=0.5, max_types=5) in 0.22 s; ran at the maximum corner (cutoff=50.0, max_distance=500.0, max_types=60) in 0.20 s."
+            "message": "ran at the minimum corner (cutoff=0.5, max_types=5) in 0.21 s; ran at the maximum corner (cutoff=50.0, max_distance=500.0, max_types=60) in 0.20 s."
           },
           {
             "id": "no_mutation",
@@ -926,7 +926,7 @@
           "filesystem_write"
         ]
       },
-      "published": "2026-11-05"
+      "published": "2026-11-08"
     },
     {
       "id": "celltype-cooccurrence",
@@ -2221,9 +2221,9 @@
     {
       "id": "ridge-map",
       "name": "Ridge Map",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "description": "How a gene, or the density of cells, rises and falls across a section, drawn as a relief of ridges.",
-      "author": "PointillViz authors",
+      "author": "PointillViz reference tools",
       "icon": "landscape",
       "tags": [
         "spatial",
@@ -2254,8 +2254,8 @@
         "schema": 3,
         "id": "ridge-map",
         "name": "Ridge Map",
-        "version": "1.0.2",
-        "author": "PointillViz authors",
+        "version": "1.0.3",
+        "author": "PointillViz reference tools",
         "description": "How a gene, or the density of cells, rises and falls across a section, drawn as a relief of ridges.",
         "long_description": "",
         "icon": "landscape",
@@ -2331,9 +2331,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/ridge-map-v1.0.2/ridge-map-1.0.2.pvtool",
-        "sha256": "f0763716e396582196d818874fc6c2a784d8c3ee697881c06d03bf4a4384c626",
-        "size": 35778
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/ridge-map-v1.0.3/ridge-map-1.0.3.pvtool",
+        "sha256": "189b46e276f7c0d8e466918f105475301dedad68ab8ab8753c2f4ac566cddbb7",
+        "size": 35784
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/ridge-map/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/ridge-map/preview.svg",
@@ -2351,7 +2351,7 @@
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "ridge-map 1.0.2 by PointillViz authors; Python entry tool.py, outputs summary, images, files."
+            "message": "ridge-map 1.0.3 by PointillViz reference tools; Python entry tool.py, outputs summary, images, files."
           },
           {
             "id": "environment",
@@ -2363,7 +2363,7 @@
             "id": "entry",
             "required": true,
             "status": "pass",
-            "message": "tool.py imported in 0.32 s and defines run(ds, params)."
+            "message": "tool.py imported in 0.27 s and defines run(ds, params)."
           },
           {
             "id": "imports",
@@ -2375,7 +2375,7 @@
             "id": "fixture",
             "required": true,
             "status": "pass",
-            "message": "ran on the 600-cell fixture in 0.25 s, returning summary, files, images."
+            "message": "ran on the 600-cell fixture in 0.24 s, returning summary, files, images."
           },
           {
             "id": "result",
@@ -2805,9 +2805,9 @@
     {
       "id": "smoothie",
       "name": "Smoothie",
-      "version": "1.0.2",
+      "version": "1.0.3",
       "description": "Which genes share a spatial pattern across the tissue, grouped into modules.",
-      "author": "PointillViz authors",
+      "author": "PointillViz reference tools",
       "icon": "hub",
       "tags": [
         "spatial",
@@ -2840,8 +2840,8 @@
         "schema": 3,
         "id": "smoothie",
         "name": "Smoothie",
-        "version": "1.0.2",
-        "author": "PointillViz authors",
+        "version": "1.0.3",
+        "author": "PointillViz reference tools",
         "description": "Which genes share a spatial pattern across the tissue, grouped into modules.",
         "long_description": "Smooths every gene over the tissue, links genes whose smoothed maps correlate and clusters that network into modules, with the authors' Smoothie package. Returns the modules as a table, a figure of each on the tissue and a download of every gene's module.",
         "icon": "hub",
@@ -2911,9 +2911,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/smoothie-v1.0.2/smoothie-1.0.2.pvtool",
-        "sha256": "f6e99a83d3fe7bcb67a26b30a7e273513404551378c443fd5ca75d0e1f5161bb",
-        "size": 58500
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/smoothie-v1.0.3/smoothie-1.0.3.pvtool",
+        "sha256": "973ad072f3e0d1827486cb948593fbbe442f5637614fa73a695490b545d2cc3f",
+        "size": 58507
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/smoothie/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/smoothie/preview.svg",
@@ -2931,7 +2931,7 @@
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "smoothie 1.0.2 by PointillViz authors; Python entry tool.py, outputs summary, table, images, files."
+            "message": "smoothie 1.0.3 by PointillViz reference tools; Python entry tool.py, outputs summary, table, images, files."
           },
           {
             "id": "environment",
@@ -2943,7 +2943,7 @@
             "id": "entry",
             "required": true,
             "status": "pass",
-            "message": "tool.py imported in 4.69 s and defines run(ds, params)."
+            "message": "tool.py imported in 4.65 s and defines run(ds, params)."
           },
           {
             "id": "imports",
@@ -2955,7 +2955,7 @@
             "id": "fixture",
             "required": true,
             "status": "pass",
-            "message": "ran on the 600-cell fixture in 10.80 s, returning summary, table, files, images and 57 log lines."
+            "message": "ran on the 600-cell fixture in 10.76 s, returning summary, table, files, images and 57 log lines."
           },
           {
             "id": "result",
@@ -2967,7 +2967,7 @@
             "id": "edge",
             "required": true,
             "status": "pass",
-            "message": "at the minimum corner (clustering_power=1.0, correlation_cutoff=0.1, smoothing_width=5.0) it refused in words rather than crashing: At a smoothing width of 5 µm, more than 15% of the tissue has fewer than 10 cells within 15 µm, the reach of the smoothing. Widen it to at least 7 µm. (code: too_sparse); ran at the maximum corner (clustering_power=9.0, correlation_cutoff=0.95, smoothing_width=200.0) in 10.60 s."
+            "message": "at the minimum corner (clustering_power=1.0, correlation_cutoff=0.1, smoothing_width=5.0) it refused in words rather than crashing: At a smoothing width of 5 µm, more than 15% of the tissue has fewer than 10 cells within 15 µm, the reach of the smoothing. Widen it to at least 7 µm. (code: too_sparse); ran at the maximum corner (clustering_power=9.0, correlation_cutoff=0.95, smoothing_width=200.0) in 10.56 s."
           },
           {
             "id": "no_mutation",
