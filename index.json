@@ -5,8 +5,8 @@
     {
       "id": "banksy-niches",
       "name": "BANKSY niches",
-      "version": "2.0.0",
-      "description": "Tissue niches from each cell's expression and its neighbourhood's, imported from the authors' own BANKSY package.",
+      "version": "2.0.1",
+      "description": "Which niches the tissue divides into, judged by what each cell and its neighbours express.",
       "author": "PointillViz reference tools",
       "icon": "hub",
       "tags": [
@@ -40,10 +40,10 @@
         "schema": 3,
         "id": "banksy-niches",
         "name": "BANKSY niches",
-        "version": "2.0.0",
+        "version": "2.0.1",
         "author": "PointillViz reference tools",
-        "description": "Tissue niches from each cell's expression and its neighbourhood's, imported from the authors' own BANKSY package.",
-        "long_description": "Runs BANKSY (Singhal et al., Nat Genet 2024) with the authors' published Python package, pybanksy, imported as they ship it, with no method code of its own. It joins every cell's expression to that of its spatial neighbours and clusters the result into niches with Leiden. The niches are painted on the map, with their cell types, marker genes and a downloadable list of every cell's niche.",
+        "description": "Which niches the tissue divides into, judged by what each cell and its neighbours express.",
+        "long_description": "Groups cells into niches by their own expression together with their neighbours', with the authors' BANKSY package. Paints the niches on the map, with their cell types, marker genes and a download of every cell's niche.",
         "icon": "hub",
         "tags": [
           "spatial",
@@ -71,7 +71,7 @@
             "name": "lambda_param",
             "type": "float",
             "label": "Neighbourhood weight (lambda)",
-            "help": "How much a cell's neighbourhood counts against its own expression (pybanksy's lambda).\nThe authors use 0.8 for tissue domains and 0.2 for spatially informed cell types; 0 ignores space.",
+            "help": "Sets how much a cell's neighbourhood counts against its own expression.\nThe authors use 0.8 for tissue domains and 0.2 for spatially informed cell types; 0 ignores space.",
             "default": 0.8,
             "optional": false,
             "min": 0.0,
@@ -82,7 +82,7 @@
             "name": "k_geom",
             "type": "int",
             "label": "Spatial neighbours (k_geom)",
-            "help": "How many nearest cells make a neighbourhood. The authors' default is 15, for single cells.",
+            "help": "Sets how many nearest cells form each cell's neighbourhood.\nThe authors use 15 for single-cell data.",
             "default": 15,
             "optional": false,
             "min": 5.0,
@@ -93,7 +93,7 @@
             "name": "max_m",
             "type": "int",
             "label": "AGF order (max_m)",
-            "help": "1 adds BANKSY's azimuthal Gabor filter, over twice the neighbours: it responds where expression changes across a neighbourhood, as at a border. It is the authors' recommended default.\n0 uses the neighbourhood's mean alone, and a third less memory.",
+            "help": "Sets whether the azimuthal Gabor filter (AGF) is added: 1 adds it, 0 uses the neighbourhood's mean alone.\nThe AGF responds where expression changes across a neighbourhood, as at a border; the authors recommend it.",
             "default": 1,
             "optional": false,
             "min": 0.0,
@@ -104,7 +104,7 @@
             "name": "nbr_weight_decay",
             "type": "select",
             "label": "Neighbour weights",
-            "help": "How a neighbour's weight falls with its distance.",
+            "help": "Sets how a neighbour's weight falls with its distance.",
             "default": "scaled_gaussian",
             "optional": false,
             "options": [
@@ -148,7 +148,7 @@
             "name": "pca_dims",
             "type": "int",
             "label": "Principal components (pca_dims)",
-            "help": "How many components of the BANKSY matrix the clustering sees. The authors' default is 20.",
+            "help": "Sets how many principal components of the BANKSY matrix the clustering uses.\nThe authors use 20.",
             "default": 20,
             "optional": false,
             "min": 5.0,
@@ -159,7 +159,7 @@
             "name": "resolution",
             "type": "float",
             "label": "Leiden resolution",
-            "help": "Higher values give more, smaller niches; lower values give fewer, larger ones.\n0.7 is the authors' default. Not used when Number of niches is set.",
+            "help": "Sets the resolution of the Leiden clustering: higher values give more, smaller niches, and lower values fewer, larger ones.\n0.7 is the authors' default. Not used when Number of niches is set.",
             "default": 0.7,
             "optional": false,
             "min": 0.05,
@@ -170,7 +170,7 @@
             "name": "max_labels",
             "type": "int",
             "label": "Number of niches (max_labels)",
-            "help": "0 goes by the resolution. Any other number has pybanksy search for a resolution that gives that many niches, up to 25 tries of Leiden, so it takes longer and may stop short.",
+            "help": "Sets a number of niches for the package to aim for, by searching for a resolution that gives it; 0 uses the resolution as set.\nThe search can stop short of that number, and the summary then says so.",
             "default": 0,
             "optional": false,
             "min": 0.0,
@@ -181,7 +181,7 @@
             "name": "num_nn",
             "type": "int",
             "label": "Expression neighbours (num_nn)",
-            "help": "How many neighbours each cell has in the graph Leiden partitions, in the space of the principal components. The authors use 50.",
+            "help": "Sets how many neighbours each cell has in the graph that Leiden partitions, in the space of the principal components.\nThe authors use 50.",
             "default": 50,
             "optional": false,
             "min": 10.0,
@@ -192,7 +192,7 @@
             "name": "n_top_genes",
             "type": "int",
             "label": "Variable genes (n_top_genes)",
-            "help": "How many of the most variable genes to use. The authors use 2000.\nTime and memory grow in proportion.",
+            "help": "Sets how many of the most variable genes are used.\nThe authors use 2000.",
             "default": 2000,
             "optional": false,
             "min": 50.0,
@@ -203,7 +203,7 @@
             "name": "refine_iterations",
             "type": "int",
             "label": "Label refinement (iterations)",
-            "help": "How many times a cell takes the label of most of its 6 nearest cells. 0 is off.\nThe authors offer it for domain segmentation, and warn against excess: it wears out fine domains.",
+            "help": "Sets how many times each cell takes the niche of most of its 6 nearest cells; 0 is off.\nThe authors offer it for domain segmentation and warn that too much of it erodes fine domains.",
             "default": 0,
             "optional": false,
             "min": 0.0,
@@ -221,9 +221,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/banksy-niches-v2.0.0/banksy-niches-2.0.0.pvtool",
-        "sha256": "a24947114986d9a01eca19cc378e48d30a2d6891fd670453824a62f000d40c71",
-        "size": 62977
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/banksy-niches-v2.0.1/banksy-niches-2.0.1.pvtool",
+        "sha256": "cab12d1ad5dcaebd9614d797a4405826342e0a71b0ea777862ac406e8ea42b82",
+        "size": 62672
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/banksy-niches/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/banksy-niches/preview.svg",
@@ -235,13 +235,13 @@
             "id": "bundle",
             "required": true,
             "status": "pass",
-            "message": "6 files, 61.5 kB packed and 288.9 kB unpacked, plugin.json at the root."
+            "message": "6 files, 61.2 kB packed and 288.4 kB unpacked, plugin.json at the root."
           },
           {
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "banksy-niches 2.0.0 by PointillViz reference tools; Python entry tool.py, outputs summary, labels, matrix, table."
+            "message": "banksy-niches 2.0.1 by PointillViz reference tools; Python entry tool.py, outputs summary, labels, matrix, table."
           },
           {
             "id": "environment",
@@ -253,7 +253,7 @@
             "id": "entry",
             "required": true,
             "status": "pass",
-            "message": "tool.py imported in 11.57 s and defines run(ds, params)."
+            "message": "tool.py imported in 11.60 s and defines run(ds, params)."
           },
           {
             "id": "imports",
@@ -265,7 +265,7 @@
             "id": "fixture",
             "required": true,
             "status": "pass",
-            "message": "ran on the 600-cell fixture in 6.59 s, returning summary, table, matrix, files, labels and 113 log lines."
+            "message": "ran on the 600-cell fixture in 5.87 s, returning summary, table, matrix, files, labels and 113 log lines."
           },
           {
             "id": "result",
@@ -277,7 +277,7 @@
             "id": "edge",
             "required": true,
             "status": "pass",
-            "message": "ran at the minimum corner (k_geom=5, lambda_param=0.0, max_m=0, n_top_genes=50, num_nn=10, pca_dims=5, resolution=0.05) in 6.02 s; ran at the maximum corner (k_geom=30, lambda_param=1.0, max_labels=30, n_top_genes=5000, nbr_weight_decay='uniform', num_nn=100, pca_dims=50, refine_iterations=5, resolution=3.0, zscore_by='all') in 6.76 s."
+            "message": "ran at the minimum corner (k_geom=5, lambda_param=0.0, max_m=0, n_top_genes=50, num_nn=10, pca_dims=5, resolution=0.05) in 5.50 s; ran at the maximum corner (k_geom=30, lambda_param=1.0, max_labels=30, n_top_genes=5000, nbr_weight_decay='uniform', num_nn=100, pca_dims=50, refine_iterations=5, resolution=3.0, zscore_by='all') in 6.86 s."
           },
           {
             "id": "no_mutation",
@@ -288,12 +288,12 @@
         ],
         "risks": []
       },
-      "published": "2026-11-05"
+      "published": "2026-11-08"
     },
     {
       "id": "beeswarm-plot",
       "name": "Beeswarm Plot",
-      "version": "1.0.0",
+      "version": "1.0.1",
       "description": "How marker genes are expressed across cell types or niches, one swarm of cells per group.",
       "author": "PointillViz reference tools",
       "icon": "bubble_chart",
@@ -325,7 +325,7 @@
         "schema": 3,
         "id": "beeswarm-plot",
         "name": "Beeswarm Plot",
-        "version": "1.0.0",
+        "version": "1.0.1",
         "author": "PointillViz reference tools",
         "description": "How marker genes are expressed across cell types or niches, one swarm of cells per group.",
         "long_description": "",
@@ -428,9 +428,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/beeswarm-plot-v1.0.0/beeswarm-plot-1.0.0.pvtool",
-        "sha256": "5f05dcff07b3215405df0ffe32641d4bd82872412cc39233f58093cfb1cde7d1",
-        "size": 29840
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/beeswarm-plot-v1.0.1/beeswarm-plot-1.0.1.pvtool",
+        "sha256": "52e3fe62a2065f488975d5e850532e5c47799e3603634e69b47be32df51e7bfa",
+        "size": 29722
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/beeswarm-plot/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/beeswarm-plot/preview.svg",
@@ -442,13 +442,13 @@
             "id": "bundle",
             "required": true,
             "status": "pass",
-            "message": "6 files, 29.1 kB packed and 103.4 kB unpacked, plugin.json at the root."
+            "message": "6 files, 29.0 kB packed and 103.1 kB unpacked, plugin.json at the root."
           },
           {
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "beeswarm-plot 1.0.0 by PointillViz reference tools; Python entry tool.py, outputs images, table, summary, files."
+            "message": "beeswarm-plot 1.0.1 by PointillViz reference tools; Python entry tool.py, outputs images, table, summary, files."
           },
           {
             "id": "environment",
@@ -495,7 +495,7 @@
         ],
         "risks": []
       },
-      "published": "2026-10-28"
+      "published": "2026-11-08"
     },
     {
       "id": "categorical-chords",
@@ -2221,8 +2221,8 @@
     {
       "id": "ridge-map",
       "name": "Ridge Map",
-      "version": "1.0.1",
-      "description": "A tissue section as a relief of ridges, their height a gene or the cell density, their colour the most common cell type.",
+      "version": "1.0.2",
+      "description": "How a gene, or the density of cells, rises and falls across a section, drawn as a relief of ridges.",
       "author": "PointillViz authors",
       "icon": "landscape",
       "tags": [
@@ -2254,9 +2254,9 @@
         "schema": 3,
         "id": "ridge-map",
         "name": "Ridge Map",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "author": "PointillViz authors",
-        "description": "A tissue section as a relief of ridges, their height a gene or the cell density, their colour the most common cell type.",
+        "description": "How a gene, or the density of cells, rises and falls across a section, drawn as a relief of ridges.",
         "long_description": "",
         "icon": "landscape",
         "tags": [
@@ -2331,9 +2331,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/ridge-map-v1.0.1/ridge-map-1.0.1.pvtool",
-        "sha256": "316443ed0f93c0efdec60b5d5c31898ec81d016088366908b81c59c1a8f715f8",
-        "size": 35939
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/ridge-map-v1.0.2/ridge-map-1.0.2.pvtool",
+        "sha256": "f0763716e396582196d818874fc6c2a784d8c3ee697881c06d03bf4a4384c626",
+        "size": 35778
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/ridge-map/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/ridge-map/preview.svg",
@@ -2345,13 +2345,13 @@
             "id": "bundle",
             "required": true,
             "status": "pass",
-            "message": "6 files, 35.1 kB packed and 163.3 kB unpacked, plugin.json at the root."
+            "message": "6 files, 34.9 kB packed and 163.0 kB unpacked, plugin.json at the root."
           },
           {
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "ridge-map 1.0.1 by PointillViz authors; Python entry tool.py, outputs summary, images, files."
+            "message": "ridge-map 1.0.2 by PointillViz authors; Python entry tool.py, outputs summary, images, files."
           },
           {
             "id": "environment",
@@ -2363,7 +2363,7 @@
             "id": "entry",
             "required": true,
             "status": "pass",
-            "message": "tool.py imported in 0.20 s and defines run(ds, params)."
+            "message": "tool.py imported in 0.32 s and defines run(ds, params)."
           },
           {
             "id": "imports",
@@ -2375,7 +2375,7 @@
             "id": "fixture",
             "required": true,
             "status": "pass",
-            "message": "ran on the 600-cell fixture in 0.18 s, returning summary, files, images."
+            "message": "ran on the 600-cell fixture in 0.25 s, returning summary, files, images."
           },
           {
             "id": "result",
@@ -2387,7 +2387,7 @@
             "id": "edge",
             "required": true,
             "status": "pass",
-            "message": "ran at the minimum corner (relief=1.0, smoothing=0.25, strips=20) in 0.17 s; ran at the maximum corner (relief=30.0, smoothing=3.0, strips=300) in 0.25 s."
+            "message": "ran at the minimum corner (relief=1.0, smoothing=0.25, strips=20) in 0.24 s; ran at the maximum corner (relief=30.0, smoothing=3.0, strips=300) in 0.37 s."
           },
           {
             "id": "no_mutation",
@@ -2398,7 +2398,7 @@
         ],
         "risks": []
       },
-      "published": "2026-11-05"
+      "published": "2026-11-08"
     },
     {
       "id": "ripley-cross-l",
@@ -2619,8 +2619,8 @@
     {
       "id": "seurat-niches",
       "name": "Seurat niches",
-      "version": "1.0.1",
-      "description": "Tissue niches from the cell types around each cell, imported from the authors' own Seurat package.",
+      "version": "1.0.2",
+      "description": "Which niches the tissue divides into, judged by the cell types around each cell.",
       "author": "PointillViz reference tools",
       "icon": "scatter_plot",
       "tags": [
@@ -2654,10 +2654,10 @@
         "schema": 3,
         "id": "seurat-niches",
         "name": "Seurat niches",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "author": "PointillViz reference tools",
-        "description": "Tissue niches from the cell types around each cell, imported from the authors' own Seurat package.",
-        "long_description": "Runs the niche analysis of Seurat (Hao et al., Nat Biotechnol 2024) with the authors' published R package, imported as they ship it, with no method code of its own. It counts the cell types among each cell's nearest cells and groups cells with similar surroundings into niches with k-means. The niches are painted on the map, with their cell types and a downloadable list of every cell's niche.",
+        "description": "Which niches the tissue divides into, judged by the cell types around each cell.",
+        "long_description": "Groups cells into niches by the cell types among their nearest neighbours, with BuildNicheAssay from the authors' Seurat package. Paints the niches on the map, with their composition and a download of every cell's niche.",
         "icon": "scatter_plot",
         "tags": [
           "spatial",
@@ -2685,7 +2685,7 @@
             "name": "field",
             "type": "categorical_field",
             "label": "Cell-type column (group.by)",
-            "help": "The annotation counted around each cell: cell types, unless the dataset has none or you choose another column.",
+            "help": "Selects the annotation whose groups are counted around each cell.\nDefaults to the dataset's cell-type column.",
             "default": null,
             "optional": false
           },
@@ -2693,7 +2693,7 @@
             "name": "niches_k",
             "type": "int",
             "label": "Number of niches (niches.k)",
-            "help": "How many niches k-means makes. The authors' Xenium analysis uses 5; the function's own default is 4.",
+            "help": "Sets how many niches k-means makes.\nThe authors use 5 in their Xenium vignette.",
             "default": 5,
             "optional": false,
             "min": 2.0,
@@ -2704,7 +2704,7 @@
             "name": "neighbors_k",
             "type": "int",
             "label": "Spatial neighbours (neighbors.k)",
-            "help": "How many nearest cells make up a cell's surroundings. More neighbours give broader niches.\nThe authors' Xenium analysis uses 30; the function's own default is 20.",
+            "help": "Sets how many nearest cells form each cell's neighbourhood.\nMore neighbours give broader niches; the authors use 30.",
             "default": 30,
             "optional": false,
             "min": 5.0,
@@ -2715,7 +2715,7 @@
             "name": "iter_max",
             "type": "int",
             "label": "K-means iterations (iter.max)",
-            "help": "The most iterations for each of k-means' 30 starts. 10 is what the authors' function uses.\nRaise it when the summary says that starts stopped at this limit.",
+            "help": "Sets the maximum number of iterations in each of k-means' 30 starts.\nRaise it when the summary says that starts stopped at this limit.",
             "default": 10,
             "optional": false,
             "min": 10.0,
@@ -2733,9 +2733,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/seurat-niches-v1.0.1/seurat-niches-1.0.1.pvtool",
-        "sha256": "01444dfe8df6152b35bdc44cb1b5ad339da4d46eea7ca7a436bb81c81bfba9e3",
-        "size": 155572
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/seurat-niches-v1.0.2/seurat-niches-1.0.2.pvtool",
+        "sha256": "f35a924e461ce5682af018aa9945c13a3fe7d13be8736c271dbffbf50900e583",
+        "size": 155027
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/seurat-niches/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/seurat-niches/preview.svg",
@@ -2747,13 +2747,13 @@
             "id": "bundle",
             "required": true,
             "status": "pass",
-            "message": "6 files, 151.9 kB packed and 528.1 kB unpacked, plugin.json at the root."
+            "message": "6 files, 151.4 kB packed and 526.8 kB unpacked, plugin.json at the root."
           },
           {
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "seurat-niches 1.0.1 by PointillViz reference tools; R entry tool.R, outputs summary, labels, matrix, table."
+            "message": "seurat-niches 1.0.2 by PointillViz reference tools; R entry tool.R, outputs summary, labels, matrix, table."
           },
           {
             "id": "environment",
@@ -2765,7 +2765,7 @@
             "id": "entry",
             "required": true,
             "status": "pass",
-            "message": "tool.R sourced in 3.07 s and defines run <- function(ds, params)."
+            "message": "tool.R sourced in 3.91 s and defines run <- function(ds, params)."
           },
           {
             "id": "imports",
@@ -2777,7 +2777,7 @@
             "id": "fixture",
             "required": true,
             "status": "pass",
-            "message": "ran on the 600-cell fixture in 3.85 s, returning summary, table, matrix, files, labels and 1 log line."
+            "message": "ran on the 600-cell fixture in 4.86 s, returning summary, table, matrix, files, labels and 1 log line."
           },
           {
             "id": "result",
@@ -2789,7 +2789,7 @@
             "id": "edge",
             "required": true,
             "status": "pass",
-            "message": "ran at the minimum corner (neighbors_k=5, niches_k=2) in 3.69 s; ran at the maximum corner (iter_max=500, neighbors_k=100, niches_k=30) in 3.95 s."
+            "message": "ran at the minimum corner (neighbors_k=5, niches_k=2) in 4.41 s; ran at the maximum corner (iter_max=500, neighbors_k=100, niches_k=30) in 4.57 s."
           },
           {
             "id": "no_mutation",
@@ -2800,13 +2800,13 @@
         ],
         "risks": []
       },
-      "published": "2026-11-05"
+      "published": "2026-11-08"
     },
     {
       "id": "smoothie",
       "name": "Smoothie",
-      "version": "1.0.1",
-      "description": "Gene modules that share a spatial pattern, found by the published Smoothie package.",
+      "version": "1.0.2",
+      "description": "Which genes share a spatial pattern across the tissue, grouped into modules.",
       "author": "PointillViz authors",
       "icon": "hub",
       "tags": [
@@ -2840,10 +2840,10 @@
         "schema": 3,
         "id": "smoothie",
         "name": "Smoothie",
-        "version": "1.0.1",
+        "version": "1.0.2",
         "author": "PointillViz authors",
-        "description": "Gene modules that share a spatial pattern, found by the published Smoothie package.",
-        "long_description": "Runs Smoothie (Holdener & De Vlaminck, Commun Biol 2026) as its authors ship it: it smooths every gene over the tissue with a Gaussian, correlates the smoothed genes, links the pairs above a cutoff and clusters that network into modules. Returns the modules as a table, a figure mapping each one on the tissue, and every gene's module as a download.",
+        "description": "Which genes share a spatial pattern across the tissue, grouped into modules.",
+        "long_description": "Smooths every gene over the tissue, links genes whose smoothed maps correlate and clusters that network into modules, with the authors' Smoothie package. Returns the modules as a table, a figure of each on the tissue and a download of every gene's module.",
         "icon": "hub",
         "tags": [
           "spatial",
@@ -2911,9 +2911,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/smoothie-v1.0.1/smoothie-1.0.1.pvtool",
-        "sha256": "de9e820ad2a740698b32e84e44302b63e857dc4001a78db48948a4cf1e6bdde6",
-        "size": 58724
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/smoothie-v1.0.2/smoothie-1.0.2.pvtool",
+        "sha256": "f6e99a83d3fe7bcb67a26b30a7e273513404551378c443fd5ca75d0e1f5161bb",
+        "size": 58500
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/smoothie/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/smoothie/preview.svg",
@@ -2925,13 +2925,13 @@
             "id": "bundle",
             "required": true,
             "status": "pass",
-            "message": "6 files, 57.3 kB packed and 271.0 kB unpacked, plugin.json at the root."
+            "message": "6 files, 57.1 kB packed and 270.6 kB unpacked, plugin.json at the root."
           },
           {
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "smoothie 1.0.1 by PointillViz authors; Python entry tool.py, outputs summary, table, images, files."
+            "message": "smoothie 1.0.2 by PointillViz authors; Python entry tool.py, outputs summary, table, images, files."
           },
           {
             "id": "environment",
@@ -2943,7 +2943,7 @@
             "id": "entry",
             "required": true,
             "status": "pass",
-            "message": "tool.py imported in 5.23 s and defines run(ds, params)."
+            "message": "tool.py imported in 4.69 s and defines run(ds, params)."
           },
           {
             "id": "imports",
@@ -2955,7 +2955,7 @@
             "id": "fixture",
             "required": true,
             "status": "pass",
-            "message": "ran on the 600-cell fixture in 10.32 s, returning summary, table, files, images and 57 log lines."
+            "message": "ran on the 600-cell fixture in 10.80 s, returning summary, table, files, images and 57 log lines."
           },
           {
             "id": "result",
@@ -2967,7 +2967,7 @@
             "id": "edge",
             "required": true,
             "status": "pass",
-            "message": "at the minimum corner (clustering_power=1.0, correlation_cutoff=0.1, smoothing_width=5.0) it refused in words rather than crashing: At a smoothing width of 5 µm, more than 15% of the tissue has fewer than 10 cells within 15 µm, the reach of the smoothing. Widen it to at least 7 µm. (code: too_sparse); ran at the maximum corner (clustering_power=9.0, correlation_cutoff=0.95, smoothing_width=200.0) in 10.17 s."
+            "message": "at the minimum corner (clustering_power=1.0, correlation_cutoff=0.1, smoothing_width=5.0) it refused in words rather than crashing: At a smoothing width of 5 µm, more than 15% of the tissue has fewer than 10 cells within 15 µm, the reach of the smoothing. Widen it to at least 7 µm. (code: too_sparse); ran at the maximum corner (clustering_power=9.0, correlation_cutoff=0.95, smoothing_width=200.0) in 10.60 s."
           },
           {
             "id": "no_mutation",
@@ -2978,7 +2978,7 @@
         ],
         "risks": []
       },
-      "published": "2026-11-05"
+      "published": "2026-11-08"
     },
     {
       "id": "tissue-permeability",
