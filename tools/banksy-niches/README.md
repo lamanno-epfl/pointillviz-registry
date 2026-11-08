@@ -1,31 +1,27 @@
 # BANKSY niches
 
-Answers the question: **Which tissue domains, or niches, does a section divide into, judged by what each cell and its neighbours express?**
+Answers the question: **Which tissue domains, or niches, does the tissue divide into, based on what each cell and its neighbours express?**
 
-The tool runs [BANKSY](https://github.com/prabhakarlab/Banksy_py) (Singhal, Chou, Lee et al., *Nature Genetics* 2024) with the authors' own Python package, **imported from PyPI as they ship it** (`pybanksy` 1.3.5). It calls the package's functions in the order of the authors' notebooks, with their values, and holds no copy of their method:
+The tool runs [BANKSY](https://github.com/prabhakarlab/Banksy_py) with the authors' own Python package, `pybanksy`, and their default settings. BANKSY describes each cell by its own expression together with that of its spatial neighbours, and groups cells with similar descriptions into niches.
 
-1. normalises the counts and keeps the most variable genes (`normalize_total`, `filter_hvg`);
-2. builds a spatial graph of each cell's nearest neighbours (`initialize_banksy`);
-3. builds the BANKSY matrix: each cell's expression, its neighbours' weighted mean and, by default, the azimuthal Gabor filter (AGF), which responds where expression changes across a neighbourhood (`generate_banksy_matrix`);
-4. reduces it with PCA (`pca_umap`) and clusters the components with Leiden (`run_Leiden_partition`).
+The counts are first normalized and reduced to the most variable genes, which gives each cell *i* its own expression *x(i)*. The tool then averages the expression of the cell's *k* nearest neighbours *N(i)*, using weights *w(i,j)* that sum to 1 and, by default, decrease with distance:
 
-Called directly on the same counts, with no code of this tool, the authors' functions give the same niches, cell for cell, on Xenium 5K sections of 135,231 and 235,803 cells.
+$$
+m(i) = \sum_{j∈N(i)} w(i,j) x(j)
+$$
 
-**Map.** Every cell painted by its niche, numbered N1, N2, … from the largest.
+By default, a third block is added: the azimuthal Gabor filter (AGF) *g(i)*, which weights neighbouring cells by their direction around cell *i*. It therefore responds where expression changes from one side of the neighbourhood to the other, as at a tissue border. Each block is z-scored gene by gene, and the blocks are joined using the neighbourhood weight *λ*:
 
-**Matrix.** Each niche's cell-type composition, or its marker genes if the dataset has no cell types.
+$$
+b(i) = \paren{√(1−λ) x(i), √(2λ/3) m(i), √(λ/3) g(i)}
+$$
 
-**Table.** Each niche's size, marker genes and main cell types, with a download of every cell's niche.
+Without the AGF, *m(i)* receives the full weight *√λ*. With *λ* = **0.8**, the neighbourhood dominates and the niches follow tissue domains; with *λ* = **0.2**, they resemble spatially informed cell types. The joined profiles are reduced to their principal components and clustered with the Leiden algorithm, and each cluster forms one niche.
 
-**Several sections.** A cell's neighbours always come from its own section. **Z-score** sets the rest. Per section, the default, each section gets its own z-scores and the matrices are joined before the PCA, as in the authors' multi-sample notebook. Across all sections, the package runs once over every cell, with the sections set apart in space so that no neighbourhood crosses between them.
+**Map.** Each cell is colored by its niche. Niches are numbered N1, N2, … from the largest to the smallest; the numbers carry no other meaning.
 
-**What the package does as shipped.** The tool leaves these as they are:
+**Matrix.** Rows are niches and columns are cell types, ordered by abundance. Each square shows the percentage of the niche's labelled cells that belong to that cell type. Without a cell-type annotation, the columns show the niches' top marker genes instead, colored by their marker z-scores.
 
-- The AGF is not centred: `generate_banksy_matrix` passes its `variance_balance` argument (False) into the `center` slot of `create_nbr_matrix`. Results can therefore differ from the authors' R package.
-- Ranked weights fail with the AGF, so the tool refuses that combination with a sentence.
-- With scaled Gaussian or reciprocal weights, cells on the same spot make the package lose the whole neighbourhood block without a word. The tool refuses, and names the uniform weights.
-- The package's other clustering, `mclust`, needs R and `rpy2`, and is not offered.
+**Table.** Each row represents one niche. `Cells` and `% of cells` give its size. `Marker genes` lists the five genes whose mean expression in the niche has the highest z-score relative to all cells, while `Main cell types` gives its three most common cell types with their shares. A download lists the niche of every cell.
 
-**Cost.** 135,231 cells take about 6 minutes and 21 GB at 2,000 variable genes, and a selection of 20,000 cells about 30 s. If the memory is not there, the tool says so before it starts, and which control to lower.
-
-`pybanksy` is under the GPL-3.0 licence, and so is this tool.
+With several sections, each cell's neighbours come from its own section, and all sections share one set of niches.

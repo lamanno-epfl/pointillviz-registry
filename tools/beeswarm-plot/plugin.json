@@ -2,7 +2,7 @@
   "schema": 3,
   "id": "beeswarm-plot",
   "name": "Beeswarm Plot",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "author": "PointillViz reference tools",
   "description": "How marker genes are expressed across cell types or niches, one swarm of cells per group.",
   "icon": "bubble_chart",

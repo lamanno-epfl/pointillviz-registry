@@ -2,10 +2,10 @@
   "schema": 3,
   "id": "seurat-niches",
   "name": "Seurat niches",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "PointillViz reference tools",
-  "description": "Tissue niches from the cell types around each cell, imported from the authors' own Seurat package.",
-  "long_description": "Runs the niche analysis of Seurat (Hao et al., Nat Biotechnol 2024) with the authors' published R package, imported as they ship it, with no method code of its own. It counts the cell types among each cell's nearest cells and groups cells with similar surroundings into niches with k-means. The niches are painted on the map, with their cell types and a downloadable list of every cell's niche.",
+  "description": "Which niches the tissue divides into, judged by the cell types around each cell.",
+  "long_description": "Groups cells into niches by the cell types among their nearest neighbours, with BuildNicheAssay from the authors' Seurat package. Paints the niches on the map, with their composition and a download of every cell's niche.",
   "icon": "scatter_plot",
   "tags": ["spatial", "niches", "cell types", "neighbourhoods", "R"],
   "entry": "tool.R",
@@ -24,7 +24,7 @@
       "name": "field",
       "type": "categorical_field",
       "label": "Cell-type column (group.by)",
-      "help": "The annotation counted around each cell: cell types, unless the dataset has none or you choose another column."
+      "help": "Selects the annotation whose groups are counted around each cell.\nDefaults to the dataset's cell-type column."
     },
     {
       "name": "niches_k",
@@ -34,7 +34,7 @@
       "min": 2,
       "max": 30,
       "step": 1,
-      "help": "How many niches k-means makes. The authors' Xenium analysis uses 5; the function's own default is 4."
+      "help": "Sets how many niches k-means makes.\nThe authors use 5 in their Xenium vignette."
     },
     {
       "name": "neighbors_k",
@@ -44,7 +44,7 @@
       "min": 5,
       "max": 100,
       "step": 1,
-      "help": "How many nearest cells make up a cell's surroundings. More neighbours give broader niches.\nThe authors' Xenium analysis uses 30; the function's own default is 20."
+      "help": "Sets how many nearest cells form each cell's neighbourhood.\nMore neighbours give broader niches; the authors use 30."
     },
     {
       "name": "iter_max",
@@ -54,7 +54,7 @@
       "min": 10,
       "max": 500,
       "step": 10,
-      "help": "The most iterations for each of k-means' 30 starts. 10 is what the authors' function uses.\nRaise it when the summary says that starts stopped at this limit."
+      "help": "Sets the maximum number of iterations in each of k-means' 30 starts.\nRaise it when the summary says that starts stopped at this limit."
     }
   ]
 }
