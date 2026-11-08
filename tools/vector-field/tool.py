@@ -229,8 +229,8 @@ def _quantity(ds, params):
         name = params.get("gene")
         if not name:
             raise PluginError("no_gene",
-                              "Choose a gene. 'Differentiate' is set to a gene "
-                              "and the gene box is empty.")
+                              "Choose a gene. 'Gradient of' is set to Gene and "
+                              "no gene is chosen.")
         return np.asarray(ds.gene(str(name), "cp10k"), dtype=np.float64), \
             f"{name} (cp10k)", False
 
@@ -240,8 +240,8 @@ def _quantity(ds, params):
             available = ", ".join(c["name"] for c in ds.continuous_fields()) or "none"
             raise PluginError(
                 "no_column",
-                "Choose a continuous column. 'Differentiate' is set to a "
-                f"continuous column and none is selected. This dataset has: {available}.")
+                "Choose a continuous column. 'Gradient of' is set to Continuous "
+                f"column and none is selected. This dataset has: {available}.")
         return np.asarray(ds.continuous(str(name)), dtype=np.float64), str(name), False
 
     field = params.get("field")
@@ -250,14 +250,13 @@ def _quantity(ds, params):
         if not ds.categorical_fields():
             raise PluginError(
                 "no_categoricals",
-                "This dataset has no categorical columns, so there is no level "
-                "to differentiate. Set 'Differentiate' to a gene or to a "
-                "continuous column.")
+                "This dataset has no categorical columns, so there is no category "
+                "to map. Set 'Gradient of' to Gene or to Continuous column.")
         raise PluginError(
             "no_level",
-            "Choose a level. 'Differentiate' is set to a category level, and "
-            "one level per run is the whole design: a category has no gradient, "
-            "only the local fraction of ONE of its levels does.")
+            "Choose a category. 'Gradient of' is set to Cell type or category, "
+            "and one category per run is the whole design: a column of categories "
+            "has no gradient, only the local fraction of ONE of them does.")
     levels, codes = ds.categorical(str(field) if field else None)
     if str(level) not in levels:
         raise PluginError("unknown_level",
