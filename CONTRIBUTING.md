@@ -158,12 +158,18 @@ PointillViz draws one control per parameter, and checks and converts each value 
 | `continuous_field` | the dataset's continuous columns | a column name | |
 | `json` | JSON editor | an object or a list, at most 64 KiB | |
 
-Each parameter has a `name` (letters, digits and `_`, not starting with a digit, so that it works in Python and in R), a `label` and a one-line `help`.
+Each parameter has a `name` (letters, digits and `_`, not starting with a digit, so that it works in Python and in R), a `label` and a one-line `help`, and any parameter may declare `show_when`.
 
 - **Defaults.** `int`, `float`, `bool`, `text`, `select` and `json` parameters need a `default`, or `"optional": true`. The form opens on the defaults, and the gates run the tool on them. A `select` default must be one of its options, and a numeric default must lie in its own range.
 - **Dataset parameters** (`gene`, `genes`, `categorical_field`, `category_value`, `continuous_field`) take no default: PointillViz fills them from the open dataset, and the gates from theirs. With `"optional": true`, `run()` gets `None` (`NULL` in R) when nothing is chosen.
 - **Gene presets.** A `genes` parameter with `"preset": "top_markers"` opens on the `preset_n` genes (default `max_items`) detected in the most cells: the Marker Dot Plot's "Top markers" ranking, which `ds.top_detected_genes(n)` returns. The gates run on the same list, and the user edits it from there.
 - **Sweeps.** One `int` or `float` parameter may set `"sweep": true`, with `sweep_steps` from 2 to 12 (default 8). PointillViz can then run the tool over a range of that parameter at once, and the user moves between the steps. A tool that returns per-cell outputs (`cells`, `vectors`, `labels`) cannot declare a sweep.
+- **Conditional parameters.** A parameter with `show_when` is shown only while the `select` or `bool` it names holds one of the listed values (`true` or `false` for a `bool`):
+  ```json
+  {"name": "source", "type": "select", "default": "type", "options": ["type", "gene"]},
+  {"name": "gene", "type": "gene", "show_when": {"param": "source", "in": ["gene"]}}
+  ```
+  A hidden parameter never blocks Run, and `run()` gets its default, or `None` (`NULL` in R) when it has none. A shown one follows the rules above, so one without `"optional": true` must be answered whenever it is shown. A parameter whose controlling parameter is hidden is hidden too, a `category_value` must be hidden whenever the `categorical_field` it follows is, and a swept parameter cannot declare `show_when`: it is always shown. A parameter must come after the one its `show_when` names. The gates run the tool at least once with each value of a parameter that shows or hides others, in the default run, at a corner or in an extra run; as at a corner, a refusal in words passes.
 
 ## 4. Python tools
 
@@ -418,7 +424,7 @@ Recent pixi versions call `[system-requirements]` deprecated; it still works. CI
 | `imports` | advisory, never fails: it lists, by file and line, any use of the network, other programs, file writing, dynamic code or environment variables, for whoever decides whether to install the tool |
 | `fixture` | a run on the defaults, on the synthetic dataset below, completes: no crash, and no refusal of its own defaults. A declared sweep is run as well |
 | `result` | that run returned every declared output and nothing undeclared, each in a valid shape, and each painted output (`cells`, `labels`, `vectors`, `series`, `matrix`, `radar`, `chord`, `images`) has something to show |
-| `edge` | runs at the two corners of the parameters: every number at its minimum, booleans off and menus at their first option; then every number at its maximum, booleans on and menus at their last option. A refusal with `PluginError` (`pv_error`) is a pass; a crash or a malformed result is not |
+| `edge` | runs at the two corners of the parameters: every number at its minimum, booleans off and menus at their first option; then every number at its maximum, booleans on and menus at their last option; then once more for each value of a `show_when` choice that neither the defaults nor a corner ran. A refusal with `PluginError` (`pv_error`) is a pass; a crash or a malformed result is not |
 | `no_mutation` | the dataset is unchanged after every run; only `plugin_cache/` may be written |
 
 Every gate but `imports` is required. A tool without a `pixi.toml` runs in PointillViz's own environment and skips `environment`, but the registry accepts a tool only with its `pixi.toml` and `pixi.lock`.

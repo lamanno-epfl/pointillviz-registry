@@ -8,6 +8,7 @@ the real pixi CLI on small temporary workspaces and skips without pixi.
 import io
 import json
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -498,6 +499,178 @@ def test_a_crash_at_a_corner_fails_edge_and_a_refusal_passes(tmp_path, at, label
     r = validate(str(_tool(tmp_path, code=CORNERS.format(at=at, crash=False), name="refuse")))
     edge = gate(r, "edge")
     assert edge["status"] == "pass" and "refused in words" in edge["message"]
+
+
+def test_the_corners_of_a_tool_without_show_when_are_unchanged(clean_report):
+    edge = gate(clean_report, "edge")
+    assert re.fullmatch(r"ran at the minimum corner \(k=3\) in \d+\.\d\d s; "
+                        r"ran at the maximum corner \(k=50\) in \d+\.\d\d s\.", edge["message"])
+    assert set(edge["detail"]) == {"corners"}, "no branches key, and no branch run"
+    assert [c["params"] for c in edge["detail"]["corners"].values()] == [{"k": 3}, {"k": 50}]
+
+
+# ===========================================================================
+# show_when: hidden parameters, and every branch run
+# ===========================================================================
+def _when(param, *values):
+    return {"param": param, "in": list(values)}
+
+
+#: Vector Field's shape: which parameters matter depends on `source`.
+BRANCH_PARAMS = [
+    {"name": "source", "type": "select", "label": "Differentiate", "default": "category",
+     "options": ["category", "gene", "continuous"]},
+    {"name": "field", "type": "categorical_field", "show_when": _when("source", "category")},
+    {"name": "level", "type": "category_value", "field_param": "field",
+     "show_when": _when("source", "category")},
+    {"name": "gene", "type": "gene", "show_when": _when("source", "gene")},
+    {"name": "column", "type": "continuous_field", "show_when": _when("source", "continuous")},
+    {"name": "k", "type": "int", "label": "Neighbours", "default": 15, "min": 3, "max": 50},
+]
+#: Fails (an AssertionError is a crash) whenever a parameter the form hides
+#: arrives with a value, or one it shows arrives without one.
+BRANCHING = ("from pointillviz_tool import PluginError\n"
+             "def run(ds, params):\n"
+             "    src = params['source']\n"
+             "    shown = {'category': ('field', 'level'), 'gene': ('gene',),\n"
+             "             'continuous': ('column',)}[src]\n"
+             "    for name in ('field', 'level', 'gene', 'column'):\n"
+             "        assert (params[name] is not None) == (name in shown), (src, name)\n"
+             "    if src == 'category':\n"
+             "        levels, codes = ds.categorical(params['field'])\n"
+             "        values = (codes == list(levels).index(params['level'])).astype(float)\n"
+             "    elif src == 'gene':\n"
+             "        values = ds.gene(params['gene'])\n"
+             "    else:\n"
+             "        values = ds.continuous(params['column'])\n"
+             "    #BRANCH\n"
+             "    return {'summary': src, 'cells': {'values': values}}\n")
+
+
+def test_a_show_when_tool_runs_every_branch_once(tmp_path):
+    r = validate(str(_tool(tmp_path, code=BRANCHING, manifest={"params": BRANCH_PARAMS})))
+    assert r["ok"], format_report(r)
+    params = gate(r, "fixture")["detail"]["params"]
+    assert params["source"] == "category" and params["gene"] is None and params["column"] is None
+    edge = gate(r, "edge")
+    # The maximum corner reaches `continuous` with the column the form holds.
+    assert edge["detail"]["corners"]["maximum"]["params"]["column"] is not None
+    # Only `gene` is a branch neither the defaults nor a corner took.
+    assert list(edge["detail"]["branches"]) == ["source='gene'"]
+    branch = edge["detail"]["branches"]["source='gene'"]
+    assert (branch["param"], branch["value"], branch["status"]) == ("source", "gene", "pass")
+    assert branch["params"]["gene"] == "Ubiquitous"
+    assert re.search(r"; ran the source='gene' branch in \d+\.\d\d s\.$", edge["message"])
+
+
+def test_reading_a_hidden_parameter_at_the_defaults_is_explained(tmp_path):
+    code = ("def run(ds, params):\n"
+            "    return {'summary': params['gene'].upper(),\n"
+            "            'cells': {'values': [1.0] * ds.n_cells}}\n")
+    r = validate(str(_tool(tmp_path, code=code, manifest={"params": BRANCH_PARAMS})))
+    fixture = gate(r, "fixture")
+    assert fixture["status"] == "fail" and "AttributeError" in fixture["message"]
+    assert fixture["message"].endswith("'upper'. At these defaults the form hides gene and "
+                                       "column, so run() received None (NULL in R) for them.")
+
+
+def test_names_in_a_message_are_joined_as_prose():
+    from pointillviz_tool.validate import _prose
+    assert [_prose(names) for names in (["a"], ["a", "b"], ["a", "b", "c"])] == [
+        "a", "a and b", "a, b and c"]
+
+
+@pytest.mark.parametrize("move, status, words", [
+    ("return 1 / 0", "fail", "the tool crashed: ZeroDivisionError"),
+    ("raise PluginError('no_gene', 'No gene today.')", "pass", "it refused in words"),
+])
+def test_a_branch_no_corner_reaches_is_held_to_the_corners_rule(tmp_path, move, status, words):
+    code = BRANCHING.replace("#BRANCH", f"if src == 'gene':\n        {move}")
+    edge = gate(validate(str(_tool(tmp_path, code=code, manifest={"params": BRANCH_PARAMS}))),
+                "edge")
+    assert edge["status"] == status, edge["message"]
+    assert ("on the source='gene' branch (field=None, gene='Ubiquitous', level=None, "
+            f"source='gene') {words}") in edge["message"]
+    assert edge["detail"]["branches"]["source='gene'"]["status"] == status
+    if status == "fail":
+        assert any("1 / 0" in note for note in edge["detail"]["notes"])
+
+
+def test_a_branch_reveals_a_hidden_controlling_parameter_up_its_chain(tmp_path):
+    code = ("def run(ds, params):\n"
+            "    assert not params['fine'] or params['source'] == 'gene', params\n"
+            "    return {'summary': 's', 'cells': {'values': [1.0] * ds.n_cells}}\n")
+    tool = _tool(tmp_path, code=code, manifest={"params": [
+        BRANCH_PARAMS[0],
+        {"name": "fine", "type": "bool", "default": False, "show_when": _when("source", "gene")},
+        {"name": "sigma", "type": "float", "default": 1.0, "min": 0.5, "max": 3.0,
+         "show_when": _when("fine", True)},
+        {"name": "smooth", "type": "bool", "default": True},
+        {"name": "width", "type": "float", "default": 1.0, "min": 0.5, "max": 3.0,
+         "show_when": _when("smooth", True)},
+        BRANCH_PARAMS[-1]]})
+    r = validate(str(tool))
+    assert r["ok"], format_report(r)
+    branches = gate(r, "edge")["detail"]["branches"]
+    # source='gene' shows `fine` at its default, false, so that branch is
+    # taken too; fine=True runs with source set to the value that reveals it;
+    # the corners already took both values of `smooth`.
+    assert list(branches) == ["source='gene'", "fine=True"]
+    assert branches["fine=True"]["params"]["source"] == "gene"
+
+
+@pytest.mark.parametrize("value, where", [("gene", "on the source='gene' branch"),
+                                          ("continuous", "at the maximum corner")])
+def test_a_branch_or_corner_that_reveals_an_empty_parameter_fails_edge(tmp_path, value, where):
+    tool = _tool(tmp_path, manifest={"params": [
+        BRANCH_PARAMS[0],
+        {"name": "note", "type": "text", "label": "Note", "show_when": _when("source", value)},
+        BRANCH_PARAMS[-1]]})
+    r = validate(str(tool))
+    assert gate(r, "fixture")["status"] == "pass", "hidden, it is never required"
+    edge = gate(r, "edge")
+    assert edge["status"] == "fail"
+    assert (f"{where}, show_when reveals a parameter the form has no value for: Note is "
+            f"required while Differentiate is {value}. Give that parameter a `default`"
+            ) in edge["message"]
+
+
+def test_corners_start_from_the_form(tmp_path):
+    from pointillviz_tool.fixture import write_fixture
+    from pointillviz_tool.manifest import validate as validate_manifest
+    from pointillviz_tool.validate import _default_params, _edge_params, _form_values
+    fixture = write_fixture(str(tmp_path / "fixture"))["path"]
+    raw = json.loads(open(os.path.join(TOOLS, "py-cells", "plugin.json")).read())
+    # Without show_when, corners from the form are the corners from the
+    # coerced defaults, which is what they were built from before.
+    plain = [{k: v for k, v in p.items() if k != "show_when"} for p in BRANCH_PARAMS]
+    m = validate_manifest(dict(raw, params=plain + [{"name": "on", "type": "bool",
+                                                     "default": True}]))
+    form, params = _form_values(m, fixture), _default_params(m, fixture)
+    for end in ("min", "max"):
+        assert _edge_params(m, form, end) == _edge_params(m, params, end)
+    # With it, a corner that reveals a parameter finds the form's value there.
+    m = validate_manifest(dict(raw, params=BRANCH_PARAMS))
+    form = _form_values(m, fixture)
+    assert form["column"] and _edge_params(m, form, "max")["column"] == form["column"]
+    assert _default_params(m, fixture)["column"] is None
+
+
+def test_a_hidden_parameters_default_is_checked_as_if_shown():
+    from pointillviz_tool.manifest import validate as validate_manifest
+    from pointillviz_tool.validate import _default_problems
+    m = validate_manifest({**json.loads(open(os.path.join(TOOLS, "py-cells", "plugin.json")).read()),
+                           "params": [
+        {"name": "on", "type": "bool", "default": False},
+        {"name": "k", "type": "int", "default": 99, "min": 3, "max": 50,
+         "show_when": _when("on", True)},
+        {"name": "mode", "type": "select", "default": "fast", "options": ["slow", "exact"],
+         "show_when": _when("on", True)},
+        {"name": "g", "type": "gene", "show_when": _when("on", True)}]})
+    problems = _default_problems(m)
+    assert len(problems) == 2, problems
+    assert "k: the default 99 is outside its own declared range 3..50" in problems[0]
+    assert "'fast' is not one of" in problems[1]
 
 
 # ===========================================================================

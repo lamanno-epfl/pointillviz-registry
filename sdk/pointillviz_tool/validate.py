@@ -85,7 +85,8 @@ import zipfile
 
 from . import bundle, envs, launch
 from .dataset import DEVICES, PluginError
-from .manifest import ManifestError, coerce_params, language, load as load_manifest, sweep_values
+from .manifest import (ManifestError, coerce_params, language, load as load_manifest,
+                       sweep_values, visible_params)
 from .results import OUTPUT_KINDS, RESULT_CODES, output_mismatch
 
 #: Gate order and required-ness. `environment` is required only for a tool
@@ -194,6 +195,11 @@ class _Context:
         self.log = log
         self.manifest = None
         self.status: dict = {}
+        # What the form holds on first open (every dataset parameter filled,
+        # hidden ones included), and what the default run sent: the first
+        # through coerce_params. Corners and branches start from the form, so
+        # a parameter they reveal arrives with the value a user would see.
+        self.form: dict = {}
         self.params: dict = {}
         self.first = None                    # the fixture run's outcome
         self.ran_any = False
@@ -426,17 +432,21 @@ def _default_problems(manifest: dict) -> list:
     `categorical_field` parameter is meant to have none — the viewer fills it
     from the open dataset — and "Gene is required" is coerce_params being
     right, not a defect to gate on.
+
+    A parameter with `show_when` is probed as if shown: while hidden it
+    receives its default, so that default must be valid either way.
     """
     declared = [p for p in manifest["params"] if p.get("default") not in (None, "")]
     problems = []
     for p in declared:
         name, want = p["name"], p["default"]
+        probe = {k: v for k, v in p.items() if k != "show_when"}
         # One parameter at a time: coerce_params raises on the FIRST bad value
         # and returns nothing for the rest, and a report that names one of two
         # broken defaults costs the author a second round trip to find the
         # other one.
         try:
-            got = coerce_params(dict(manifest, params=[p]), {})[name]
+            got = coerce_params(dict(manifest, params=[probe]), {})[name]
         except ManifestError as exc:
             problems.append(str(exc).rstrip("."))
             continue
@@ -1073,7 +1083,8 @@ def _gate_fixture(ctx: _Context):
     ctx.require("entry", "the entry file did not load, so there is nothing to run.")
     dataset = ctx.dataset()
     try:
-        ctx.params = _default_params(m, dataset)
+        ctx.form = _form_values(m, dataset)
+        ctx.params = coerce_params(m, ctx.form)
     except ManifestError as exc:
         return "fail", (
             f"no default parameter set could be built: {exc} Give the parameter a "
@@ -1091,6 +1102,15 @@ def _gate_fixture(ctx: _Context):
     cpu_note = (f' The tool declares "gpu": "{m["gpu"]}", and the gates run it on the CPU '
                 "(as CI does), so it needs a CPU fallback."
                 if m.get("gpu") and ctx.device == "cpu" else "")
+    # A parameter the form hides at the defaults (show_when) and that declares
+    # no default arrives as None. A tool that reads it anyway fails on its own
+    # defaults for a reason the fixture has nothing to do with; say which.
+    shown = visible_params(m, ctx.params)
+    unset = [p["name"] for p in m["params"]
+             if p["name"] not in shown and ctx.params.get(p["name"]) is None]
+    hidden_note = (f" At these defaults the form hides {_prose(unset)}, so run() received "
+                   f"None (NULL in R) for {'it' if len(unset) == 1 else 'them'}."
+                   if unset else "")
 
     if code == "cancelled":
         return "fail", "the run was cancelled before it finished.", detail
@@ -1110,9 +1130,10 @@ def _gate_fixture(ctx: _Context):
                 "value was rejected — see the result gate."
             ), detail
         if code == "crash":
+            stop = "" if not hidden_note or str(run["message"]).endswith(".") else "."
             return "fail", (
                 f"the tool crashed after {_tool_seconds(run):.2f} s on its own defaults: "
-                f"{run['message']}{cpu_note}"
+                f"{run['message']}{stop}{hidden_note}{cpu_note}"
             ), dict(detail, notes=(run.get("traceback") or "").splitlines()[-14:])
         info = ctx.fixture_info
         return "fail", (
@@ -1120,7 +1141,7 @@ def _gate_fixture(ctx: _Context):
             f"{run['message']} (code: {code}). The fixture has {info['n_cells']} cells, "
             f"{info['n_sections']} sections, {len(info['cell_types'])} cell types, one extra "
             f"categorical, two continuous columns and {info['n_genes']} genes, so a refusal "
-            f"here is a refusal on almost any dataset.{cpu_note}"
+            f"here is a refusal on almost any dataset.{hidden_note}{cpu_note}"
         ), detail
 
     got = [k for k in OUTPUT_KINDS if k in (run.get("result") or {})]
@@ -1183,20 +1204,32 @@ def _check_sweep(ctx: _Context, m: dict):
 
 
 def _default_params(manifest: dict, dataset_dir: str) -> dict:
-    """The parameter dict the generated form would submit on first open.
+    """The parameter dict the generated form would submit on first open:
+    `_form_values`, through the coercion the host applies to every run."""
+    return coerce_params(manifest, _form_values(manifest, dataset_dir))
 
-    Manifest defaults where there are any; otherwise the fixture's OWN gene /
-    field / level, because that is what the viewer's generated control does — a
-    `gene` parameter is a search box over THIS dataset's panel, so a literal
-    default in a manifest would be a gene name that is wrong on every dataset
-    but the one its author had open. Filling from the dataset is not a
-    convenience here, it is the same rule the form obeys.
+
+def _form_values(manifest: dict, dataset_dir: str) -> dict:
+    """What the generated form holds on first open, before coercion.
+
+    Manifest defaults where there are any (left to coercion to fill in);
+    otherwise the fixture's OWN gene / field / level, because that is what the
+    viewer's generated control does — a `gene` parameter is a search box over
+    THIS dataset's panel, so a literal default in a manifest would be a gene
+    name that is wrong on every dataset but the one its author had open.
+    Filling from the dataset is not a convenience here, it is the same rule
+    the form obeys.
 
     Two parameters of the same kind get DIFFERENT values, in declaration order.
     A tool that takes two cell types may correctly refuse when they are the
     same one ("random labelling has nothing to permute"), so a validator that
     could only ever hand out level 0 would fail a tool for being right. Values
     wrap when the dataset runs out.
+
+    Parameters the form hides (`show_when`) are filled too: the viewer's form
+    keeps a value for every control, and coercion is what drops a hidden one.
+    So a corner or a branch that reveals a parameter finds in it the value a
+    user would see appear, not the None the default run received.
 
     Coercion itself is still `manifest.coerce_params`; this only decides what
     to hand it.
@@ -1248,7 +1281,7 @@ def _default_params(manifest: dict, dataset_dir: str) -> dict:
             if field:
                 levels, _codes = ds.categorical(field)
                 supplied[name] = take(("level", field), list(levels))
-    return coerce_params(manifest, {k: v for k, v in supplied.items() if v is not None})
+    return {k: v for k, v in supplied.items() if v is not None}
 
 
 def _expressed_genes(ds, n: int) -> list:
@@ -1404,13 +1437,23 @@ def _gate_edge(ctx: _Context):
     ctx.require("fixture", "the tool did not complete a default run, so a corner would only "
                            "repeat that failure.")
     base = ctx.params
-    plans = [("minimum", _edge_params(m, base, "min"))]
-    top = _edge_params(m, base, "max")
+    # From the form, not from the default run's params. Without show_when the
+    # two give the same corners; with it, a corner that moves a select to its
+    # last option reveals the parameters that option shows, and they must hold
+    # the values the form keeps for them (a real continuous column) rather
+    # than the None the default branch coerced them to.
+    corners = {}
+    for label, end in (("minimum", "min"), ("maximum", "max")):
+        try:
+            corners[label] = _edge_params(m, ctx.form, end)
+        except ManifestError as exc:
+            return "fail", _unfillable(f"at the {label} corner", exc), None
+    plans = [("minimum", corners["minimum"])]
     # Both ends, not just the bottom: the top of a declared range is where a
     # neighbourhood becomes the whole section and a statistic can go
     # undefined, which only a run there reaches.
-    if top != plans[0][1]:
-        plans.append(("maximum", top))
+    if corners["maximum"] != plans[0][1]:
+        plans.append(("maximum", corners["maximum"]))
 
     sentences, detail = [], {"corners": {}}
     for label, params in plans:
@@ -1429,7 +1472,89 @@ def _gate_edge(ctx: _Context):
     if len(plans) == 1:
         sentences.append("there is no other corner — no numeric, boolean or select parameter "
                          "to move")
+    if any(p.get("show_when") for p in m["params"]):
+        failed = _edge_branches(ctx, m, [base] + [params for _label, params in plans],
+                                sentences, detail)
+        if failed:
+            return failed
     return "pass", "; ".join(sentences) + ".", detail
+
+
+def _edge_branches(ctx: _Context, m: dict, ran: list, sentences: list, detail: dict):
+    """Run each show_when branch that no run in `ran` took; None, or the gate's failure.
+
+    A branch is one value of a controlling parameter (a select or a bool that
+    some show_when names): every option of a select, False and True for a
+    bool. The corners reach only the first and the last option, so a middle
+    one, and the parameters it shows, would otherwise reach users without
+    ever having run. Each branch not yet taken runs once from the form's
+    values with that value set and, when the form hides the controlling
+    parameter itself, with the values up its own show_when chain that reveal
+    it. The pass rule is a corner's. Branches already run count as taken, so
+    a branch that reveals another controlling parameter at one of its values
+    is not run twice. Sentences go to `sentences`, outcomes to
+    detail["branches"].
+    """
+    named = {p["show_when"]["param"] for p in m["params"] if p.get("show_when")}
+    detail["branches"] = {}
+    ran = list(ran)
+    for control in (p for p in m["params"] if p["name"] in named):
+        name = control["name"]
+        values = ([o["value"] for o in control["options"]] if control["type"] == "select"
+                  else [False, True])
+        for value in values:
+            if any(_took_branch(m, done, name, value) for done in ran):
+                continue
+            label = f"{name}={value!r}"
+            try:
+                params = coerce_params(m, _revealing(m, ctx.form, control, value))
+            except ManifestError as exc:
+                return "fail", _unfillable(f"on the {label} branch", exc), detail
+            run = ctx.run(params)
+            status, sentence, notes = _branch_outcome(label, _corner_text(params, ctx.params), run)
+            detail["branches"][label] = {"param": name, "value": value, "params": params,
+                                         "status": status, "seconds": _tool_seconds(run),
+                                         "blank": _blank_outputs(run.get("result") or {})}
+            if status == "fail":
+                # Stop here, as the corners do: a tool broken on one branch is a
+                # tool to fix and re-run.
+                return "fail", sentence, dict(detail, notes=notes) if notes else detail
+            sentences.append(sentence)
+            ran.append(params)
+    return None
+
+
+def _took_branch(manifest: dict, params: dict, name: str, value) -> bool:
+    """Whether a run with these coerced params took the branch name=value.
+
+    Only while `name` is itself shown: a hidden controlling parameter carries
+    its default, but the parameters that value would show stay hidden with
+    it, so its branch did not run.
+    """
+    return params.get(name) == value and name in visible_params(manifest, params)
+
+
+def _revealing(manifest: dict, form: dict, control: dict, value) -> dict:
+    """The form's values with `control` set to `value`, and `control` shown.
+
+    When the form hides it, each parameter up its show_when chain is set to
+    the first value that shows the one below it.
+    """
+    by_name = {p["name"]: p for p in manifest["params"]}
+    values = dict(form, **{control["name"]: value})
+    if control["name"] not in visible_params(manifest, values):
+        rule = control.get("show_when")
+        while rule:
+            values[rule["param"]] = rule["in"][0]
+            rule = by_name[rule["param"]].get("show_when")
+    return values
+
+
+def _unfillable(where: str, exc: ManifestError) -> str:
+    """A corner or branch whose coercion failed: show_when revealed an empty parameter."""
+    return (f"{where}, show_when reveals a parameter the form has no value for: {exc} Give "
+            "that parameter a `default` (or mark it optional), as every int, float, bool, "
+            "text, select and json parameter needs.")
 
 
 def _corner_outcome(label: str, corner: str, run: dict):
@@ -1441,23 +1566,35 @@ def _corner_outcome(label: str, corner: str, run: dict):
     at the bottom and "no two categories have 5000 cells" at the top are both
     answers. A traceback or a malformed result is not.
     """
+    return _outcome(run, f"at the {label} corner ({corner})",
+                    f"ran at the {label} corner ({corner})",
+                    "at the end of its own declared range")
+
+
+def _branch_outcome(label: str, moved: str, run: dict):
+    """(status, sentence, notes) for one show_when branch, by a corner's pass rule."""
+    return _outcome(run, f"on the {label} branch ({moved})", f"ran the {label} branch",
+                    "at one of its own settings")
+
+
+def _outcome(run: dict, at: str, ran: str, where: str):
+    """(status, sentence, notes) for an edge run; `at` and `ran` say where it ran."""
     code = run.get("code")
     if code == "cancelled":
-        return "fail", f"the run at the {label} corner ({corner}) was cancelled", None
+        return "fail", f"the run {at} was cancelled", None
     if code in ("no_result", "no_subprocess"):
-        return "fail", f"at the {label} corner ({corner}), {_lower_first(run['message'])}", \
+        return "fail", f"{at}, {_lower_first(run['message'])}", \
                (run.get("stderr") or "").splitlines()[-10:]
     if run["status"] == "error":
         if code == "crash":
-            return "fail", (f"at the {label} corner ({corner}) the tool crashed: "
-                            f"{run['message']}. A tool that cannot answer at the end of its "
-                            "own declared range must say so with PluginError, not with a "
+            return "fail", (f"{at} the tool crashed: {run['message']}. A tool that cannot "
+                            f"answer {where} must say so with PluginError, not with a "
                             "traceback."), (run.get("traceback") or "").splitlines()[-14:]
         if code in RESULT_CODES:
-            return "fail", (f"at the {label} corner ({corner}) the return value was rejected: "
-                            f"{run['message']} (code: {code})."), None
-        return "pass", (f"at the {label} corner ({corner}) it refused in words rather than "
-                        f"crashing: {run['message']} (code: {code})"), None
+            return "fail", (f"{at} the return value was rejected: {run['message']} "
+                            f"(code: {code})."), None
+        return "pass", (f"{at} it refused in words rather than crashing: {run['message']} "
+                        f"(code: {code})"), None
     blank = _blank_outputs(run.get("result") or {})
     if blank:
         # Reported, not failed: "no cell qualifies at this threshold" and "this
@@ -1466,12 +1603,12 @@ def _corner_outcome(label: str, corner: str, run: dict):
         # author begins from (its maximum threshold is unreachable on 600
         # cells) to catch a defect only its author can identify.
         return "pass", (
-            f"ran at the {label} corner ({corner}) in {_tool_seconds(run):.2f} s but painted "
-            f"nothing there — {' and '.join(blank)}. Correct if no cell can qualify at those "
-            "parameters, a defect if the statistic is undefined; if it is the latter, refuse "
-            "with PluginError so the user is told which"
+            f"{ran} in {_tool_seconds(run):.2f} s but painted nothing there — "
+            f"{' and '.join(blank)}. Correct if no cell can qualify at those parameters, a "
+            "defect if the statistic is undefined; if it is the latter, refuse with "
+            "PluginError so the user is told which"
         ), None
-    return "pass", f"ran at the {label} corner ({corner}) in {_tool_seconds(run):.2f} s", None
+    return "pass", f"{ran} in {_tool_seconds(run):.2f} s", None
 
 
 def _corner_text(params: dict, base: dict) -> str:
@@ -1488,6 +1625,10 @@ def _edge_params(manifest: dict, base: dict, corner: str = "min") -> dict:
     Selects move too, and to the LAST option rather than a random one, because
     the option list is ordered by the author and the far end is the one least
     likely to have been the one they developed against.
+
+    `base` is the form's values (`_form_values`). Through coerce_params, a
+    parameter the corner hides gets its default and one it reveals keeps the
+    value the form holds for it.
     """
     lowest = corner == "min"
     out = dict(base)
@@ -1580,6 +1721,12 @@ def _lower_first(text: str) -> str:
     """Splice a driver sentence into the middle of a gate sentence."""
     text = str(text or "the run failed with no message.")
     return text[0].lower() + text[1:]
+
+
+def _prose(names: list) -> str:
+    """"a", "a and b", "a, b and c": names joined as a sentence joins them."""
+    names = [str(n) for n in names]
+    return " and ".join(names) if len(names) < 3 else f"{', '.join(names[:-1])} and {names[-1]}"
 
 
 def _tool_seconds(run: dict) -> float:

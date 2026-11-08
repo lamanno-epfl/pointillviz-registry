@@ -78,6 +78,13 @@ DEFAULT_SWEEP_STEPS = 8
 #: multiply them by the step count, so a tool returning them cannot declare one.
 SWEEP_EXCLUDED_OUTPUTS = ("cells", "vectors", "labels")
 
+#: The parameter types a `show_when` may name. Only these have a closed set of
+#: values, so only these give the form a rule it can evaluate as the user
+#: clicks, and the gates a finite set of branches to run.
+SHOW_WHEN_CONTROLS = ("select", "bool")
+#: The strings a bool parameter reads as true; everything else is false.
+_TRUE = ("1", "true", "yes", "on")
+
 
 class ManifestError(ValueError):
     """A manifest the host will not load, and the reason in one sentence."""
@@ -203,6 +210,7 @@ def validate(raw: dict, plugin_dir: str = None) -> dict:
         if p["name"] in seen:
             raise ManifestError(f"duplicate parameter name {p['name']!r}.")
         seen.add(p["name"])
+    _check_show_when(params)
 
     spatial = str(requires.get("spatial") or "any")
     if spatial not in ("any", "2d", "3d"):
@@ -304,12 +312,228 @@ def _validate_param(p: dict, i: int) -> dict:
                 raise ManifestError(f"{where}: preset_n must be from 1 to max_items "
                                     f"({out['max_items']}).")
             out["preset"], out["preset_n"] = p["preset"], n
+    rule = p.get("show_when")
+    if rule is not None:
+        # Only the shape here. What the rule names, and whether its values are
+        # that parameter's values, can be checked only once every parameter is
+        # known: see _check_show_when.
+        if out.get("sweep"):
+            raise ManifestError(f"{where}: a swept parameter cannot declare show_when, "
+                                "because the sweep control has to stay usable whatever "
+                                "else the form shows.")
+        if not isinstance(rule, dict) or set(rule) != {"param", "in"}:
+            raise ManifestError(f'{where}: show_when must be an object with exactly the keys '
+                                f'"param" and "in", such as {{"param": "source", "in": '
+                                f'["gene"]}}, not {rule!r}.')
+        if not isinstance(rule["param"], str):
+            raise ManifestError(f'{where}: show_when "param" must be the name of another '
+                                f'parameter, not {rule["param"]!r}.')
+        if not isinstance(rule["in"], list) or not rule["in"]:
+            raise ManifestError(f'{where}: show_when "in" must be a non-empty list of the '
+                                f'values that show {name}, not {rule["in"]!r}.')
+        # A copy: the values are normalised in place once the parameter they
+        # belong to is known, and the caller's dict must not change under it.
+        out["show_when"] = {"param": rule["param"], "in": list(rule["in"])}
     return out
+
+
+def _check_show_when(params: list) -> None:
+    """The cross-parameter rules of `show_when`, and its values normalised in place.
+
+    Runs once every parameter has been validated on its own and the names are
+    known to be unique. A select's values become the option strings they
+    match (5 matches the option "5"), a bool's stay true and false, and
+    duplicates go, in order: so the viewer and coerce_params compare like
+    with like.
+    """
+    by_name = {p["name"]: p for p in params}
+    for i, p in enumerate(params):
+        rule = p.get("show_when")
+        if rule is None:
+            continue
+        where, named = f"params[{i}] ({p['name']})", rule["param"]
+        if named == p["name"]:
+            raise ManifestError(f"{where}: show_when names {named} itself; name the select or "
+                                f"bool parameter that decides whether {named} is shown.")
+        control = by_name.get(named)
+        if control is None:
+            raise ManifestError(f"{where}: show_when names {named!r}, which is not a "
+                                "parameter of this manifest.")
+        if control["type"] not in SHOW_WHEN_CONTROLS:
+            raise ManifestError(f"{where}: show_when names {named}, a {control['type']} "
+                                "parameter; only a select or a bool can decide what the "
+                                "form shows.")
+        if control["type"] == "select":
+            options = [o["value"] for o in control["options"]]
+            bad = [v for v in rule["in"] if str(v) not in options]
+            if bad:
+                raise ManifestError(
+                    f"{where}: show_when lists {', '.join(repr(v) for v in bad)}, which "
+                    f"{'is' if len(bad) == 1 else 'are'} not among {named}'s options "
+                    f"({', '.join(options)}).")
+            values = [str(v) for v in rule["in"]]
+        else:
+            bad = [v for v in rule["in"] if not isinstance(v, bool)]
+            if bad:
+                raise ManifestError(
+                    f"{where}: {named} is a bool, so show_when \"in\" must hold true and/or "
+                    f"false, not {', '.join(repr(v) for v in bad)}.")
+            values = list(rule["in"])
+        rule["in"] = list(dict.fromkeys(values))
+
+    for i, p in enumerate(params):
+        # Each parameter names at most one other, so following the names from
+        # any parameter either ends or loops; a loop through this parameter is
+        # reported here, and one it merely leads into from one of its members.
+        path, node = [p["name"]], p
+        while node.get("show_when"):
+            named = node["show_when"]["param"]
+            if named == p["name"]:
+                raise ManifestError(
+                    f"params[{i}] ({p['name']}): show_when forms a cycle "
+                    f"({' → '.join(path + [named])}), so the form could never decide "
+                    "whether to show those parameters; one of them must not depend on "
+                    "the others.")
+            if named in path:
+                break
+            path.append(named)
+            node = by_name[named]
+
+    # After the cycle check, so that a cycle is reported as one: in a cycle
+    # some parameter always names one declared after it.
+    position = {p["name"]: i for i, p in enumerate(params)}
+    for i, p in enumerate(params):
+        # The form draws a dependent row as part of the choice above it, under
+        # a rule on its left; a dependent declared above its choice would be
+        # drawn under the wrong one.
+        named = (p.get("show_when") or {}).get("param")
+        if named is not None and position[named] > i:
+            raise ManifestError(
+                f"params[{i}] ({p['name']}): show_when names {named}, which is declared after "
+                f"it; put {named} above {p['name']}, because the form shows a parameter below "
+                "the choice that reveals it.")
+
+    first_field = next((q["name"] for q in params if q["type"] == "categorical_field"), None)
+    for i, p in enumerate(params):
+        # A level menu lists the levels of the column its field parameter
+        # holds. Were it shown while that field is hidden, the form would offer
+        # levels of a column the run then sends as None. Following the level's
+        # own chain to a link on the field's controlling parameter whose values
+        # all show the field proves the level is hidden whenever the field is.
+        if p["type"] != "category_value":
+            continue
+        named = p.get("field_param")
+        if isinstance(named, str) and named in by_name:
+            field, source = named, f"its levels come from {named}"
+        else:
+            # The form's own fallback: with no field_param that names a
+            # parameter, a level menu lists the levels of the column held by
+            # the manifest's first categorical_field parameter.
+            field = first_field
+            source = (f"its field_param {named!r} names no parameter, and the form then lists"
+                      if named else "with no field_param, the form lists")
+            source += f" the levels of the first categorical_field, {field}"
+        if field is None or not by_name[field].get("show_when"):
+            continue
+        need = by_name[field]["show_when"]
+        node, implied = p, False
+        while node.get("show_when") and not implied:
+            link = node["show_when"]
+            implied = link["param"] == need["param"] and set(link["in"]) <= set(need["in"])
+            node = by_name[link["param"]]
+        if not implied:
+            raise ManifestError(
+                f"params[{i}] ({p['name']}): {source}, which is shown only while "
+                f"{need['param']} is {_one_of(need['in'])}, so {p['name']} must be hidden "
+                f"whenever {field} is; give it the same \"show_when\": {json.dumps(need)}.")
+
+
+def _one_of(values: list) -> str:
+    """"gene", or "one of category, gene": a show_when's values in a sentence."""
+    words = [json.dumps(v) if isinstance(v, bool) else str(v) for v in values]
+    return words[0] if len(words) == 1 else "one of " + ", ".join(words)
 
 
 # ---------------------------------------------------------------------------
 # Coercion — run host-side, before the tool's process starts
 # ---------------------------------------------------------------------------
+def visible_params(manifest: dict, values: dict) -> set:
+    """The names of the parameters the form shows for these values.
+
+    A parameter without `show_when` is always shown. One with
+    `"show_when": {"param": c, "in": [...]}` is shown while `c` is itself shown
+    and holds one of the listed values. `c`'s value is the one in `values`, or
+    its declared default when that is missing, None or "", normalised as
+    coerce_params normalises it (a select's as a string, a bool's as true or
+    false). A select value that is not an option, or no value at all, matches
+    nothing; a bool with no value reads as false, because a switch is always
+    on or off and the viewer draws it off. The viewer draws the form by the
+    same rule.
+
+    A show_when that names a parameter absent from `manifest` is treated as
+    undeclared, so that parameter is shown: `validate` refuses such a
+    manifest, and the gates coerce one-parameter slices of a valid one.
+    """
+    specs = {p["name"]: p for p in manifest["params"]}
+    values = values or {}
+
+    def holds(control: dict, allowed: list) -> bool:
+        value = _control_value(control, values)
+        if control["type"] == "bool":
+            return value in allowed
+        return value in [str(v) for v in allowed]
+
+    def shown(name: str) -> bool:
+        seen, rule = {name}, specs[name].get("show_when")
+        while rule:
+            named = rule.get("param")
+            control = specs.get(named) if isinstance(named, str) else None
+            if control is None or named in seen:
+                return True            # not evaluable, which validate refuses: as if undeclared
+            if not holds(control, rule.get("in") or []):
+                return False
+            seen.add(named)
+            rule = control.get("show_when")
+        return True
+
+    return {name for name in specs if shown(name)}
+
+
+def _control_value(control: dict, values: dict):
+    """A controlling parameter's value as show_when compares it.
+
+    The value in `values`, or the declared default when that is missing,
+    None or "". A bool's is true or false (with neither, false: the switch is
+    drawn off); a select's is a string, or None when there is no value.
+    """
+    value = values.get(control["name"])
+    if value is None or value == "":
+        value = control.get("default")
+    if control["type"] == "bool":
+        return value if isinstance(value, bool) else str(value).lower() in _TRUE
+    return None if value is None or value == "" else str(value)
+
+
+def _required(manifest: dict, p: dict, values: dict) -> str:
+    """The refusal for a shown parameter left empty, naming the choice that shows it.
+
+    The Assistant and the command line see only this sentence. A caller who
+    sends a gene without choosing "gene" is told that the default choice
+    wants its category, and so learns to set the choice. A parameter without
+    show_when keeps the plain sentence.
+    """
+    named = (p.get("show_when") or {}).get("param")
+    control = next((q for q in manifest["params"] if q["name"] == named), None)
+    if control is None:
+        return f"{p['label']} is required."
+    value = _control_value(control, values)
+    if control["type"] == "bool":
+        said = "on" if value else "off"
+    else:
+        said = next((o["label"] for o in control["options"] if o["value"] == value), value)
+    return f"{p['label']} is required while {control['label']} is {said}."
+
+
 def coerce_params(manifest: dict, supplied: dict) -> dict:
     """Turn the browser's JSON into the exact dict `run()` is promised.
 
@@ -319,25 +543,38 @@ def coerce_params(manifest: dict, supplied: dict) -> dict:
     and clamping is the recovery a user would want. Anything genuinely
     unanswerable — a required parameter with no default and no value, or a
     number that is not one — raises ManifestError.
+
+    A parameter the form hides (`show_when`, see visible_params) ignores any
+    value submitted for it: run() gets its declared default, coerced like any
+    default, or None when it declares none, and it is never required. So run()
+    still receives a well-typed value for every parameter that declares a
+    default, and a tool that reads float(params["radius"]) in every branch
+    keeps working; the dataset parameters (gene, columns, levels), which
+    declare none, arrive as None, so a gene the user picked before switching
+    to another source never reaches the tool, and a run depends only on what
+    the form shows. A shown one left empty is refused as any other, in a
+    sentence that also names the choice showing it ("Category is required
+    while Gradient of is Cell type or category.").
     """
     supplied = supplied or {}
+    shown = visible_params(manifest, supplied)
     out = {}
     for p in manifest["params"]:
         name, ptype = p["name"], p["type"]
-        val = supplied.get(name, None)
+        val = supplied.get(name, None) if name in shown else None
         if val is None or val == "":
             val = p.get("default")
         if val is None or val == "":
-            if p["optional"]:
+            if p["optional"] or name not in shown:
                 out[name] = None
                 continue
-            raise ManifestError(f"{p['label']} is required.")
+            raise ManifestError(_required(manifest, p, supplied))
         if ptype == "int":
             out[name] = int(max(p["min"], min(p["max"], _number(val, p["label"]))))
         elif ptype == "float":
             out[name] = float(max(p["min"], min(p["max"], _number(val, p["label"]))))
         elif ptype == "bool":
-            out[name] = val if isinstance(val, bool) else str(val).lower() in ("1", "true", "yes", "on")
+            out[name] = val if isinstance(val, bool) else str(val).lower() in _TRUE
         elif ptype == "select":
             allowed = {o["value"] for o in p["options"]}
             if str(val) not in allowed:
