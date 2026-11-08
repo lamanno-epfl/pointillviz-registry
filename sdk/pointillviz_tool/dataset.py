@@ -58,6 +58,15 @@ cell whose section did not measure that gene — a zero only where a section
 measured it and saw none. `ds.gene_measured(name)` is the matching boolean
 mask, and `ds.sections[i]["unmeasured_genes"]` lists, per section, the indices
 into `ds.gene_names` it lacks (absent when it measured every gene).
+
+What the matrix holds is the dataset's own record (`ds.gene_values`): raw
+counts, or values the import or the file already normalised (CP10K, CPM,
+logged or not), or scaled values. `normalize="cp10k"` and `"log1p"` give the
+same numbers for all of them, the app's: a stored log is undone first, and
+values normalised per cell keep their own normalisation. `"raw"` is the
+values as stored. Scaled values (z-scores, residuals) cannot be normalised:
+`"cp10k"`, `"log1p"` and `ds.total_counts()` refuse with
+`PluginError("scaled_values")`.
 """
 
 from __future__ import annotations
@@ -70,8 +79,9 @@ from typing import Optional
 import numpy as np
 
 from ._format import (
-    PluginError, _gene_index, _is_full_composition, _load_cells_bin, _load_meta, _read_gene,
-    _size_factors, _total_counts, bind_composition, categorical_fields, gene_panels,
+    PluginError, _gene_index, _is_full_composition, _linear_of, _load_cells_bin, _load_meta,
+    _read_gene, _size_factors, _stored_transform, _total_counts, bind_composition,
+    categorical_fields, gene_panels, values_of,
 )
 
 __all__ = ["Dataset", "PluginError"]
@@ -250,6 +260,16 @@ class Dataset:
     def has_gene(self, name: str) -> bool:
         return name in self._gene_positions()
 
+    @property
+    def gene_values(self) -> dict:
+        """What the gene matrix holds, so what `gene(name, "raw")` returns:
+        {kind, origin, target_sum?, log_base?}, `kind` one of "counts",
+        "cp10k" (CP10K or CPM: `target_sum`), "log1p_cp10k", "log1p_counts"
+        (`log_base` "e" or 2) and "scaled". `origin` is "import" when the
+        app's own CP10K / log1p made the values, else "file". A dataset
+        converted before the record existed reads as counts."""
+        return values_of(self.meta)
+
     def top_detected_genes(self, n: int) -> list:
         """The `n` genes detected in the most cells, most first, ties in panel order.
 
@@ -269,9 +289,16 @@ class Dataset:
         """(n_cells,) float32 expression of one gene, densified.
 
         `normalize` is one of:
-          "raw"   — the stored counts, untouched
+          "raw"   — the stored values, untouched: counts, or what
+                    `gene_values` says the dataset stores
           "cp10k" — counts per 10,000 transcripts (the viewer's default)
           "log1p" — log1p of cp10k, which is what most statistics want
+
+        "cp10k" and "log1p" are the same whatever the dataset stores, the
+        numbers the app's own statistics use: a stored log is undone first,
+        and values normalised per cell keep their own normalisation (CPM is
+        rescaled to CP10K, nothing is normalised twice). A dataset of scaled
+        values refuses them with PluginError("scaled_values").
 
         Densification is deliberate and is the point of this method: the file
         is gene-major sparse, one packed block per gene, and every tool would
@@ -299,6 +326,11 @@ class Dataset:
         out = np.zeros(self.n_cells, dtype=np.float32)
         with open(path, "rb") as fh:
             idx, val = _read_gene(fh, gi, pos)
+        if normalize != "raw":
+            # Back to the linear scale first (a stored log1p or log2(x + 1)),
+            # as the app's readers do; the size factor then knows what the
+            # values were normalised to (_total_counts).
+            val = _linear_of(val, _stored_transform(gi, self.meta))
         if idx.size:
             out[idx] = val.astype(np.float32)
         if normalize != "raw":
@@ -344,7 +376,10 @@ class Dataset:
         return out
 
     def total_counts(self) -> np.ndarray:
-        """(n_cells,) float64 transcripts per cell."""
+        """(n_cells,) float64 transcripts per cell: the CP10K size factor's
+        total. For values already normalised per cell (CP10K, CPM), the
+        total they were normalised to (10,000, 1,000,000), as in the app.
+        Refuses a dataset of scaled values."""
         if self._totals is None:
             self._totals = _total_counts(self.dir, self.meta, self.fields)
         return self._totals

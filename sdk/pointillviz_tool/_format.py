@@ -26,6 +26,14 @@ Two things differ from the app on purpose:
     sentence the user can act on, rather than a FileNotFoundError that the
     runner can only report as a crash.
 
+What the gene matrix holds is the dataset's own record, `meta.genes.values`
+(`values_of`): raw counts, values the import or the file already normalised
+(CP10K, CPM, logged or not), or scaled values. The readers hand back the values
+as stored; normalising takes the record into account the app's way
+(`_linear_of`, `_total_counts`), so `cp10k` and `log1p` are the same numbers
+whatever the dataset stores, and scaled values, which cannot be taken back to
+expression, are refused (`PluginError("scaled_values")`).
+
 Gene files that are not in the packed layout (a dataset converted before it)
 refuse with `PluginError("gene_layout")`, whose message says to convert the
 dataset again from its source; they are never read as a dataset without genes.
@@ -267,8 +275,87 @@ def categorical_fields(meta: dict) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# What the gene matrix holds (the app's backend/expression.py)
+# ---------------------------------------------------------------------------
+#: What `meta.genes.values["kind"]` can be.
+KINDS = ("counts", "cp10k", "log1p_cp10k", "log1p_counts", "scaled")
+
+
+def values_of(meta: dict) -> dict:
+    """meta.genes.values, completed: {kind, origin, target_sum?, log_base?}.
+
+      kind        counts | cp10k | log1p_cp10k | log1p_counts | scaled
+      target_sum  for the cp10k kinds, the per-cell total the values were
+                  normalised to (10,000 for CP10K, 1,000,000 for CPM)
+      log_base    for the log kinds, "e" (log1p) or 2 (log2(x + 1))
+      origin      "file" (the matrix arrived like this) or "import" (the
+                  converter's own CP10K / log1p made it)
+
+    A dataset converted before the record existed is read from its gene
+    transform (the import's CP10K / log1p); without one its values are counts,
+    the one kind the converter stored before the record."""
+    g = (meta or {}).get("genes") or {}
+    v = g.get("values")
+    if isinstance(v, dict) and v.get("kind") in KINDS:
+        out = {"kind": v["kind"], "origin": v.get("origin") or "file"}
+        if "cp10k" in out["kind"]:
+            out["target_sum"] = float(v.get("target_sum") or TARGET_SUM)
+        if out["kind"].startswith("log1p"):
+            out["log_base"] = 2 if v.get("log_base") in (2, "2") else "e"
+        return out
+    tr = g.get("transform") or {}
+    if tr.get("cp10k") or tr.get("log1p"):
+        kind = ("log1p_cp10k" if tr.get("cp10k") and tr.get("log1p")
+                else "cp10k" if tr.get("cp10k") else "log1p_counts")
+        out = {"kind": kind, "origin": "file" if tr.get("in_file") else "import"}
+        if tr.get("cp10k"):
+            out["target_sum"] = float(tr.get("target_sum") or TARGET_SUM)
+        if tr.get("log1p"):
+            out["log_base"] = 2 if tr.get("log_base") in (2, "2") else "e"
+        return out
+    return {"kind": "counts", "origin": "file"}
+
+
+def _require_expression(meta: dict) -> None:
+    """Refuse, in the user's words, normalising a matrix of scaled values."""
+    if values_of(meta)["kind"] != "scaled":
+        return
+    raise PluginError(
+        "scaled_values",
+        "This tool needs expression values — counts, or counts normalised to "
+        "CP10K / CPM, logged or not. This dataset stores scaled values "
+        "(z-scores or residuals), which cannot be taken back to expression. "
+        "Import a counts matrix (often .raw.X or a 'counts' layer) instead.")
+
+
+def _stored_transform(gi: dict, meta: dict):
+    """The record stored values are undone by, where the app's readers find
+    it: a flat dataset's gene index; an atlas's meta.genes.transform."""
+    if gi.get("_atlas_reader") is not None:
+        return (meta.get("genes") or {}).get("transform") or None
+    return gi.get("transform") or None
+
+
+def _linear_of(val: np.ndarray, transform) -> np.ndarray:
+    """Stored values back on the linear scale (counts, or CP10K / CPM): a
+    stored log1p, or log2(x + 1), undone."""
+    tr = transform or {}
+    if not tr.get("log1p"):
+        return val
+    if tr.get("log_base") in (2, "2"):
+        return np.exp2(val) - 1.0
+    return np.expm1(val)
+
+
+# ---------------------------------------------------------------------------
 # Size factors for CP10K
 # ---------------------------------------------------------------------------
+def _normalised_totals(sums: np.ndarray, kind: dict) -> np.ndarray:
+    """Values normalised per cell: the target sum for every cell that
+    expresses anything, 0 for one that expresses nothing."""
+    return np.where(sums > 0, float(kind.get("target_sum") or TARGET_SUM), 0.0)
+
+
 def _total_counts(dataset_dir: str, meta: dict,
                   fields: dict[str, np.ndarray]) -> np.ndarray:
     """Per-cell total counts, used as the CP10K size factor.
@@ -278,8 +365,18 @@ def _total_counts(dataset_dir: str, meta: dict,
     otherwise sums the gene matrix here, in memory. It never writes (see the
     module docstring), so a dataset without a totals column pays one pass over
     its gene matrix per run that asks.
+
+    Values already normalised per cell (CP10K, CPM; the import's or the
+    file's) total the target sum they were normalised to, for every cell that
+    expresses anything, as in the app: a column of true totals would scale
+    them a second time, and their own sums would normalise again a matrix
+    whose genes were cut after normalising. A stored log is undone before
+    summing. A matrix of scaled values is refused.
     """
-    for name in ("cont_transcript_counts", "cont_total_counts", "cont_n_counts"):
+    _require_expression(meta)
+    kind = values_of(meta)
+    cp10k = "cp10k" in kind["kind"]
+    for name in () if cp10k else ("cont_transcript_counts", "cont_total_counts", "cont_n_counts"):
         arr = fields.get(name)
         if arr is not None:
             totals = np.asarray(arr, dtype=np.float64)
@@ -300,17 +397,19 @@ def _total_counts(dataset_dir: str, meta: dict,
         if os.path.exists(cache):
             totals = np.load(cache)
             if totals.shape[0] == n:
-                return totals.astype(np.float64)
+                totals = totals.astype(np.float64)
+                return _normalised_totals(totals, kind) if cp10k else totals
 
     gi, counts_path = _gene_index(dataset_dir, meta)
+    tr = _stored_transform(gi, meta)
     totals = np.zeros(n, dtype=np.float64)
     # Many genes per decode (_scan_matrix). np.add.at adds in the order given,
     # and each cell still takes its genes in gene order, so these are the
     # float64 sums of a gene-by-gene pass over _read_gene, bit for bit.
     for idx, val in _scan_matrix(gi, counts_path):
         if idx.size:
-            np.add.at(totals, idx, val)
-    return totals
+            np.add.at(totals, idx, _linear_of(val, tr))
+    return _normalised_totals(totals, kind) if cp10k else totals
 
 
 def _size_factors(totals: np.ndarray) -> np.ndarray:

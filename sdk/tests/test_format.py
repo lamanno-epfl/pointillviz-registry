@@ -195,7 +195,7 @@ _REC = np.dtype([("x", "<f4"), ("y", "<f4"), ("cat_tissue", "u1"),
                  ("_pad0", "u1"), ("_pad1", "u1"), ("_pad2", "u1")])
 
 
-def _write_shard(sec_dir, si, counts, lod=None):
+def _write_shard(sec_dir, si, counts, lod=None, value_dtype="u16"):
     os.makedirs(sec_dir)
     n = counts.shape[0]
     rec = np.zeros(n, dtype=_REC)
@@ -207,14 +207,15 @@ def _write_shard(sec_dir, si, counts, lod=None):
     with open(os.path.join(sec_dir, "gene_counts.bin"), "wb") as fh:
         for g in range(counts.shape[1]):
             idx = np.flatnonzero(counts[:, g]).astype("<u4")
-            block, ne, nv = _genecodec.encode_block(idx, counts[idx, g].astype("<u2"), "u16")
+            vals = counts[idx, g].astype("<u2" if value_dtype == "u16" else "<f4")
+            block, ne, nv = _genecodec.encode_block(idx, vals, value_dtype)
             offsets.append(fh.tell())
             lengths.append(len(block))
             nnz.append(int(idx.size))
             n_esc_idx.append(ne)
             n_esc_val.append(nv)
             fh.write(block)
-    gi = {"n_cells": n, "n_genes": len(GENES), "layout": "packed", "value_dtype": "u16",
+    gi = {"n_cells": n, "n_genes": len(GENES), "layout": "packed", "value_dtype": value_dtype,
           "genes": GENES, "offsets": offsets, "lengths": lengths, "nnz": nnz,
           "n_esc_idx": n_esc_idx, "n_esc_val": n_esc_val,
           "max_counts": counts.max(axis=0).astype(float).tolist()}
@@ -225,9 +226,10 @@ def _write_shard(sec_dir, si, counts, lod=None):
         json.dump(gi, fh)
 
 
-def _write_atlas(root, shards, lods):
+def _write_atlas(root, shards, lods, value_dtype="u16", genes_extra=None):
     for si, (sid, counts) in enumerate(shards.items()):
-        _write_shard(os.path.join(root, "sections", sid), si, counts, lod=lods.get(sid))
+        _write_shard(os.path.join(root, "sections", sid), si, counts, lod=lods.get(sid),
+                     value_dtype=value_dtype)
     meta = {
         "atlas": True, "name": "atlas_probe",
         "n_cells": int(sum(c.shape[0] for c in shards.values())),
@@ -241,7 +243,8 @@ def _write_atlas(root, shards, lods):
         "record_size": 12,
         "sections": [{"section_id": sid, "n_cells": int(c.shape[0])}
                      for sid, c in shards.items()],
-        "genes": {"n_genes": len(GENES), "genes": GENES, "value_dtype": "u16"},
+        "genes": {"n_genes": len(GENES), "genes": GENES, "value_dtype": value_dtype,
+                  **(genes_extra or {})},
         "extra_categorical": [{"name": "cat_tissue", "source_obs": "tissue",
                                "levels": list(shards), "missing_idx": 255}],
         "spatial": {"mode": "2d"},
@@ -371,6 +374,24 @@ def test_the_handle_reads_an_atlas(atlas):
     assert ds.section.tolist() == [0] * 5 + [1] * 4
     levels, codes = ds.categorical("tissue")
     assert levels == ["A", "B"] and codes.tolist() == [0] * 5 + [1] * 4
+
+
+def test_an_atlas_of_logged_counts_normalises_as_its_counts_do(tmp_path):
+    # An atlas whose shards hold log1p of the counts (the transform record in
+    # meta.genes, as the app writes it for an atlas): undone before the totals
+    # and before CP10K, never logged a second time; "raw" stays the logs.
+    plain = Dataset(_write_atlas(str(tmp_path / "counts"), SHARDS, {}))
+    logged = Dataset(_write_atlas(
+        str(tmp_path / "logged"), {k: np.log1p(v.astype(np.float64)) for k, v in SHARDS.items()}, {},
+        value_dtype="f32",
+        genes_extra={"values": {"kind": "log1p_counts", "log_base": "e", "origin": "file"},
+                     "transform": {"cp10k": False, "log1p": True, "in_file": True}}))
+    assert logged.gene_values == {"kind": "log1p_counts", "origin": "file", "log_base": "e"}
+    assert np.allclose(logged.total_counts(), plain.total_counts())
+    for g in GENES:
+        assert np.allclose(logged.gene(g, "cp10k"), plain.gene(g, "cp10k"), rtol=1e-5)
+        assert np.allclose(logged.gene(g, "log1p"), plain.gene(g, "log1p"), atol=1e-6)
+        assert np.allclose(logged.gene(g, "raw"), np.log1p(plain.gene(g, "raw")), atol=1e-6)
 
 
 def test_atlas_prefixes_read_escaped_entries_exactly(tmp_path):
