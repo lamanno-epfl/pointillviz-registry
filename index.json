@@ -500,7 +500,7 @@
     {
       "id": "categorical-chords",
       "name": "Categorical Chords",
-      "version": "2.0.0",
+      "version": "2.1.0",
       "description": "Explore spatial contacts or shared membership between categorical annotations with count-weighted ribbons and enrichment colors.",
       "author": "PointillViz reference tools",
       "icon": "donut_large",
@@ -532,7 +532,7 @@
         "schema": 3,
         "id": "categorical-chords",
         "name": "Categorical Chords",
-        "version": "2.0.0",
+        "version": "2.1.0",
         "author": "PointillViz reference tools",
         "description": "Explore spatial contacts or shared membership between categorical annotations with count-weighted ribbons and enrichment colors.",
         "long_description": "",
@@ -557,6 +557,14 @@
         "optional_outputs": [],
         "params": [
           {
+            "name": "field",
+            "type": "categorical_field",
+            "label": "Grouping annotation",
+            "help": "Selects the categorical annotation used for the groups.\nIn annotation mode, this is the first of the two annotations.",
+            "default": null,
+            "optional": false
+          },
+          {
             "name": "mode",
             "type": "select",
             "label": "Relationship",
@@ -575,31 +583,49 @@
             ]
           },
           {
-            "name": "field",
-            "type": "categorical_field",
-            "label": "Grouping annotation",
-            "help": "Selects the categorical annotation used for the groups.\nIn annotation mode, this is the first of the two annotations.",
-            "default": null,
-            "optional": false
-          },
-          {
             "name": "other_field",
             "type": "categorical_field",
             "label": "Second annotation",
-            "help": "Selects the second annotation compared on the same cells.\nUsed only for Annotation relationships.",
+            "help": "Selects the second annotation compared on the same cells.",
             "default": null,
-            "optional": true
+            "optional": true,
+            "show_when": {
+              "param": "mode",
+              "in": [
+                "annotations"
+              ]
+            }
           },
           {
             "name": "radius",
             "type": "float",
             "label": "Contact radius",
-            "help": "Sets the maximum distance between two cells for them to count as a spatial contact, in dataset coordinate units.\nUsed only for Spatial contacts.",
+            "help": "Sets the maximum distance between two cells for them to count as a spatial contact, in dataset coordinate units.",
             "default": 60,
             "optional": false,
             "min": 1.0,
             "max": 1000.0,
-            "step": 1.0
+            "step": 1.0,
+            "show_when": {
+              "param": "mode",
+              "in": [
+                "contacts"
+              ]
+            }
+          },
+          {
+            "name": "self_links",
+            "type": "bool",
+            "label": "Include within-group contacts",
+            "help": "Includes spatial contacts between cells belonging to the same group.",
+            "default": false,
+            "optional": false,
+            "show_when": {
+              "param": "mode",
+              "in": [
+                "contacts"
+              ]
+            }
           },
           {
             "name": "min_count",
@@ -633,14 +659,6 @@
             "min": 1.0,
             "max": 500.0,
             "step": 1.0
-          },
-          {
-            "name": "self_links",
-            "type": "bool",
-            "label": "Include within-group contacts",
-            "help": "Includes spatial contacts between cells belonging to the same group.\nUsed only for Spatial contacts.",
-            "default": false,
-            "optional": false
           }
         ],
         "requires": {
@@ -653,9 +671,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/categorical-chords-v2.0.0/categorical-chords-2.0.0.pvtool",
-        "sha256": "0317641b3056b7aa1bb9af71ded23fb7f4f1e1c915cd2bb06a8eec82a1ad38b7",
-        "size": 18853
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/categorical-chords-v2.1.0/categorical-chords-2.1.0.pvtool",
+        "sha256": "477f8e7783b2dffd5a8f33151860529c4dce28dd363b243790338f15dfdcc4f1",
+        "size": 18881
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/categorical-chords/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/categorical-chords/preview.svg",
@@ -667,13 +685,13 @@
             "id": "bundle",
             "required": true,
             "status": "pass",
-            "message": "6 files, 18.4 kB packed and 72.8 kB unpacked, plugin.json at the root."
+            "message": "6 files, 18.4 kB packed and 73.0 kB unpacked, plugin.json at the root."
           },
           {
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "categorical-chords 2.0.0 by PointillViz reference tools; Python entry tool.py, outputs chord, matrix, table, summary."
+            "message": "categorical-chords 2.1.0 by PointillViz reference tools; Python entry tool.py, outputs chord, matrix, table, summary."
           },
           {
             "id": "environment",
@@ -697,7 +715,7 @@
             "id": "fixture",
             "required": true,
             "status": "pass",
-            "message": "ran on the 600-cell fixture in 0.24 s, returning summary, table, matrix, chord."
+            "message": "ran on the 600-cell fixture in 0.20 s, returning summary, table, matrix, chord."
           },
           {
             "id": "result",
@@ -709,7 +727,7 @@
             "id": "edge",
             "required": true,
             "status": "pass",
-            "message": "at the minimum corner (max_links=1, max_nodes=4, radius=1.0) it refused in words rather than crashing: No relationships pass these controls. Reduce minimum support, increase radius for contacts, or include self-links. (code: no_links); at the maximum corner (max_links=500, max_nodes=60, min_count=1000, mode='annotations', radius=1000.0, self_links=True) it refused in words rather than crashing: No relationships pass these controls. Reduce minimum support, increase radius for contacts, or include self-links. (code: no_links)."
+            "message": "at the minimum corner (max_links=1, max_nodes=4, radius=1.0) it refused in words rather than crashing: No relationships pass these controls. Reduce minimum support, increase radius for contacts, or include self-links. (code: no_links); at the maximum corner (max_links=500, max_nodes=60, min_count=1000, mode='annotations', other_field='cat_region') it refused in words rather than crashing: No relationships pass these controls. Reduce minimum support, increase radius for contacts, or include self-links. (code: no_links)."
           },
           {
             "id": "no_mutation",
@@ -720,7 +738,7 @@
         ],
         "risks": []
       },
-      "published": "2026-10-28"
+      "published": "2026-11-08"
     },
     {
       "id": "celltype-contact-network",
@@ -2965,7 +2983,7 @@
     {
       "id": "tissue-permeability",
       "name": "Tissue Permeability",
-      "version": "2.0.1",
+      "version": "2.1.0",
       "description": "Which cells one cell type seals off from the rest of the tissue.",
       "author": "PointillViz reference tools",
       "icon": "route",
@@ -2998,7 +3016,7 @@
         "schema": 3,
         "id": "tissue-permeability",
         "name": "Tissue Permeability",
-        "version": "2.0.1",
+        "version": "2.1.0",
         "author": "PointillViz reference tools",
         "description": "Which cells one cell type seals off from the rest of the tissue.",
         "long_description": "",
@@ -3062,10 +3080,16 @@
             "name": "source_type",
             "type": "category_value",
             "label": "Source cell type",
-            "help": "Selects the destination population when routing towards another cell type.\nIt must differ from the barrier population.",
+            "help": "Selects the destination population.\nIt must differ from the barrier population.",
             "default": null,
-            "optional": true,
-            "field_param": "field"
+            "optional": false,
+            "field_param": "field",
+            "show_when": {
+              "param": "source",
+              "in": [
+                "type"
+              ]
+            }
           },
           {
             "name": "barrier_width",
@@ -3133,9 +3157,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/tissue-permeability-v2.0.1/tissue-permeability-2.0.1.pvtool",
-        "sha256": "de2e098e4e123c0cd852b9b3fd270f4d7774ba71765fd162ba691498ca758d26",
-        "size": 35642
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/tissue-permeability-v2.1.0/tissue-permeability-2.1.0.pvtool",
+        "sha256": "b03e39102747e762c3f6fb7cc281deda69d6b310a3a3787954874cf650ecd2c1",
+        "size": 35649
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/tissue-permeability/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/tissue-permeability/preview.svg",
@@ -3153,7 +3177,7 @@
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "tissue-permeability 2.0.1 by PointillViz reference tools; Python entry tool.py, outputs summary, cells, series, table."
+            "message": "tissue-permeability 2.1.0 by PointillViz reference tools; Python entry tool.py, outputs summary, cells, series, table."
           },
           {
             "id": "environment",
@@ -3177,7 +3201,7 @@
             "id": "fixture",
             "required": true,
             "status": "pass",
-            "message": "ran on the 600-cell fixture in 0.30 s, returning summary, cells, table, series."
+            "message": "ran on the 600-cell fixture in 0.23 s, returning summary, cells, table, series."
           },
           {
             "id": "result",
@@ -3189,7 +3213,7 @@
             "id": "edge",
             "required": true,
             "status": "pass",
-            "message": "at the minimum corner (barrier_width=0.0, max_gap=1.5, n_null=2) it refused in words rather than crashing: Nothing here is more than one cell spacing from a source, so there is no route to measure and nothing is enclosed. At a gap of 1.5 spacings almost every cell counts as exposed surface — raise it, or route towards a cell type instead of the surface. (code: no_interior); ran at the maximum corner (barrier_width=3.0, max_gap=20.0, n_null=20, paint='tau', source='type') in 0.23 s."
+            "message": "at the minimum corner (barrier_width=0.0, max_gap=1.5, n_null=2) it refused in words rather than crashing: Nothing here is more than one cell spacing from a source, so there is no route to measure and nothing is enclosed. At a gap of 1.5 spacings almost every cell counts as exposed surface — raise it, or route towards a cell type instead of the surface. (code: no_interior); ran at the maximum corner (barrier_width=3.0, max_gap=20.0, n_null=20, paint='tau', source='type', source_type='Fibroblast') in 0.19 s."
           },
           {
             "id": "no_mutation",
@@ -3200,12 +3224,12 @@
         ],
         "risks": []
       },
-      "published": "2026-11-03"
+      "published": "2026-11-08"
     },
     {
       "id": "vector-field",
       "name": "Vector Field",
-      "version": "2.0.1",
+      "version": "2.1.0",
       "description": "Which way a quantity increases across the tissue, as arrows over the section. Gene, cell type or any annotation column — with every arrow that could be noise removed.",
       "author": "PointillViz reference tools",
       "icon": "near_me",
@@ -3236,7 +3260,7 @@
         "schema": 3,
         "id": "vector-field",
         "name": "Vector Field",
-        "version": "2.0.1",
+        "version": "2.1.0",
         "author": "PointillViz reference tools",
         "description": "Which way a quantity increases across the tissue, as arrows over the section. Gene, cell type or any annotation column — with every arrow that could be noise removed.",
         "long_description": "",
@@ -3262,63 +3286,87 @@
           {
             "name": "source",
             "type": "select",
-            "label": "Differentiate",
-            "help": "Selects whether the field represents the local proportion of a population, a continuous measurement, or gene expression.",
+            "label": "Gradient of",
+            "help": "Selects the quantity whose gradient is drawn.\nFor a cell type or any other category, that is its local fraction of cells; for a gene, its local mean expression; for a continuous column, its local mean value.",
             "default": "category",
             "optional": false,
             "options": [
               {
                 "value": "category",
-                "label": "One level of a categorical column"
+                "label": "Cell type or category"
               },
               {
                 "value": "gene",
-                "label": "A gene"
+                "label": "Gene"
               },
               {
                 "value": "continuous",
-                "label": "A continuous column"
+                "label": "Continuous column"
               }
             ]
           },
           {
             "name": "field",
             "type": "categorical_field",
-            "label": "Categorical column",
-            "help": "Selects the categorical annotation used to define the populations.\nUsed only when Differentiate is set to category.\nDefaults to the dataset’s cell-type column.",
+            "label": "Column",
+            "help": "Selects the categorical column the category comes from.\nDefaults to the dataset’s cell-type column.",
             "default": null,
-            "optional": true
+            "optional": true,
+            "show_when": {
+              "param": "source",
+              "in": [
+                "category"
+              ]
+            }
           },
           {
             "name": "level",
             "type": "category_value",
-            "label": "Level",
-            "help": "Selects the population from the chosen categorical column whose local proportion is analyzed.",
+            "label": "Category",
+            "help": "Selects the category whose local fraction of cells is mapped.\nCells with no label in this column are left out of the field.",
             "default": null,
-            "optional": true,
-            "field_param": "field"
-          },
-          {
-            "name": "column",
-            "type": "continuous_field",
-            "label": "Continuous column",
-            "help": "Selects the continuous measurement to analyze.\nUsed only when Differentiate is set to continuous.",
-            "default": null,
-            "optional": true
+            "optional": false,
+            "field_param": "field",
+            "show_when": {
+              "param": "source",
+              "in": [
+                "category"
+              ]
+            }
           },
           {
             "name": "gene",
             "type": "gene",
             "label": "Gene",
-            "help": "Selects the gene whose normalized expression is analyzed.\nUsed only when Differentiate is set to gene.\nValues are normalized to a total of 10,000 counts per cell.",
+            "help": "Selects the gene whose expression is mapped.\nValues are normalized to a total of 10,000 counts per cell.",
             "default": null,
-            "optional": true
+            "optional": false,
+            "show_when": {
+              "param": "source",
+              "in": [
+                "gene"
+              ]
+            }
+          },
+          {
+            "name": "column",
+            "type": "continuous_field",
+            "label": "Column",
+            "help": "Selects the per-cell measurement whose local mean is mapped.",
+            "default": null,
+            "optional": false,
+            "show_when": {
+              "param": "source",
+              "in": [
+                "continuous"
+              ]
+            }
           },
           {
             "name": "sigma",
             "type": "float",
-            "label": "Smoothing (σ, grid cells)",
-            "help": "Sets the width of the Gaussian smoothing in grid cells.\nLarger values produce smoother fields with broader, weaker gradients.",
+            "label": "Smoothing",
+            "help": "Sets the width σ of the Gaussian smoothing, in grid cells.\nLarger values produce smoother fields with broader, weaker gradients.",
             "default": 1.2,
             "optional": false,
             "min": 0.6,
@@ -3366,9 +3414,9 @@
         "sweep": null
       },
       "bundle": {
-        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/vector-field-v2.0.1/vector-field-2.0.1.pvtool",
-        "sha256": "72aa3112fc7415594f4d003002d79a0fdf9fb101d488383e7a36c98576739f75",
-        "size": 42999
+        "url": "https://github.com/lamanno-epfl/pointillviz-registry/releases/download/vector-field-v2.1.0/vector-field-2.1.0.pvtool",
+        "sha256": "3dab343b395432b1e8fde322a4dbfbfb465eacf6d6731c7171e71e17c69c71a0",
+        "size": 43030
       },
       "readme_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/vector-field/README.md",
       "preview_url": "https://raw.githubusercontent.com/lamanno-epfl/pointillviz-registry/main/tools/vector-field/preview.svg",
@@ -3380,13 +3428,13 @@
             "id": "bundle",
             "required": true,
             "status": "pass",
-            "message": "7 files, 42.0 kB packed and 170.5 kB unpacked, plugin.json at the root."
+            "message": "7 files, 42.0 kB packed and 170.6 kB unpacked, plugin.json at the root."
           },
           {
             "id": "manifest",
             "required": true,
             "status": "pass",
-            "message": "vector-field 2.0.1 by PointillViz reference tools; Python entry tool.py, outputs summary, cells, vectors, series."
+            "message": "vector-field 2.1.0 by PointillViz reference tools; Python entry tool.py, outputs summary, cells, vectors, series."
           },
           {
             "id": "environment",
@@ -3422,7 +3470,7 @@
             "id": "edge",
             "required": true,
             "status": "pass",
-            "message": "ran at the minimum corner (arrows=200, detail=0.5, gate=False, sigma=0.6) in 0.01 s; at the maximum corner (arrows=20000, detail=2.5, sigma=3.0, source='continuous') it refused in words rather than crashing: Nothing could be measured. Of 122 grid sites inside the tissue, none were far enough from a tissue edge for the smoothing window to sit entirely on real data, so no gradient at all was computed for cont_cell_area. The grid is too coarse, or σ too large, for a region this size: lower the smoothing, raise the grid detail, or widen the selection. (code: no_measurable_sites)."
+            "message": "ran at the minimum corner (arrows=200, detail=0.5, gate=False, sigma=0.6) in 0.01 s; at the maximum corner (arrows=20000, column='cont_cell_area', detail=2.5, field=None, level=None, sigma=3.0, source='continuous') it refused in words rather than crashing: Nothing could be measured. Of 122 grid sites inside the tissue, none were far enough from a tissue edge for the smoothing window to sit entirely on real data, so no gradient at all was computed for cont_cell_area. The grid is too coarse, or σ too large, for a region this size: lower the smoothing, raise the grid detail, or widen the selection. (code: no_measurable_sites); ran the source='gene' branch in 0.01 s."
           },
           {
             "id": "no_mutation",
@@ -3433,7 +3481,7 @@
         ],
         "risks": []
       },
-      "published": "2026-11-03"
+      "published": "2026-11-08"
     }
   ],
   "placeholders": []
