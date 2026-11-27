@@ -1,0 +1,8 @@
+.pixi/
+__pycache__/
+*.pyc
+*.pvtool
+dist/
+.pytest_cache/
+# What an NFS share leaves behind when a file is deleted while it is open.
+.nfs*

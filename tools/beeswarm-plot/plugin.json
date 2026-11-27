@@ -1,0 +1,93 @@
+{
+  "schema": 3,
+  "id": "beeswarm-plot",
+  "name": "Beeswarm Plot",
+  "version": "1.0.0",
+  "author": "PointillViz reference tools",
+  "description": "How marker genes are expressed across cell types or niches, one swarm of cells per group.",
+  "icon": "bubble_chart",
+  "tags": [
+    "expression",
+    "markers",
+    "groups",
+    "plot"
+  ],
+  "entry": "tool.py",
+  "license": "MIT",
+  "outputs": [
+    "images",
+    "table",
+    "summary",
+    "files"
+  ],
+  "requires": {
+    "genes": true,
+    "categoricals": true,
+    "min_cells": 20
+  },
+  "params": [
+    {
+      "name": "field",
+      "type": "categorical_field",
+      "label": "Groups",
+      "optional": true,
+      "help": "Selects the annotation whose groups form the rows: cell types, niches or any other categorical column.\nDefaults to the dataset’s cell-type column."
+    },
+    {
+      "name": "genes",
+      "type": "genes",
+      "label": "Genes",
+      "optional": true,
+      "max_items": 40,
+      "preset": "top_markers",
+      "preset_n": 20,
+      "help": "Selects the genes that form the columns.\nOpens on the 20 genes detected in the most cells, the Marker Dot Plot’s Top markers. Search to add genes, or remove them; left empty, the plot uses those 20."
+    },
+    {
+      "name": "coarse",
+      "type": "categorical_field",
+      "label": "Coarse groups",
+      "optional": true,
+      "help": "Adds a second, broader annotation as an outer colour strip and orders the rows by it; each group takes the coarse group most of its cells belong to.\nThe same column as Groups draws no outer strip."
+    },
+    {
+      "name": "threshold",
+      "type": "float",
+      "label": "Expression threshold",
+      "default": 0,
+      "min": 0,
+      "max": 5,
+      "step": 0.05,
+      "help": "Leaves cells at or below this log1p(CP10K) out of the swarms; 0 keeps every cell that detects the gene.\nThe colours always count every cell of a group."
+    },
+    {
+      "name": "cmap",
+      "type": "select",
+      "label": "Colormap",
+      "default": "magma",
+      "options": [
+        {
+          "value": "viridis",
+          "label": "Viridis"
+        },
+        {
+          "value": "plasma",
+          "label": "Plasma"
+        },
+        {
+          "value": "inferno",
+          "label": "Inferno"
+        },
+        {
+          "value": "magma",
+          "label": "Magma"
+        },
+        {
+          "value": "cividis",
+          "label": "Cividis"
+        }
+      ],
+      "help": "Colours the mean expression z-score with the colormaps the viewer offers for gene expression."
+    }
+  ]
+}

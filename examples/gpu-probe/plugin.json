@@ -1,0 +1,20 @@
+{
+  "schema": 3,
+  "id": "gpu-probe",
+  "name": "GPU Probe",
+  "version": "1.0.0",
+  "author": "PointillViz reference tools",
+  "description": "Checks whether a tool can see the GPU, and times a matrix product on the chosen device.",
+  "icon": "memory",
+  "tags": ["gpu", "diagnostics"],
+  "entry": "tool.py",
+  "license": "MIT",
+  "gpu": "optional",
+  "outputs": ["summary", "table"],
+  "requires": {},
+  "params": [
+    { "name": "size", "type": "int", "label": "Matrix size", "default": 2048,
+      "min": 256, "max": 4096, "step": 256,
+      "help": "Sets the side of the two square matrices that are multiplied. Larger matrices give a steadier timing and take longer." }
+  ]
+}

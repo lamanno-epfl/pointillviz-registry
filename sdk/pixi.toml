@@ -1,0 +1,18 @@
+# The SDK's own development and test environment. Tools do not depend on the
+# SDK: the host puts it on PYTHONPATH inside each tool's environment.
+[workspace]
+name = "pointillviz-tool-sdk"
+channels = ["conda-forge"]
+platforms = ["linux-64", "osx-arm64", "osx-64", "win-64"]
+
+[dependencies]
+python = "3.11.*"
+numpy = "*"
+scipy = "*"
+pytest = "*"
+# The R bridge tests run native R tools.
+r-base = "*"
+r-jsonlite = "*"
+
+[tasks]
+test = "pytest -q tests"

@@ -1,0 +1,221 @@
+# Releases every tool version that is new, and keeps index.json in step.
+#
+# On each push to main, and when automerge.yml has merged a tool, every tool
+# whose tag <id>-v<version> does not exist yet is packed, gated as a bundle in
+# its own environment, and released. Then index.json is rebuilt, and committed
+# when it changed, and the store site is told to rebuild from the registry as
+# this run leaves it. A released bundle never changes: a version is packed and
+# hashed once, and the index carries it over from then on. A tool that fails is
+# not released and does not hold up the others.
+#
+# Tools are merged without review, so the code the gates run is a stranger's.
+# It runs only in the `gates` jobs, whose token can only read, with no cache
+# that another job reads, and all such a job hands on is its own report.
+# `publish` holds the one write permission and runs no tool code: it releases a
+# tool only when GitHub says that tool's gates job succeeded, and it packs every
+# bundle it releases itself, from the clean checkout (scripts/publish.py).
+#
+# pixi is pinned to the version PointillViz is built and tested with, as in
+# validate.yml.
+name: release
+
+on:
+  push:
+    branches: [main]
+  # automerge.yml starts it: a merge made with a workflow's token starts no workflow.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One run at a time, never cancelled half way. Each run starts from main as the
+# previous one left it, so a queued run that GitHub drops for a newer one loses
+# nothing.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Plan
+    runs-on: ubuntu-latest
+    outputs:
+      sha: ${{ steps.plan.outputs.sha }}
+      tools: ${{ steps.plan.outputs.tools }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: false
+      # The tools without a release, and any released but missing from the index.
+      - id: plan
+        run: |
+          tools=$(python3 scripts/changed_tools.py --release)
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          echo "tools=$tools" >> "$GITHUB_OUTPUT"
+
+  gates:
+    name: Gates (${{ matrix.tool }})
+    needs: plan
+    if: needs.plan.outputs.tools != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(needs.plan.outputs.tools) }}
+    env:
+      TOOL: ${{ matrix.tool }}
+      VERSION: ${{ matrix.version }}
+      TAG: ${{ matrix.tag }}
+      PYTHONPATH: ${{ github.workspace }}/sdk
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+          persist-credentials: false
+      - name: Check that the tool brings its environment
+        run: |
+          for file in pixi.toml pixi.lock; do
+            if [ ! -f "tools/$TOOL/$file" ]; then
+              echo "::error file=tools/$TOOL/plugin.json::tools/$TOOL has no $file. The registry builds each tool's environment from its pixi.toml and pixi.lock: declare python, numpy and scipy in pixi.toml (and r-base and r-jsonlite for an R tool), run 'pixi lock' in the tool's folder, and commit both files."
+              exit 1
+            fi
+          done
+      # No cache: a cache this job wrote could be restored by another tool's job.
+      - uses: prefix-dev/setup-pixi@v0.11.2
+        with:
+          pixi-version: v0.83.0
+          manifest-path: tools/${{ matrix.tool }}/pixi.toml
+          locked: true
+          environments: default
+          cache: false
+      # The bundle the gates check. It is not the one released: the tool runs
+      # beside it and could rewrite it, so publish packs its own.
+      - name: Pack the bundle
+        if: ${{ !matrix.released }}
+        run: |
+          mkdir -p "out/bundles/$TAG"
+          pixi run --locked --manifest-path "tools/$TOOL/pixi.toml" python -m pointillviz_tool pack "tools/$TOOL" -o "out/bundles/$TAG/$TOOL-$VERSION.pvtool"
+      # Released by an earlier run that could not update the index: the
+      # released bundle is the one to check and to index.
+      - name: Download the released bundle
+        if: ${{ matrix.released }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release download "$TAG" --pattern "$TOOL-$VERSION.pvtool" --dir "out/bundles/$TAG"
+      - name: Run the gates
+        run: |
+          pixi run --locked --manifest-path "tools/$TOOL/pixi.toml" python -m pointillviz_tool validate "out/bundles/$TAG/$TOOL-$VERSION.pvtool" --env app --json > report.json || true
+          pixi run --locked --manifest-path "tools/$TOOL/pixi.toml" python - "$TOOL" report.json <<'EOF'
+          import json, sys
+          from pointillviz_tool.validate import format_report
+          tool, path = sys.argv[1:]
+          with open(path, encoding="utf-8") as fh:
+              report = json.load(fh)
+          print(format_report(report))
+          if report["plugin_id"] not in (None, tool):
+              print(f"::error file=tools/{tool}/plugin.json::plugin.json gives the id "
+                    f"{report['plugin_id']}, but a tool lives in tools/<its id>/.")
+              sys.exit(1)
+          sys.exit(0 if report["ok"] else 1)
+          EOF
+      - uses: actions/upload-artifact@v7
+        with:
+          name: report-${{ matrix.tool }}
+          path: report.json
+          if-no-files-found: error
+
+  publish:
+    name: Publish
+    needs: [plan, gates]
+    if: ${{ !cancelled() && needs.plan.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read           # which gates jobs succeeded
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      SHA: ${{ needs.plan.outputs.sha }}
+      PLAN: ${{ needs.plan.outputs.tools }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ needs.plan.outputs.sha }}
+          persist-credentials: false
+      # Each report in its own folder, report-<id>/, fetched by its own name: one
+      # job's artifact cannot stand in for another's. (download-artifact with a
+      # pattern unpacks a lone artifact straight into its path, without that
+      # folder, so a run releasing a single tool would find no report.) A tool
+      # whose gates job failed has none; publish.py skips it by that job's result.
+      - name: Download the gate reports
+        run: |
+          for tool in $(jq -r '.[].tool | select(test("^[a-z][a-z0-9-]{1,48}[a-z0-9]$"))' <<< "$PLAN"); do
+            gh run download "$GITHUB_RUN_ID" --name "report-$tool" --dir "$RUNNER_TEMP/reports/report-$tool" || true
+          done
+      # No cache: this job can write, so it builds its environment from the lock.
+      - uses: prefix-dev/setup-pixi@v0.11.2
+        with:
+          pixi-version: v0.83.0
+          manifest-path: sdk/pixi.toml
+          locked: true
+          cache: false
+      - name: Release the tools that passed
+        run: |
+          pixi run --locked --manifest-path sdk/pixi.toml python scripts/publish.py \
+            "$RUNNER_TEMP/reports" "$RUNNER_TEMP/out" || echo "RELEASE_FAILED=1" >> "$GITHUB_ENV"
+      - name: Rebuild index.json
+        run: |
+          pixi run --locked --manifest-path sdk/pixi.toml python scripts/build_index.py \
+            --bundles "$RUNNER_TEMP/out/bundles" --reports "$RUNNER_TEMP/out/reports" \
+            --base-url "https://github.com/$GH_REPO/releases/download" \
+            --raw-base "https://raw.githubusercontent.com/$GH_REPO/main"
+          python3 scripts/check_hygiene.py
+      # Through the contents API: the commit lands on main as it is now, and is
+      # refused if another run changed index.json in the meantime.
+      - name: Commit index.json
+        run: |
+          if [ -z "$(git status --porcelain -- index.json)" ]; then
+            echo "index.json is unchanged."
+            exit 0
+          fi
+          python3 - "$RUNNER_TEMP/commit.json" <<'EOF'
+          import base64, json, subprocess, sys
+          with open("index.json", "rb") as fh:
+              body = {"message": "Update index.json [skip ci]", "branch": "main",
+                      "content": base64.b64encode(fh.read()).decode("ascii")}
+          blob = subprocess.run(["git", "rev-parse", "-q", "--verify", "HEAD:index.json"],
+                                capture_output=True, text=True).stdout.strip()
+          if blob:
+              body["sha"] = blob        # the version this run started from
+          with open(sys.argv[1], "w", encoding="utf-8") as fh:
+              json.dump(body, fh)
+          EOF
+          gh api --method PUT "repos/$GH_REPO/contents/index.json" --input "$RUNNER_TEMP/commit.json" > "$RUNNER_TEMP/committed.json"
+          jq -r .commit.html_url "$RUNNER_TEMP/committed.json"
+          # The commit the store rebuilds from (next step).
+          echo "INDEX_SHA=$(jq -r .commit.sha "$RUNNER_TEMP/committed.json")" >> "$GITHUB_ENV"
+      # store.pointillviz.com (lamanno-epfl/pointillviz-store) rebuilds from the
+      # registry commit this run leaves main at, now rather than at its hourly
+      # run, which GitHub can delay. A workflow's own token cannot start a
+      # workflow in another repository, so this step takes the secret
+      # STORE_REBUILD_TOKEN: a fine-grained token for that repository alone,
+      # with Actions: write. With no such secret, or if the request fails, the
+      # store waits for its hourly run and the release still succeeds. No tool
+      # code runs in this job, so the token is never within a tool's reach.
+      - name: Start the store's rebuild
+        env:
+          GH_TOKEN: ${{ secrets.STORE_REBUILD_TOKEN }}
+        run: |
+          if [ -z "$GH_TOKEN" ]; then
+            echo "::notice::No STORE_REBUILD_TOKEN secret: the store rebuilds at its hourly run."
+            exit 0
+          fi
+          gh workflow run rebuild.yml --repo lamanno-epfl/pointillviz-store --ref main \
+            -f registry_sha="${INDEX_SHA:-$SHA}" \
+            || echo "::warning::The store's rebuild could not be started: it rebuilds at its hourly run."
+      - name: Report the tools that could not be released
+        if: env.RELEASE_FAILED == '1'
+        run: exit 1
